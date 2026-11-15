@@ -2111,19 +2111,22 @@ function fromB64(b){b=b.replace(/-/g,'+').replace(/_/g,'/').replace(/=+$/,'');if
 // 貼り付けたときに混ざりがちなもの（改行・空白・全角・前後の文章）を取り除く
 function cleanCode(code){
   let s=String(code||'');try{s=s.normalize('NFKC')}catch(e){}
+  const raw=s.trim(),peek=raw.length>18?raw.slice(0,18)+'…':raw;
   const i=s.search(/KJ[01]:/);
-  if(i<0){const b=s.replace(/[^A-Za-z0-9+\/=_-]/g,'');return b.length>20?{h:'KJ1:',b,n:b.length}:{h:'',b:'',n:s.trim().length}}
-  const h=s.slice(i,i+4),b=s.slice(i+4).replace(/[^A-Za-z0-9+\/=_-]/g,'');
-  return {h,b,n:b.length+4};
+  if(i<0){const b=s.replace(/[^A-Za-z0-9+\/=_-]/g,'');return /^H4sI/.test(b)?{h:'KJ1:',b,n:b.length,peek}:{h:'',b:'',n:raw.length,peek}}
+  // コードが2回貼られていたら、最初の1つだけ使う
+  let rest=s.slice(i+4);const j=rest.search(/KJ[01]:/);if(j>=0)rest=rest.slice(0,j);
+  const h=s.slice(i,i+4),b=rest.replace(/[^A-Za-z0-9+\/=_-]/g,'');
+  return {h,b,n:b.length+4,peek};
 }
 const TRUNC_MSG=n=>`コードが途中で切れているみたい（貼り付けたのは${n.toLocaleString('ja-JP')}文字）。最後の文字まで全部コピーして、もう一度貼り付けてほしい`;
 async function unb64z(code){
-  const {h,b,n}=cleanCode(code);
-  if(!h)throw new Error(n?'コードの形がちがう。KJ1: から始まるコードを貼り付けてほしい':'コードが空っぽ');
+  const {h,b,n,peek}=cleanCode(code);
+  if(!h)throw new Error(n?`バックアップコードではないものが貼られている（貼られていたのは「${peek}」${n.toLocaleString('ja-JP')}文字）。コードは「KJ1:」で始まる長い文字。もう一度コピーし直してほしい`:'コードが空っぽ。先にコードをコピーしてから貼り付けてほしい');
   let bytes;try{bytes=fromB64(b)}catch(e){throw new Error(TRUNC_MSG(n))}
   if(h==='KJ0:'){try{return new TextDecoder().decode(bytes)}catch(e){throw new Error(TRUNC_MSG(n))}}
   if(typeof DecompressionStream!=='undefined'){try{const ds=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));return await new Response(ds).text()}catch(e){}}
-  try{return new TextDecoder().decode(jsGunzip(bytes))}catch(e){throw new Error(e.message==='trunc'?TRUNC_MSG(n):'コードが読み取れなかった。別のコードが混ざっていないか確かめてほしい')}
+  try{return new TextDecoder().decode(jsGunzip(bytes))}catch(e){throw new Error(e.message==='trunc'?TRUNC_MSG(n):`コードの一部が欠けているか、書き換わっているみたい（貼られていたのは「${peek}」${n.toLocaleString('ja-JP')}文字）。コードは「KJ1:H4sI」で始まる。最初から最後まで全部コピーし直してほしい`)}
 }
 async function exportCode(){
   flushAll();
@@ -3143,7 +3146,7 @@ function backupHtml(){
   <p class="note">育成・監督業・マイ選手・コイン・素材は、操作するたびにこの端末のブラウザへ自動で保存される。画面を閉じたときにも保存する。${cloud}</p>
   <div class="seg c2"><button class="opt" data-act="bkExport">バックアップコードを作る</button><button class="opt" data-act="bkImportOpen">コードから読み込む</button></div>
   ${B.out?`<div class="label">バックアップコード（${B.out.length.toLocaleString('ja-JP')}文字）</div><textarea class="code" id="bkout" readonly>${esc(B.out)}</textarea><div class="stack" style="margin-top:8px"><button class="btn ghost" data-act="bkCopy">コピーする</button></div>`:''}
-  ${B.open?`<div class="label">コードを貼り付ける（今のデータは上書きされる）</div><textarea class="code" id="bkin" placeholder="KJ1:..."></textarea><div class="stack" style="margin-top:8px"><button class="btn red" data-act="bkImport">読み込む</button></div>`:''}
+  ${B.open?`<div class="label">コードを貼り付ける（今のデータは上書きされる）</div><textarea class="code" id="bkin" placeholder="KJ1:..."></textarea><div class="stack" style="margin-top:8px"><button class="btn red" data-act="bkImport">読み込む</button>${typeof navigator!=='undefined'&&navigator.clipboard&&navigator.clipboard.readText?'<button class="btn ghost" data-act="bkPaste">コピーしたコードをそのまま読み込む</button>':''}</div>`:''}
   ${B.msg?`<p class="note ${B.err?'bad':''}" style="margin-top:8px">${esc(B.msg)}</p>`:''}`;
 }
 /* ---------- 記録の画面 ---------- */
@@ -3202,6 +3205,7 @@ Object.assign(ACT,{
  bkExport:()=>{G.bk={msg:'作成中…'};exportCode().then(c=>{G.bk={out:c,msg:'このコードをメモやLINEに保存しておけば、別の端末やデータが消えたときに戻せる。'};render()}).catch(()=>{G.bk={msg:'コードを作れなかった。',err:1};render()})},
  bkCopy:()=>{const t=document.getElementById('bkout');const v=t?t.value:'';copyText(v).then(ok=>{G.bk.msg=ok?`コピーした（${v.length.toLocaleString('ja-JP')}文字）。メモやLINEに貼り付けて保存しておこう。`:'自動でコピーできなかった。コード欄を長押し→「すべてを選択」→「コピー」してほしい。';render()})},
  bkImportOpen:()=>{G.bk={open:true}},
+ bkPaste:()=>{navigator.clipboard.readText().then(v=>{G.bk={open:true,msg:'読み込み中…'};render();return importCode(v)}).then(()=>{G.bk={msg:'読み込んだ。続きから遊べる。'};render()}).catch(e=>{G.bk={open:true,msg:e&&e.name==='NotAllowedError'?'クリップボードを読めなかった。上の欄に長押しで貼り付けて「読み込む」を押してほしい。':'読み込めなかった：'+(e&&e.message||'コードを確かめてほしい'),err:1};render()})},
  bkImport:()=>{const t=document.getElementById('bkin'),v=t?t.value:'';G.bk={open:true,msg:'読み込み中…'};importCode(v).then(()=>{G.bk={msg:'読み込んだ。続きから遊べる。'};render()}).catch(e=>{G.bk={open:true,msg:'読み込めなかった：'+(e&&e.message||'コードを確かめてほしい'),err:1};render()})},
  acGoogle:()=>{if(!NET.web)return;G.bk={msg:'ログイン中…'};NET.web.signInGoogle().then(()=>{G.bk={msg:'ログインした。'};render()}).catch(e=>{G.bk={msg:'ログインできなかった。'+(e&&e.code==='auth/popup-blocked'?'ポップアップが止められた。':'')+'SafariやChromeで開いて、もう一度試してほしい。',err:1};render()})},
  acOut:()=>{if(!NET.web)return;NET.web.signOut().then(()=>{G.bk={msg:'ログアウトした。ゲストとして続けられる。'};render()})},
