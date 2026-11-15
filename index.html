@@ -2071,19 +2071,55 @@ async function cloudLoadPlay(){
   }catch(e){AUTO.cloudOk=false}
 }
 /* バックアップコード（どの端末・どの権限でも使える） */
+/* 小さなinflate（DecompressionStreamがない古い端末用）。RFC1951 */
+function jsInflate(src){
+  let pos=0,bit=0,bitc=0;const out=[];
+  const need=()=>{if(pos>=src.length)throw new Error('trunc');bit|=src[pos++]<<bitc;bitc+=8};
+  const bits=n=>{while(bitc<n)need();const v=bit&((1<<n)-1);bit>>>=n;bitc-=n;return v};
+  const build=lens=>{const cnt=new Uint16Array(16),offs=new Uint16Array(16),sym=new Uint16Array(lens.length);for(const l of lens)cnt[l]++;cnt[0]=0;for(let i=1;i<16;i++)offs[i]=offs[i-1]+cnt[i-1];for(let i=0;i<lens.length;i++)if(lens[i])sym[offs[lens[i]]++]=i;return {cnt,sym}};
+  const dec=t=>{let code=0,first=0,idx=0;for(let l=1;l<16;l++){code|=bits(1);const c=t.cnt[l];if(code-c<first)return t.sym[idx+(code-first)];idx+=c;first+=c;first<<=1;code<<=1}throw new Error('bad')};
+  const LB=[3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258],LE=[0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0];
+  const DB=[1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577],DE=[0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
+  let fl,fd;{const l=new Array(288);for(let i=0;i<288;i++)l[i]=i<144?8:i<256?9:i<280?7:8;fl=build(l);fd=build(new Array(30).fill(5))}
+  let last=0;
+  while(!last){last=bits(1);const type=bits(2);
+    if(type===0){bit=0;bitc=0;if(pos+4>src.length)throw new Error('trunc');const len=src[pos]|src[pos+1]<<8;pos+=4;if(pos+len>src.length)throw new Error('trunc');for(let i=0;i<len;i++)out.push(src[pos++]);continue}
+    let lt,dt;
+    if(type===1){lt=fl;dt=fd}
+    else if(type===2){const hl=bits(5)+257,hd=bits(5)+1,hc=bits(4)+4,ord=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15],cl=new Array(19).fill(0);
+      for(let i=0;i<hc;i++)cl[ord[i]]=bits(3);const ct=build(cl),ls=[];
+      while(ls.length<hl+hd){const s=dec(ct);if(s<16)ls.push(s);else if(s===16){const p=ls[ls.length-1],r=3+bits(2);for(let i=0;i<r;i++)ls.push(p)}else if(s===17){const r=3+bits(3);for(let i=0;i<r;i++)ls.push(0)}else{const r=11+bits(7);for(let i=0;i<r;i++)ls.push(0)}}
+      lt=build(ls.slice(0,hl));dt=build(ls.slice(hl))}
+    else throw new Error('bad');
+    for(;;){const s=dec(lt);if(s<256)out.push(s);else if(s===256)break;else{const i=s-257,len=LB[i]+bits(LE[i]),d=dec(dt),dist=DB[d]+bits(DE[d]);let st=out.length-dist;if(st<0)throw new Error('bad');for(let k=0;k<len;k++)out.push(out[st+k])}}
+  }
+  return new Uint8Array(out);
+}
+function jsGunzip(u){if(u[0]!==0x1f||u[1]!==0x8b)throw new Error('bad');const f=u[3];let p=10;if(f&4)p+=2+(u[p]|u[p+1]<<8);if(f&8){while(u[p++]);}if(f&16){while(u[p++]);}if(f&2)p+=2;return jsInflate(u.subarray(p))}
+// URLセーフな文字（- と _）で作る。LINEなどで + や / が化けても困らないように
 async function b64z(str){
   const bytes=new TextEncoder().encode(str);
-  if(typeof CompressionStream!=='undefined'){const cs=new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));const buf=new Uint8Array(await new Response(cs).arrayBuffer());return 'KJ1:'+toB64(buf)}
+  if(typeof CompressionStream!=='undefined'){try{const cs=new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));const buf=new Uint8Array(await new Response(cs).arrayBuffer());return 'KJ1:'+toB64(buf)}catch(e){}}
   return 'KJ0:'+toB64(bytes);
 }
-function toB64(u){let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
-function fromB64(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+function toB64(u){let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function fromB64(b){b=b.replace(/-/g,'+').replace(/_/g,'/').replace(/=+$/,'');if(b.length%4===1)throw new Error('trunc');while(b.length%4)b+='=';const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+// 貼り付けたときに混ざりがちなもの（改行・空白・全角・前後の文章）を取り除く
+function cleanCode(code){
+  let s=String(code||'');try{s=s.normalize('NFKC')}catch(e){}
+  const i=s.search(/KJ[01]:/);
+  if(i<0){const b=s.replace(/[^A-Za-z0-9+\/=_-]/g,'');return b.length>20?{h:'KJ1:',b,n:b.length}:{h:'',b:'',n:s.trim().length}}
+  const h=s.slice(i,i+4),b=s.slice(i+4).replace(/[^A-Za-z0-9+\/=_-]/g,'');
+  return {h,b,n:b.length+4};
+}
+const TRUNC_MSG=n=>`コードが途中で切れているみたい（貼り付けたのは${n.toLocaleString('ja-JP')}文字）。最後の文字まで全部コピーして、もう一度貼り付けてほしい`;
 async function unb64z(code){
-  code=String(code||'').replace(/\s+/g,'');
-  const [h,b]=[code.slice(0,4),code.slice(4)];
-  if(h==='KJ0:')return new TextDecoder().decode(fromB64(b));
-  if(h==='KJ1:'){if(typeof DecompressionStream==='undefined')throw new Error('この端末では読み込めない形式');const ds=new Blob([fromB64(b)]).stream().pipeThrough(new DecompressionStream('gzip'));return await new Response(ds).text()}
-  throw new Error('バックアップコードではない');
+  const {h,b,n}=cleanCode(code);
+  if(!h)throw new Error(n?'コードの形がちがう。KJ1: から始まるコードを貼り付けてほしい':'コードが空っぽ');
+  let bytes;try{bytes=fromB64(b)}catch(e){throw new Error(TRUNC_MSG(n))}
+  if(h==='KJ0:'){try{return new TextDecoder().decode(bytes)}catch(e){throw new Error(TRUNC_MSG(n))}}
+  if(typeof DecompressionStream!=='undefined'){try{const ds=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));return await new Response(ds).text()}catch(e){}}
+  try{return new TextDecoder().decode(jsGunzip(bytes))}catch(e){throw new Error(e.message==='trunc'?TRUNC_MSG(n):'コードが読み取れなかった。別のコードが混ざっていないか確かめてほしい')}
 }
 async function exportCode(){
   flushAll();
@@ -2091,7 +2127,8 @@ async function exportCode(){
   return await b64z(JSON.stringify(o));
 }
 async function importCode(code){
-  const o=JSON.parse(await unb64z(code));
+  let o;try{o=JSON.parse(await unb64z(code))}catch(e){throw e instanceof SyntaxError?new Error(TRUNC_MSG(cleanCode(code).n)):e}
+  if(o&&(o.k==='ch'||o.k==='re'))throw new Error('これは対戦コード。「対戦」タブの「コード対戦」で使ってほしい');
   if(!o||o.v!==1||!o.meta)throw new Error('中身が読み取れなかった');
   M=metaFix(o.meta);_metaLast='';M.t=Date.now();applyGifts();
   try{localStorage.setItem(META_KEY,JSON.stringify(M))}catch(e){}
@@ -2913,6 +2950,14 @@ function cardTile(c,opts={}){
 }
 
 /* ---------- ガチャ ---------- */
+/* コピー：iPhoneでも確実に全部コピーできるように、まず同期で試してから clipboard API */
+function copyText(val){
+  let ok=false;
+  try{const ta=document.createElement('textarea');ta.value=val;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px';document.body.appendChild(ta);ta.focus();ta.select();ta.setSelectionRange(0,val.length);ok=document.execCommand('copy');ta.remove()}catch(e){ok=false}
+  if(ok)return Promise.resolve(true);
+  if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(val).then(()=>true).catch(()=>false);
+  return Promise.resolve(false);
+}
 const puCard=id=>GLEGS.find(l=>l.id===id)||(id==='shanchi'?SHANCHI:id==='mao'?MAO:ICHIKAWA);
 const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと：${legText(l)}`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:CAP_SKILL};
 H.gacha=()=>{
@@ -3136,13 +3181,11 @@ Object.assign(ACT,{
  cdMake:()=>{const B=G.bt;B.cMsg='作成中…';B.cErr=0;makeChallenge().then(c=>{B.cOut=c;B.cMsg='コピーして相手に送ろう。何人に送ってもいい。';render()}).catch(()=>{B.cMsg='コードを作れなかった。';B.cErr=1;render()})},
  cdOpen:()=>{const B=G.bt;B.cIn=!B.cIn;B.cMsg='';B.cErr=0},
  cdGo:()=>{const B=G.bt,t=document.getElementById('cdin'),v=t?t.value:'';B.cMsg='読み込み中…';B.cErr=0;acceptBattleCode(v).then(()=>{B.cMsg='';B.cIn=false;toTop();render();startPlayback()}).catch(e=>{B.cMsg=e&&e.message||'読み込めなかった。';B.cErr=1;render()})},
- copyFrom:v=>{const t=document.getElementById(v),val=t?t.value:'';const ok=()=>{G.toastMsg='コピーした';render();setTimeout(()=>{G.toastMsg=null;render()},1500)};
-   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(val).then(ok).catch(()=>{if(t){t.select();try{document.execCommand('copy');ok()}catch(e){}}});else if(t){t.select();try{document.execCommand('copy');ok()}catch(e){}}},
+ copyFrom:v=>{const t=document.getElementById(v),val=t?t.value:'';copyText(val).then(ok=>{G.toastMsg=ok?`コピーした（${val.length.toLocaleString('ja-JP')}文字）`:'自動でコピーできなかった。コード欄を長押し→「すべてを選択」→「コピー」してほしい';render();setTimeout(()=>{G.toastMsg=null;render()},ok?1800:5000)})},
  btSkip:()=>{if(G.bt.play)G.bt.play.done=true},
  btMenu:()=>{G.bt.view='menu';G.bt.match=null;G.bt.play=null;G.bt.code='';G.bt.cOut='';toTop()},
  bkExport:()=>{G.bk={msg:'作成中…'};exportCode().then(c=>{G.bk={out:c,msg:'このコードをメモやLINEに保存しておけば、別の端末やデータが消えたときに戻せる。'};render()}).catch(()=>{G.bk={msg:'コードを作れなかった。',err:1};render()})},
- bkCopy:()=>{const t=document.getElementById('bkout');const v=t?t.value:'';const done=()=>{G.bk.msg='コピーした。';render()};
-   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v).then(done).catch(()=>{if(t){t.select();try{document.execCommand('copy');done()}catch(e){G.bk.msg='長押しでコピーしてほしい。';render()}}});else if(t){t.select();try{document.execCommand('copy');done()}catch(e){}}},
+ bkCopy:()=>{const t=document.getElementById('bkout');const v=t?t.value:'';copyText(v).then(ok=>{G.bk.msg=ok?`コピーした（${v.length.toLocaleString('ja-JP')}文字）。メモやLINEに貼り付けて保存しておこう。`:'自動でコピーできなかった。コード欄を長押し→「すべてを選択」→「コピー」してほしい。';render()})},
  bkImportOpen:()=>{G.bk={open:true}},
  bkImport:()=>{const t=document.getElementById('bkin'),v=t?t.value:'';G.bk={open:true,msg:'読み込み中…'};importCode(v).then(()=>{G.bk={msg:'読み込んだ。続きから遊べる。'};render()}).catch(e=>{G.bk={open:true,msg:'読み込めなかった：'+(e&&e.message||'コードを確かめてほしい'),err:1};render()})},
  acGoogle:()=>{if(!NET.web)return;G.bk={msg:'ログイン中…'};NET.web.signInGoogle().then(()=>{G.bk={msg:'ログインした。'};render()}).catch(e=>{G.bk={msg:'ログインできなかった。'+(e&&e.code==='auth/popup-blocked'?'ポップアップが止められた。':'')+'SafariやChromeで開いて、もう一度試してほしい。',err:1};render()})},
@@ -3173,7 +3216,7 @@ function syncInputs(){
   const r=document.getElementById('rcode');if(r)G.bt.code=normCode(r.value);
   const a=document.getElementById('msei'),b=document.getElementById('mmei');if(a&&G.mdraft){G.mdraft.sei=a.value.trim()||G.mdraft.sei;G.mdraft.mei=b.value.trim()||G.mdraft.mei}
 }
-if(typeof document!=='undefined')boot();
+if(typeof document!=='undefined'){document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.matches&&t.matches('textarea.code[readonly]'))setTimeout(()=>{try{t.setSelectionRange(0,t.value.length)}catch(x){}},0)});boot()}
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}</script>
