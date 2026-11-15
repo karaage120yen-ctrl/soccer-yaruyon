@@ -885,8 +885,8 @@ function roleOf(o,rep){const r=o-rep;return r>=3?['レギュラー確約','r1']:
 function stars(rep){const n=clamp(Math.round((rep-35)/12),1,5);return '★'.repeat(n)+'☆'.repeat(5-n)}
 function salaryFor(c,o){const L=LG[c.lg];if(!L.base)return 0;const m=Math.pow(1.12,Math.min(o,c.rep+14)-c.rep)*(1+(c.rep-L.mean)/25);return Math.max(L.base*.2,L.base*m)}
 const taxRate=s=>s<1000?.2:s<4000?.33:.45;
-function injMult(p){return (1.35-Math.min(p.st.phy,100)/150)*(p.age>=31?1.35:1)*(p.subs.nutri?.7:1)*(has(p,'iron')?.6:1)*(p.sta<30?1.6:1)}
-const prOf=(ch,c)=>{if(ch.fixed)return ch.pr(c);let v=ch.pr(c);if(v>=1)return 1;if(c.p.subs&&c.p.subs.mental)v+=.05;return clamp(v,.05,.95)};
+function injMult(p){return (1.35-Math.min(p.st.phy,100)/150)*(p.age>=31?1.35:1)*(p.subs.nutri?.7:1)*(has(p,'iron')?.6:1)*(p.sta<30?1.6:1)*(p.legFx&&p.legFx.kame?.6:1)}
+const prOf=(ch,c)=>{const km=c.p.legFx&&c.p.legFx.kame?.05:0;if(ch.fixed)return Math.min(1,ch.pr(c)+km);let v=ch.pr(c);if(v>=1)return 1;if(c.p.subs&&c.p.subs.mental)v+=.05;v+=km;return clamp(v,.05,.95+km)};
 function monthlyCost(p){
   const P=p.fam.partner,pro=p.stage==='pro';
   const items=[];
@@ -1611,6 +1611,10 @@ function allCards(){const l=[...M.roster];return l}
 function cardById(id){if(!id)return null;return M.roster.find(c=>c.id===id)||M.mgrs.find(c=>c.id===id)||null}
 function addPlayerCard(p,sum){
   const st0=p.peakSt||p.st,st={};for(const k of KEYS)st[k]=Math.round(st0[k]);
+  const fx=p.legFx||{},end=[];
+  if(fx.endDef){st.def=Math.min(99,st.def+fx.endDef);end.push(`カカオ・マメオの教え：守備+${fx.endDef}`)}
+  if(fx.inuMarry&&p.fam&&p.fam.partner&&p.fam.partner.married){KEYS.forEach(k=>st[k]=Math.min(99,st[k]+3));end.push('かわいいいぬの教え：結婚していたので全能力+3')}
+  if(sum)sum.legEnd=end;
   const c={id:uidGen('p'),kind:'pl',name:`${p.sei} ${p.mei}`,pos:p.pos,style:POS[p.pos].styles[p.style].n,st,plus:{},enh:0,
    legend:has(p,'legend'),genius:has(p,'monster'),skills:p.skills.map(k=>SKILLS[k].n),grade:sum.grade,peak:p.peak,from:'育成',t:Date.now()};
   M.roster.unshift(c);
@@ -1670,8 +1674,12 @@ function pullOne(pu){
   return 'm1';
 }
 /* レジェンドガチャ：6人のうち誰か（合計3%）。育成のときに3人まで連れて行くと能力ボーナス */
-const LEG_RATE=.03;
+const LEG_RATE=.03,LEG_PU=.02;
+const LEG_SPECIAL={mameo:'全能力 初期+2／育成終了時に守備+3',inu:'スピード 初期+7／育成終了時に結婚していれば全能力+3',kame:'ケガをしにくくなる／すべての成功率+5%'};
 const GLEGS=[
+ {id:'lg_mameo',kind:'pl',name:'カカオ・マメオ',pos:'MF',style:'チョコの魔術師',legend:true,sup:'mameo',pu:true,from:'ガチャ',st:{spd:80,tec:84,sho:78,pas:86,phy:74,def:88}},
+ {id:'lg_inu',kind:'pl',name:'かわいいいぬ',pos:'FW',style:'わんわんダッシュ',legend:true,sup:'inu',pu:true,from:'ガチャ',st:{spd:97,tec:78,sho:80,pas:70,phy:68,def:50}},
+ {id:'lg_kame',kind:'pl',name:'アームストロングカメ',pos:'DF',style:'鉄の甲羅',legend:true,sup:'kame',pu:true,from:'ガチャ',st:{spd:45,tec:70,sho:55,pas:74,phy:95,def:94}},
  {id:'lg_leon',kind:'pl',name:'疾風のレオン',pos:'FW',style:'スピードスター',legend:true,sup:'spd',from:'ガチャ',st:{spd:95,tec:85,sho:84,pas:72,phy:75,def:45}},
  {id:'lg_fabio',kind:'pl',name:'魔術師ファビオ',pos:'MF',style:'ドリブラー',legend:true,sup:'tec',from:'ガチャ',st:{spd:82,tec:96,sho:80,pas:88,phy:66,def:55}},
  {id:'lg_gabriel',kind:'pl',name:'大砲ガブリエル',pos:'FW',style:'ストライカー',legend:true,sup:'sho',from:'ガチャ',st:{spd:78,tec:80,sho:97,pas:68,phy:86,def:42}},
@@ -1683,15 +1691,22 @@ const isLegSup=c=>!!(c&&c.sup&&GLEGS.some(l=>l.id===c.id));
 const LEG_MAX=3;
 // 強化しているほどボーナスが大きい（強化10回：初期+10・限界+5）
 const legBonus=c=>({k:c.sup,st:5+Math.floor((c.enh||0)/2),cap:2+Math.floor((c.enh||0)/3)});
-function ratesFor(pu){if(pu!==LEG_RATE)return RATES;return [['pu',LEG_RATE,'レジェンド選手（6人）'],['m5',.10,'育成素材×5'],['m2',.25,'育成素材×2'],['m1',.62,'育成素材×1']]}
+const legText=c=>{if(LEG_SPECIAL[c.sup])return LEG_SPECIAL[c.sup];const b=legBonus(c);return `${LBL[b.k]} 初期+${b.st}・限界+${b.cap}`};
+function ratesFor(pu){if(pu!==LEG_RATE)return RATES;return [['pu',LEG_PU,'ピックアップレジェンド（3人）'],['pu2',LEG_RATE-LEG_PU,'ほかのレジェンド（6人）'],['m5',.10,'育成素材×5'],['m2',.25,'育成素材×2'],['m1',.62,'育成素材×1']]}
 function legOwned(){return GLEGS.map(l=>M.roster.find(c=>c.id===l.id)).filter(Boolean)}
 function legToggle(d,id){d.leg=d.leg||[];const i=d.leg.indexOf(id);if(i>=0)d.leg.splice(i,1);else if(d.leg.length<LEG_MAX)d.leg.push(id)}
 function legApply(p,d){
-  const out=[];
-  for(const id of d.leg||[]){const c=cardById(id);if(!isLegSup(c))continue;const b=legBonus(c),k=b.k;
-    p.cap[k]=Math.min(99,p.cap[k]+b.cap);p.capLim[k]=Math.min(99,Math.max(p.capLim[k],p.cap[k]));
-    p.st[k]=Math.min(p.cap[k]-2,p.st[k]+b.st);out.push({n:c.name,k,st:b.st,cap:b.cap})}
-  p.legSup=out;return out;
+  const out=[],fx={};
+  const addSt=(k,v)=>{p.st[k]+=v;if(p.st[k]>p.cap[k]){p.cap[k]=Math.min(99,Math.ceil(p.st[k]));p.capLim[k]=Math.min(99,Math.max(p.capLim[k],p.cap[k]))}p.st[k]=Math.min(p.st[k],p.cap[k])};
+  for(const id of d.leg||[]){const c=cardById(id);if(!isLegSup(c))continue;
+    if(c.sup==='mameo'){KEYS.forEach(k=>addSt(k,2));fx.endDef=(fx.endDef||0)+3}
+    else if(c.sup==='inu'){addSt('spd',7);fx.inuMarry=1}
+    else if(c.sup==='kame'){fx.kame=1}
+    else{const b=legBonus(c),k=b.k;
+      p.cap[k]=Math.min(99,p.cap[k]+b.cap);p.capLim[k]=Math.min(99,Math.max(p.capLim[k],p.cap[k]));
+      p.st[k]=Math.min(p.cap[k]-2,p.st[k]+b.st)}
+    out.push({n:c.name,d:legText(c)})}
+  p.legSup=out;p.legFx=fx;return out;
 }
 /* ガチャの種類（ピックアップ1%、ほかは育成素材） */
 const BANNERS={ich:{card:()=>ICHIKAWA,skill:()=>CAP_SKILL,short:'イチカワ',head:['主将','降臨']},shan:{card:()=>SHANCHI,skill:()=>EMP_SKILL,short:'シャン・チー',head:['帝国','開門']},mao:{card:()=>MAO,skill:()=>MAO_SKILL,short:'MAO',head:['黄金の','右足']},leg:{multi:true,card:()=>GLEGS[0],skill:()=>null,short:'レジェンド',head:['伝説','集結']}};
@@ -1702,7 +1717,7 @@ function doGacha(n,free,bk){
   const out=[];
   for(let i=0;i<n;i++){
     const k=pullOne(BN.multi?LEG_RATE:null);M.pulls++;
-    if(k==='pu'){if(BN.multi)pu=pick(GLEGS);
+    if(k==='pu'||k==='pu2'){if(BN.multi)pu=pick(GLEGS.filter(l=>k==='pu'?l.pu:!l.pu));
       M.puHits=M.puHits||{};M.puHits[pu.id]=(M.puHits[pu.id]||0)+1;
       if(!M.roster.some(c=>c.id===pu.id)){M.roster.unshift(JSON.parse(JSON.stringify({...pu,plus:{},enh:0,t:Date.now()})));out.push({type:'pu',id:pu.id,dup:false})}
       else{MATK.forEach(m=>M.mats[m]+=2);out.push({type:'pu',id:pu.id,dup:true})}
@@ -2691,6 +2706,7 @@ H.retired=()=>{
   ${p.skills.length?`<div class="kick">特殊能力</div><div class="chips" style="margin-top:0">${p.skills.map(k=>`<span class="chip gold">${esc(SKILLS[k].n)}</span>`).join('')}</div>`:''}
   <div class="kick">キャリア評価</div>
   <div style="display:flex;gap:20px;align-items:center"><div class="grade big">${s.grade}</div><div><div style="font-family:var(--display);font-weight:800;font-size:28px;line-height:1.2">${s.title}</div><div class="sub">評価点 ${s.score}${s.score>=800?'・殿堂入り':''}</div></div></div>
+  ${s.legEnd&&s.legEnd.length?`<div class="chips">${s.legEnd.map(t=>`<span class="chip gold">${esc(t)}</span>`).join('')}</div>`:''}
   ${s.cardId?`<div class="toast"><b>マイ選手に登録した。</b>全盛期の能力（総合${s.cardOvr}）でスカッドに入れられる。<b>+${s.coins.toLocaleString('ja-JP')}コイン</b></div>`:''}
   <div class="stack" style="margin-top:24px"><button class="btn red" data-act="go" data-v="squad">スカッドに入れる</button><button class="btn ghost" data-act="newGame">次の人生を始める</button><button class="btn ghost" data-act="tab" data-v="log">この人生の経歴を見る</button></div>`;
 };
@@ -2772,9 +2788,9 @@ function legBlock(d){
   const own=legOwned(),sel=(d.leg||[]).filter(id=>own.some(c=>c.id===id));d.leg=sel;
   const head=`<div class="kick" style="margin-top:18px">レジェンドの教え<span class="r">${sel.length}/${LEG_MAX}人</span></div>`;
   if(!own.length)return head+`<p class="note">ガチャの「レジェンド」でレジェンド選手を引くと、ここで3人まで連れて行ける。連れて行ったレジェンドの得意な能力が、最初から高く、伸びしろも大きくなる。</p>`;
-  const tx=c=>{const b=legBonus(c);return `${LBL[b.k]} 初期+${b.st}・限界+${b.cap}`};
+  const tx=c=>legText(c);
   return head+`<p class="note">連れて行ったレジェンドの得意な能力が、最初から高く、伸びしろも大きくなる（強化しているほど大きい）。</p>
-  <div class="picks">${own.map(c=>{const on=sel.includes(c.id),full=!on&&sel.length>=LEG_MAX;return `<button class="pk" aria-pressed="${on}" data-act="legPl" data-v="${c.id}" ${full?'disabled':''}><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="num">+${legBonus(c).st}</span></button>`}).join('')}</div>
+  <div class="picks">${own.map(c=>{const on=sel.includes(c.id),full=!on&&sel.length>=LEG_MAX;return `<button class="pk" aria-pressed="${on}" data-act="legPl" data-v="${c.id}" ${full?'disabled':''}><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="num">${LEG_SPECIAL[c.sup]?'★':'+'+legBonus(c).st}</span></button>`}).join('')}</div>
   ${sel.length?`<div class="chips">${sel.map(id=>{const c=cardById(id);return `<span class="chip gold">${esc(c.name)} → ${tx(c)}</span>`}).join('')}</div>`:''}`;
 }
 function inhBlock(d,mode,act){
@@ -2859,19 +2875,19 @@ function cardTile(c,opts={}){
 
 /* ---------- ガチャ ---------- */
 const puCard=id=>GLEGS.find(l=>l.id===id)||(id==='shanchi'?SHANCHI:id==='mao'?MAO:ICHIKAWA);
-const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと、${LBL[l.sup]}が最初から高く、伸びしろも大きくなる`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:CAP_SKILL};
+const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと：${legText(l)}`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:CAP_SKILL};
 H.gacha=()=>{
   const bk=G.ga.bk||'ich',BN=BANNERS[bk],pu=BN.card(),sk=BN.skill(),R=G.ga.res,owned=M.roster.some(c=>c.id===pu.id);
   const resHtml=R?`<div class="kick">結果<span class="r">${R.length}回</span></div><div class="gres">${R.map((x,i)=>x.type==='pu'
     ?`<div class="gr ich" style="animation-delay:${i*90}ms"><small>${x.dup?'2枚目→全素材×2':'NEW'}</small><b>${esc(puCard(x.id).name).replace(' ','<br>').replace('MAO','<br>MAO')}</b><span>SSR</span></div>`
     :`<div class="gr q${x.q}" style="animation-delay:${i*90}ms"><small>${MAT[x.k].s}</small><b>${MAT[x.k].n}</b><span>×${x.q}</span></div>`).join('')}</div>
     ${R.filter(x=>x.type==='pu'&&!x.dup).map(x=>{const c=puCard(x.id),k=puSkill(x.id);return `<div class="toast"><b>${esc(c.name)}が仲間になった。</b>特別スキル「${k.n}」：${k.d}。</div>`}).join('')}`:'';
-  const legArt=`<article class="front gban"><div><div class="dateline"><span>レジェンド6人</span><span>排出率 合計3%</span></div>
-   <p class="deck">レジェンド集結</p>
-   <p class="lede">引いたレジェンドは<b class="gold">育成専用</b>（スカッドには入れられない）。育成のときに3人まで連れて行ける。連れて行くと、そのレジェンドの得意な能力が最初から高く、伸びしろも大きくなる。</p>
+  const legArt=`<article class="front gban"><div><div class="dateline"><span>PU3人＋6人</span><span>合計3%</span></div>
+   <p class="deck">新レジェンド登場</p>
+   <p class="lede">引いたレジェンドは<b class="gold">育成専用</b>（スカッドには入れられない）。育成のときに3人まで連れて行けて、それぞれの「教え」（下の一覧）がつく。ピックアップの3人は出やすい（合わせて2%）。</p>
 </div>
    ${vhead(BN.head[0],BN.head[1],'gold')}</article>
-  <div class="plist" style="margin-top:10px">${GLEGS.map(l=>{const o=M.roster.find(c=>c.id===l.id);return `<div class="prow" style="cursor:default"><span class="po">${l.pos}</span><b>${esc(l.name)}</b><span class="sub">得意：${LBL[l.sup]}${o?'・所持':''}</span><span class="num">${cardOvr(l)}</span></div>`}).join('')}</div>`;
+  <div class="plist" style="margin-top:10px">${GLEGS.map(l=>{const o=M.roster.find(c=>c.id===l.id);return `<div class="prow" style="cursor:default"><span class="po">${l.pu?'PU':l.pos}</span><b>${esc(l.name)}</b><span class="sub">${esc(legText(l))}${o?'・所持':''}</span><span class="num">${cardOvr(l)}</span></div>`}).join('')}</div>`;
   return `<div class="seg c4 subnav">${Object.entries(BANNERS).map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${B.multi?`${legOwned().length}/${GLEGS.length}人`:M.roster.some(c=>c.id===B.card().id)?'所持':'1%'}</span></button>`).join('')}</div>
   ${BN.multi?legArt:`<article class="front gban"><div><div class="dateline"><span>ピックアップ・${pu.style?esc(pu.style):pu.pos}</span><span>排出率 1%</span></div>
    <p class="deck">${esc(pu.name)}</p>
@@ -2884,7 +2900,7 @@ H.gacha=()=>{
   <div class="kick">手持ちの育成素材<span class="r">スカッドの「強化」で使う</span></div>
   <div class="mats">${MATK.map(k=>`<div class="mat"><b class="num">${M.mats[k]}</b><span>${MAT[k].n}</span><small>${MAT[k].s}用</small></div>`).join('')}</div>
   <div class="kick">排出率<span class="r">${BN.short}ガチャ</span></div>
-  <table class="st"><tbody>${ratesFor(BN.multi?LEG_RATE:null).map(([k,p,n])=>`<tr><th>${k==='pu'?(BN.multi?n:esc(pu.name)):n}</th><td class="n">${(p*100).toFixed(0)}%</td></tr>`).join('')}</tbody></table>
+  <table class="st"><tbody>${ratesFor(BN.multi?LEG_RATE:null).map(([k,p,n])=>`<tr><th>${k==='pu'||k==='pu2'?(BN.multi?n:esc(pu.name)):n}</th><td class="n">${(p*100).toFixed(0)}%</td></tr>`).join('')}</tbody></table>
   <p class="note" style="margin-top:8px">素材の種類（7種）は等しい確率。ピックアップ選手・レジェンドの2枚目は全種類の素材×2に変わる。無料10連は1日1回、どのガチャでも使える。</p>
   <div class="kick">コインの集め方</div>
   <ul class="plan"><li>毎日1回、無料で10連が引ける（日付が変わると復活）</li><li>育成モードで選手を1人引退させる：1,000コイン</li><li>監督業を最後まで務める：1,000コイン</li><li>ルーム対戦：勝ち200・引き分け100・負け60</li><li>CPU練習試合：15〜200（相手が強いほど多い）</li></ul>`;
