@@ -458,6 +458,13 @@ textarea.code{width:100%;min-height:90px;font:12px/1.4 var(--num);background:var
 .acct .btn{margin-top:4px;padding:11px}
 
 .bev.cond{border-color:rgba(120,170,230,.45);color:#a9c8ee}
+.dogbar{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:12px;font-size:14px}
+.dogbar b{font-family:var(--display);font-size:17px;margin-left:4px}
+.dogbar .sub{display:block;font-size:12px}
+.dogbar.warn{border-color:rgba(240,113,94,.6);background:rgba(240,113,94,.08)}
+.dogbar.warn .sub{color:var(--down)}
+.dogbar.dead{opacity:.7}
+.dogbar .btn small{display:block;font-size:10px;opacity:.8}
 
 </style>
 </head>
@@ -788,6 +795,8 @@ const SHOP=[
  {id:'super',cat:'car',n:'スーパーカー',d:'限定生産の一台',eff:'人気+12、監督評価-5（維持費 月80万円）',price:40000,type:'car',up:80,fx:{pop:12,coach:-5}},
  {id:'gift',cat:'fam',n:'恋人へのプレゼント',d:'記念日に贈る',eff:'愛情+12',price:50,type:'repeat',fx:{love:12},req:p=>p.fam.partner&&!p.fam.partner.married,rq:'恋人がいるとき'},
  {id:'ring',cat:'fam',n:'婚約指輪',d:'いつか来る日のために',eff:'プロポーズの成功率+20%',price:300,type:'once',req:p=>p.fam.partner&&!p.fam.partner.married,rq:'恋人がいるとき'},
+ {id:'dogfood',cat:'fam',n:'ドッグフード',d:'愛犬のごはん（4か月分）',eff:'エサ+2ターン分',price:6,type:'repeat',fx:{dogfood:2},req:p=>p.dog&&p.dog.alive,rq:'犬を飼っているとき'},
+ {id:'dogfood6',cat:'fam',n:'ドッグフード（まとめ買い）',d:'愛犬のごはん（1年分）',eff:'エサ+6ターン分',price:15,type:'repeat',fx:{dogfood:6},req:p=>p.dog&&p.dog.alive,rq:'犬を飼っているとき'},
  {id:'edu',cat:'fam',n:'子どもの教育資金',d:'子どもの将来のために積み立てる',eff:'家族の満足度+15',price:1000,type:'season',fx:{fam:15},req:p=>p.fam.kids.length>0,rq:'子どもがいるとき'},
  {id:'parents',cat:'fam',n:'両親に家を贈る',d:'ここまで支えてくれた両親へ',eff:'人気+6、調子+10',price:6000,type:'once',fx:{pop:6,cond:10}},
  {id:'donate',cat:'social',n:'慈善団体へ寄付',d:'子どもたちの支援団体へ',eff:'人気+6（1シーズンに1回）',price:1000,type:'season',fx:{pop:6}},
@@ -914,6 +923,9 @@ function applyFx(p,fx){
     else if(k==='coach'){p.coach=clamp(p.coach+v,0,100);out.push(['監督評価',v])}
     else if(k==='cond'){p.cond=clamp(p.cond+v,0,100);out.push(['調子',v])}
     else if(k==='sta'){p.sta=clamp(p.sta+v,0,100);out.push(['体力',v])}
+    else if(k==='dog'){p.dog={n:'',food:2,hunger:0,alive:true,turns:0};out.push(['子犬','家族になった',1])}
+    else if(k==='dogno'){p.flags.dogNo=p.year}
+    else if(k==='dogfood'){if(p.dog){p.dog.food+=v;p.dog.hunger=0}out.push(['エサ',`+${v}ターン分`,1])}
     else if(k==='scout'){p.scout=clamp(p.scout+v,0,100);out.push(['注目度',v])}
     else if(k==='boost'){p.boost+=v;out.push(['出場機会',v>0?'↑':'↓',v])}
     else if(k==='inj'){p.inj+=v;out.push(['離脱',v+'週間',-1])}
@@ -975,11 +987,23 @@ function famCandidate(p){
   if(MONTHS[p.month]===10&&F.kids.some(k=>y-k.y>=4&&y-k.y<=12)&&Math.random()<.5)return 'fm:sportsday';
   return null;
 }
+/* ---------- 愛犬 ---------- */
+const DOGN=['ポチ','ハチ','コロ','モモ','ココ','マロン','ソラ','チョコ','レオ','むぎ','きなこ','こてつ'];
+// お金をしっかり稼げるようになったら（プロで所持金1000万円以上）。見送ったら次のシーズンまで来ない
+function dogOk(p){if(!p.dog)return p.flags.dogNo!==p.year;return !p.dog.alive&&p.year>p.dog.diedY}
+function dogTurn(p,res){
+  const d=p.dog;if(!d||!d.alive)return;const n=d.n||'子犬';d.turns=(d.turns||0)+1;
+  if(d.food>0){d.food--;d.hunger=0;p.sta=clamp(p.sta+6,0,100);res.notes.push(`🐶 ${n}と毎日散歩。体力+6（エサ残り${d.food}ターン分）`)}
+  else{d.hunger++;
+    if(d.hunger>=3){d.alive=false;d.diedY=p.year;p.cond=clamp(p.cond-25,0,100);res.notes.push(`🐶 ${n}が天国へ旅立った…。エサが足りなかった。調子-25`);pushNews(`【悲報】${p.sei}${p.mei}の愛犬${n}、天国へ`)}
+    else res.notes.push(d.hunger===1?`🐶 ${n}がお腹をすかせている。エサを買ってあげよう`:`🐶 ${n}が弱ってきた…。次の2か月もエサがないと死んでしまう`)}
+}
 function rollEvent(){
   const p=S.p,m=p.month;
   const f=famCandidate(p);if(f)return f;
   if(!OFF(m)&&Math.random()<(p.stage==='pro'?.035:.025))return legendSlot(p);
   if(p.age>=19&&p.age<=30&&Math.max(...KEYS.map(k=>p.st[k]))>=80&&Math.random()<.015)return 'sp:awaken';
+  if(p.stage==='pro'&&p.money>=1000&&dogOk(p)&&Math.random()<.15)return 'sp:dog';
   if(p.stage==='pro'&&p.pop>=55&&!p.seasonFlags.sponsor&&Math.random()<.1)return 'sp:sponsor';
   if(Math.random()<(OFF(m)?.35:.5))return pickEvents(p,1)[0]||null;
   return null;
@@ -1018,6 +1042,9 @@ function famEv(id,p){
 function spEv(id,p){
   if(id==='sp:fate')return {id,t:'運命の分岐点',x:`${p.age}歳。現役生活は残りおよそ3分の1、引退まではあと10分ほどだ。ここで殻を破れるかどうかで、選手としての最後の景色が変わる。`,ch:[
     {l:'すべてを懸けて挑む',d:'成功：全能力+6／失敗：全能力-2',fixed:1,pr:()=>.4,ok:{m:'限界の向こう側に手が届いた。体が、頭が、別人のように動く。',fx:{fate:6}},ng:{m:'無理がたたって体のバランスを崩した。取り戻すには時間がかかりそうだ。',fx:{fate:-2}}}]};
+  if(id==='sp:dog')return {id,t:'子犬との出会い',x:'練習帰りに立ち寄ったペットショップで、1匹の子犬がじっとこちらを見ている。稼げるようになった今なら、迎えてあげられる。',ch:[
+    {l:'家族に迎える',d:'費用 30万円。エサを切らすと死んでしまう',pr:()=>1,ok:{m:'子犬が腕の中で小さくしっぽを振った。名前を決めてあげよう。',fx:{dog:1,money:-30}},ng:{m:'',fx:{}}},
+    {l:'今は見送る',d:'',pr:()=>1,ok:{m:'後ろ髪を引かれながら店を出た。',fx:{dogno:1}},ng:{m:'',fx:{}}}]};
   if(id==='sp:awaken')return {id,t:'ゾーンに入った',x:'ある試合の後半、ピッチ上のすべてが止まって見えた。ボールの行き先が、蹴る前からわかる。',ch:[
     {l:'この感覚を磨き続ける',d:'限界を超えて伸びる',pr:()=>.75,ok:{m:'翌日から練習の質が変わった。自分の限界が一段上にあると知った。',fx:{awaken:1}},ng:{m:'あの感覚は二度と来なかった。それでも何かは残った。',fx:{key:1}}}]};
   const amt=Math.round(p.pop*25+200);
@@ -1334,6 +1361,7 @@ function runMonth(){
   const res={m:p.month,m1:p.month,y:calYear(p),act:actName(a,p),matches:[],notes:[],skills:[],ev:S.lastEv||null,inc:0,cost:0};S.lastEv=null;
   monthStep(a,res,true);
   if(p.month%2===0&&p.month<11){p.month++;monthStep(a,res,false)}
+  dogTurn(p,res);
   res.m1=p.month;
   const club=clubOf(p);
   res.d=KEYS.map(k=>[k,Math.round(p.st[k]*10-b.st[k]*10)/10]);
@@ -2579,6 +2607,12 @@ function careerBar(p){
   const fate=p.age<FATE_AGE?`運命の分岐点まであと${FATE_AGE-p.age}シーズン`:p.flags.fate?'運命の分岐点は通過':'まもなく運命の分岐点';
   return `<div class="cbar" aria-label="キャリアの進み具合 ${pct}%"><div class="cbar-t"><span>キャリア ${pct}%・第${done+1}/${total}シーズン</span><span>プレー ${mins}分・残り約${left}分</span></div><div class="cbar-b"><i style="width:${pct}%"></i><em style="left:${Math.round((FATE_AGE-17)/total*100)}%"></em></div><div class="sub">${fate}</div></div>`;
 }
+function dogBar(p){
+  const d=p.dog;if(!d)return '';
+  if(!d.alive)return `<div class="dogbar dead">🐶 <b>${esc(d.n||'愛犬')}</b><span class="sub">天国で見守っている</span></div>`;
+  const it=shopItem('dogfood'),[ok]=canBuy(p,it);
+  return `<div class="dogbar ${d.food?'':'warn'}"><div>🐶 <b>${esc(d.n||'子犬')}</b><span class="sub">${d.food?`エサ残り${d.food}ターン分・散歩で毎ターン体力+6`:d.hunger>=2?'弱っている！このターンでエサがないと死んでしまう':d.hunger?'お腹をすかせている！':'エサがない！次のターンまでに買おう'}</span></div><button class="btn sm ${ok?'':'off'}" data-act="dogBuy" data-v="dogfood" ${ok?'':'disabled'}>エサを買う<small>${yen(it.price)}</small></button></div>`;
+}
 H.month=()=>{
   const p=S.p,m=p.month,cur=S.cur,club=clubOf(p),off=OFF(m);
   const dots=[0,2,4,6,8,10].map(i=>`<i class="${i<m?'done':i===m?'now':''}" title="${MONTHS[i]}–${MONTHS[i+1]}月"></i>`).join('');
@@ -2589,6 +2623,7 @@ H.month=()=>{
   return `${pcard(p,'compact')}
   <section class="cal"><div class="cal-m"><span class="num">${MONTHS[m]}</span><span class="u">–${MONTHS[m+1]}月</span></div><div class="cal-i"><b>${calYear(p)}年</b><span class="sub">${off?'オフシーズン':`${p.year}-${String(p.year+1).slice(2)}シーズン`}・${esc(club.n)}</span><div class="dots" aria-label="シーズンの進み具合 ${m/2+1}/6">${dots}</div></div></section>
   ${careerBar(p)}
+  ${dogBar(p)}
   <div class="kick">この2か月の予定</div><ul class="plan">${turnPlan(p,m,cur).map(s=>`<li>${s}</li>`).join('')}</ul>
   ${inLg&&me.pl?`<div class="kick">順位表<span class="r">${myRank(cur)}位・勝点${me.pts}</span></div>${tableHtml(cur,S.tableOpen)}`:''}
   ${so?`<div class="kick">今季の成績</div>${so}`:''}
@@ -2748,7 +2783,7 @@ H.life=()=>{
   <table class="st"><tbody><tr><th>年俸（額面）</th><td class="n">${p.salary?yen(p.salary):'—'}</td></tr><tr><th>毎月の手取り</th><td class="n">${yen(inc)}</td></tr>${costs.map(([n,v])=>`<tr><th>${esc(n)}</th><td class="n">-${yen(v)}</td></tr>`).join('')}<tr><th>毎月の収支</th><td class="n ${inc-cost<0?'bad':''}">${inc-cost>=0?'+':''}${yen(inc-cost)}</td></tr></tbody></table>
   <div class="seg c2" style="margin-top:10px"><button class="opt" data-act="invest" ${p.money>=1000?'':'disabled'}>1,000万円を運用に回す</button><button class="opt" data-act="withdraw" ${p.inv>0?'':'disabled'}>運用資金を引き出す</button></div>
   <p class="note" style="margin-top:8px">運用の結果は毎シーズンの開幕時に出る。平均は年+5%前後だが、大きく減る年もある。</p>
-  <div class="kick">家族</div>${fam}
+  <div class="kick">家族</div>${fam}${p.dog?`<div style="margin-top:8px">${dogBar(p)}</div>`:''}
   <p class="sub" style="margin-top:10px">住まい：${homeN}${p.car?`・クルマ：${esc(shopItem(p.car).n)}`:''}</p>
   <div class="kick">買い物</div>
   <div class="cats">${SHOPCAT.map(([k,n])=>`<button class="opt" aria-pressed="${cat===k}" data-act="shopCat" data-v="${k}">${n}</button>`).join('')}</div>
@@ -2778,6 +2813,7 @@ function render(){
   const cur=S.p||(S._resume&&S._resume.p);
   if(G.mode==='career'&&S.modal==='new'&&cur)m.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="box"><h3 id="mt">今の人生を終えますか</h3><p class="note">進行中の${esc(cur.sei)}${esc(cur.mei)}の記録は殿堂に残らずに消える。</p><div class="stack"><button class="btn red" data-act="confirmNew">新しい人生を始める</button><button class="btn ghost" data-act="closeModal">やめる</button></div></div></div>`;
   else if(G.mode==='career'&&S.modal==='retire'&&S.p)m.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="box"><h3 id="mt">${S.p.stage==='pro'?'現役を引退しますか':'就職しますか'}</h3><p class="note">${S.p.age}歳。この決断は取り消せない。引退した選手はマイ選手としてスカッドに入れられる。</p><div class="stack"><button class="btn red" data-act="doRetire">引退する</button><button class="btn ghost" data-act="closeModal">まだ続ける</button></div></div></div>`;
+  else if(G.mode==='career'&&S.p&&S.p.dog&&S.p.dog.alive&&!S.p.dog.n)m.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="box"><h3 id="mt">🐶 子犬の名前を決める</h3><p class="note">これから一緒に暮らす子犬の名前。あとから変えられない。</p><div class="field"><input id="dogn" aria-label="犬の名前" maxlength="8" value="${esc(S.p.dog._sug||'')}" placeholder="例：ポチ"><button class="opt" data-act="dogRand">おまかせ</button></div><div class="stack" style="margin-top:12px"><button class="btn red" data-act="dogOk">この名前にする</button></div></div></div>`;
   else m.innerHTML='';
   if(G.mode==='battle'&&G.bt.view==='match'&&G.bt.play&&!G.bt.play.done&&!PB)startPlayback();
   let tt=document.getElementById('kjtoast');if(G.toastMsg){if(!tt){tt=document.createElement('div');tt.id='kjtoast';tt.className='ftoast';document.body.appendChild(tt)}tt.textContent=G.toastMsg}else if(tt)tt.remove();
@@ -2839,6 +2875,9 @@ const ACT={
  doRetire:()=>{S.modal=null;retire();toTop()},
  shopCat:v=>{S.shopCat=v;S.shopMsg=null},
  buy:v=>{buy(v);toTop()},
+ dogBuy:v=>{buy(v)},
+ dogRand:()=>{const d=S.p&&S.p.dog;if(d)d._sug=pick(DOGN)},
+ dogOk:()=>{const d=S.p&&S.p.dog;if(!d)return;const t=document.getElementById('dogn');const nm=((t&&t.value)||'').trim().slice(0,8)||d._sug||pick(DOGN);d.n=nm;delete d._sug;pushNews(`【話題】${S.p.sei}${S.p.mei}、子犬「${nm}」を家族に迎える`)},
  cancelSub:v=>{S.p.subs[v]=0;S.shopMsg=null},
  invest:()=>{const p=S.p;if(p.money>=1000){p.money-=1000;p.inv+=1000}},
  withdraw:()=>{const p=S.p;p.money+=p.inv;p.inv=0},
