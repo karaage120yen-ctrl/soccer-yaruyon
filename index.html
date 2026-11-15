@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261115-182329';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -469,6 +469,8 @@ textarea.code{width:100%;min-height:90px;font:12px/1.4 var(--num);background:var
 .inapp b{color:var(--down);font-size:15px}
 .inapp p{margin:6px 0}
 .inapp .btn{display:inline-block;margin:6px 0;text-decoration:none}
+.upd{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 10px);z-index:60;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f2ede4;color:#111;border-radius:14px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.4);font-size:14px}
+.upd button{background:var(--accent);color:#fff;border:0;border-radius:99px;padding:8px 14px;font-weight:700;font-size:14px}
 
 </style>
 </head>
@@ -3158,7 +3160,11 @@ function autoLabel(){
 function backupHtml(){
   const B=G.bk||{};
   const cloud=IS_WEB?'':AUTO.ready&&AUTO.cloudOk?'アカウントにも自動で保存されている（別の端末でも続きから遊べる）。':NET.db?'アカウントへの保存は、このページへの書き込み権限がないため使えない。消えないように、ときどきバックアップコードを書き出しておくと安心。':'この表示ではアカウントへの保存が使えない。ときどきバックアップコードを書き出しておくと安心。';
-  return `<div class="kick">セーブデータ<span class="r">自動保存</span></div>${acctHtml()}
+  const gotN=GIFTS.filter(g=>M.gifts&&M.gifts[g.id]).length;
+  return `<div class="kick">プレゼント<span class="r">${gotN}/${GIFTS.length}回 受け取り済み</span></div>
+  <ul class="plan">${GIFTS.map((g,i)=>`<li>${i+1}回目 100連分（${g.coins.toLocaleString('ja-JP')}コイン）：${M.gifts&&M.gifts[g.id]?'受け取り済み':'<b>未受け取り</b>'}</li>`).join('')}</ul>
+  <p class="note">${gotN<GIFTS.length?'未受け取りがあるときは、アプリを一度閉じて開き直すと受け取れる。':'全部受け取り済み。'}${typeof window!=='undefined'&&window.APP_VER?`（バージョン ${esc(window.APP_VER)}）`:''}</p>
+  <div class="kick">セーブデータ<span class="r">自動保存</span></div>${acctHtml()}
   <p class="note">育成・監督業・マイ選手・コイン・素材は、操作するたびにこの端末のブラウザへ自動で保存される。画面を閉じたときにも保存する。${cloud}</p>
   <div class="seg c2"><button class="opt" data-act="bkExport">バックアップコードを作る</button><button class="opt" data-act="bkImportOpen">コードから読み込む</button></div>
   ${B.out?`<div class="label">バックアップコード（${B.out.length.toLocaleString('ja-JP')}文字）</div><textarea class="code" id="bkout" readonly>${esc(B.out)}</textarea><div class="stack" style="margin-top:8px"><button class="btn ghost" data-act="bkCopy">コピーする</button></div>`:''}
@@ -3254,6 +3260,15 @@ function syncInputs(){
 if(typeof document!=='undefined'){document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.matches&&t.matches('textarea.code[readonly]'))setTimeout(()=>{try{t.setSelectionRange(0,t.value.length)}catch(x){}},0)});boot()}
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+/* 新しい版が出ていないか確かめる（開いたとき・アプリに戻ったとき・5分ごと） */
+(function(){var busy=false,shown=false;
+function check(first){if(busy||shown)return;busy=true;fetch('version.txt?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(v){busy=false;v=(v||'').trim();if(!v||v===window.APP_VER)return;
+ if(first&&!sessionStorage.getItem('yaruyon-reloaded-'+v)){sessionStorage.setItem('yaruyon-reloaded-'+v,'1');location.reload();return}
+ shown=true;var d=document.createElement('div');d.className='upd';d.innerHTML='<b>新しい版があります</b><button type="button">更新する</button>';d.querySelector('button').onclick=function(){location.reload()};document.body.appendChild(d)}).catch(function(){busy=false})}
+window.addEventListener('load',function(){setTimeout(function(){check(true)},800)});
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')check(false)});
+setInterval(function(){check(false)},300000);})();
+</script>
 </body>
 </html>
