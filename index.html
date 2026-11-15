@@ -1587,6 +1587,10 @@ function metaFix(m){const d=metaDefault();m=Object.assign(d,m||{});m.mats=Object
  if(!Array.isArray(m.squad.bench))m.squad.bench=Array(5).fill(null);while(m.squad.bench.length<5)m.squad.bench.push(null);m.squad.bench=m.squad.bench.slice(0,5);if(m.squad.maoSub===undefined)m.squad.maoSub=true;return m}
 function metaLoadLocal(){try{const d=JSON.parse(localStorage.getItem(META_KEY)||'null');if(d)M=metaFix(d)}catch(e){}_metaLast=JSON.stringify(Object.assign({},M,{t:0}))}
 let _metaLast='';
+/* ---------- 配布（1アカウント1回） ---------- */
+const GIFTS=[{id:'g100',coins:GACHA_COST*100,msg:'🎁 プレゼント！100連分（10000コイン）を受け取った'}];
+function applyGifts(){if(!M.gifts)M.gifts={};let got=null;for(const g of GIFTS){if(!M.gifts[g.id]){M.gifts[g.id]=Date.now();M.coins+=g.coins;got=g}}
+ if(got){metaSave();if(typeof G!=='undefined'){G.toastMsg=got.msg;try{render()}catch(e){}setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},4000)}}}
 function metaSave(){const s=JSON.stringify(Object.assign({},M,{t:0}));if(s===_metaLast)return;_metaLast=s;M.t=Date.now();try{localStorage.setItem(META_KEY,JSON.stringify(M))}catch(e){}cloudSaveSoon();autoMark('meta',null)}
 const uidGen=p=>p+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36);
 
@@ -1827,7 +1831,7 @@ const cloudRef=()=>NET.db&&NET.uid?NET.db.doc('data/users/'+NET.uid+'/meta'):nul
 async function cloudLoad(){
   const ref=cloudRef();if(!ref)return;
   const fresh=!M.roster.length&&!M.mgrs.length&&!M.pulls&&!M.hist.length;
-  try{const snap=await ref.get();if(snap.exists){const d=snap.data();if(d&&d.m&&((d.m.t||0)>(M.t||0)||fresh)){M=metaFix(JSON.parse(JSON.stringify(d.m)));_metaLast=JSON.stringify(Object.assign({},M,{t:0}));try{localStorage.setItem(META_KEY,JSON.stringify(M))}catch(e){}}else if(M.t)NET.dirty=true}else if(M.t)NET.dirty=true;NET.loaded=true;if(NET.dirty)cloudSaveSoon()}catch(e){}
+  try{const snap=await ref.get();if(snap.exists){const d=snap.data();if(d&&d.m&&((d.m.t||0)>(M.t||0)||fresh)){M=metaFix(JSON.parse(JSON.stringify(d.m)));_metaLast=JSON.stringify(Object.assign({},M,{t:0}));try{localStorage.setItem(META_KEY,JSON.stringify(M))}catch(e){}}else if(M.t)NET.dirty=true}else if(M.t)NET.dirty=true;NET.loaded=true;applyGifts();if(NET.dirty)cloudSaveSoon()}catch(e){}
 }
 function cloudSaveSoon(){if(!cloudRef()||!NET.loaded)return;clearTimeout(NET.cloudT);NET.cloudT=setTimeout(cloudSave,2500)}
 async function cloudSave(){
@@ -1957,7 +1961,7 @@ async function exportCode(){
 async function importCode(code){
   const o=JSON.parse(await unb64z(code));
   if(!o||o.v!==1||!o.meta)throw new Error('中身が読み取れなかった');
-  M=metaFix(o.meta);_metaLast='';M.t=Date.now();
+  M=metaFix(o.meta);_metaLast='';M.t=Date.now();applyGifts();
   try{localStorage.setItem(META_KEY,JSON.stringify(M))}catch(e){}
   if(o.career&&o.career.p){S={screen:'title',tab:'play',p:null,news:o.career.news||[],modal:null,shopCat:'self',_resume:o.career}}else{S={screen:'title',tab:'play',p:null,news:S.news,modal:null,shopCat:'self'}}
   _careerLast='';save();
@@ -2718,7 +2722,7 @@ function boot(){
   setInterval(()=>{const el=document.getElementById('autosv');if(el)el.innerHTML=autoLabel()},20000);
   document.addEventListener('input',e=>{if(e.target.id==='sei'||e.target.id==='mei')syncNames()});
   document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='rcode'){e.preventDefault();ACT.btJoin();render()}});
-  metaLoadLocal();mgLoad();
+  metaLoadLocal();mgLoad();setTimeout(applyGifts,300);
   const sv=loadSave();if(sv){S._resume=sv;S.news=sv.news||[]}
   seedNews();render();
   netInit();
