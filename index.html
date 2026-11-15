@@ -1663,21 +1663,45 @@ function addMgrCard(m,sum){
 }
 
 /* ---------- ガチャ ---------- */
-function pullOne(){
+function pullOne(pu){
   const r=Math.random();let acc=0;
-  for(const [k,pr] of RATES){acc+=pr;if(r<acc)return k}
+  for(const [k,pr] of ratesFor(pu)){acc+=pr;if(r<acc)return k}
   return 'm1';
 }
+/* レジェンドガチャ：6人のうち誰か（合計3%）。育成のときに3人まで連れて行くと能力ボーナス */
+const LEG_RATE=.03;
+const GLEGS=[
+ {id:'lg_leon',kind:'pl',name:'疾風のレオン',pos:'FW',style:'スピードスター',legend:true,sup:'spd',from:'ガチャ',st:{spd:95,tec:85,sho:84,pas:72,phy:75,def:45}},
+ {id:'lg_fabio',kind:'pl',name:'魔術師ファビオ',pos:'MF',style:'ドリブラー',legend:true,sup:'tec',from:'ガチャ',st:{spd:82,tec:96,sho:80,pas:88,phy:66,def:55}},
+ {id:'lg_gabriel',kind:'pl',name:'大砲ガブリエル',pos:'FW',style:'ストライカー',legend:true,sup:'sho',from:'ガチャ',st:{spd:78,tec:80,sho:97,pas:68,phy:86,def:42}},
+ {id:'lg_andrea',kind:'pl',name:'指揮者アンドレア',pos:'MF',style:'司令塔',legend:true,sup:'pas',from:'ガチャ',st:{spd:74,tec:90,sho:76,pas:97,phy:68,def:64}},
+ {id:'lg_boris',kind:'pl',name:'鉄人ボリス',pos:'DF',style:'ファイター',legend:true,sup:'phy',from:'ガチャ',st:{spd:78,tec:66,sho:52,pas:72,phy:97,def:90}},
+ {id:'lg_marcus',kind:'pl',name:'城壁マルクス',pos:'DF',style:'ストッパー',legend:true,sup:'def',from:'ガチャ',st:{spd:80,tec:72,sho:50,pas:78,phy:90,def:97}},
+];
+const isLegSup=c=>!!(c&&c.sup&&GLEGS.some(l=>l.id===c.id));
+const LEG_MAX=3;
+// 強化しているほどボーナスが大きい（強化10回：初期+10・限界+5）
+const legBonus=c=>({k:c.sup,st:5+Math.floor((c.enh||0)/2),cap:2+Math.floor((c.enh||0)/3)});
+function ratesFor(pu){if(pu!==LEG_RATE)return RATES;return [['pu',LEG_RATE,'レジェンド選手（6人）'],['m5',.10,'育成素材×5'],['m2',.25,'育成素材×2'],['m1',.62,'育成素材×1']]}
+function legOwned(){return GLEGS.map(l=>M.roster.find(c=>c.id===l.id)).filter(Boolean)}
+function legToggle(d,id){d.leg=d.leg||[];const i=d.leg.indexOf(id);if(i>=0)d.leg.splice(i,1);else if(d.leg.length<LEG_MAX)d.leg.push(id)}
+function legApply(p,d){
+  const out=[];
+  for(const id of d.leg||[]){const c=cardById(id);if(!isLegSup(c))continue;const b=legBonus(c),k=b.k;
+    p.cap[k]=Math.min(99,p.cap[k]+b.cap);p.capLim[k]=Math.min(99,Math.max(p.capLim[k],p.cap[k]));
+    p.st[k]=Math.min(p.cap[k]-2,p.st[k]+b.st);out.push({n:c.name,k,st:b.st,cap:b.cap})}
+  p.legSup=out;return out;
+}
 /* ガチャの種類（ピックアップ1%、ほかは育成素材） */
-const BANNERS={ich:{card:()=>ICHIKAWA,skill:()=>CAP_SKILL,short:'イチカワ',head:['主将','降臨']},shan:{card:()=>SHANCHI,skill:()=>EMP_SKILL,short:'シャン・チー',head:['帝国','開門']},mao:{card:()=>MAO,skill:()=>MAO_SKILL,short:'MAO',head:['黄金の','右足']}};
+const BANNERS={ich:{card:()=>ICHIKAWA,skill:()=>CAP_SKILL,short:'イチカワ',head:['主将','降臨']},shan:{card:()=>SHANCHI,skill:()=>EMP_SKILL,short:'シャン・チー',head:['帝国','開門']},mao:{card:()=>MAO,skill:()=>MAO_SKILL,short:'MAO',head:['黄金の','右足']},leg:{multi:true,card:()=>GLEGS[0],skill:()=>null,short:'レジェンド',head:['伝説','集結']}};
 function doGacha(n,free,bk){
-  const BN=BANNERS[bk]||BANNERS.ich,pu=BN.card();
+  const BN=BANNERS[bk]||BANNERS.ich;let pu=BN.card();
   if(free){if(!freeReady())return null;M.freeDay=todayKey();n=10}
   else{const cost=GACHA_COST*n;if(M.coins<cost)return null;M.coins-=cost}
   const out=[];
   for(let i=0;i<n;i++){
-    const k=pullOne();M.pulls++;
-    if(k==='pu'){
+    const k=pullOne(BN.multi?LEG_RATE:null);M.pulls++;
+    if(k==='pu'){if(BN.multi)pu=pick(GLEGS);
       M.puHits=M.puHits||{};M.puHits[pu.id]=(M.puHits[pu.id]||0)+1;
       if(!M.roster.some(c=>c.id===pu.id)){M.roster.unshift(JSON.parse(JSON.stringify({...pu,plus:{},enh:0,t:Date.now()})));out.push({type:'pu',id:pu.id,dup:false})}
       else{MATK.forEach(m=>M.mats[m]+=2);out.push({type:'pu',id:pu.id,dup:true})}
@@ -2472,6 +2496,7 @@ H.create=()=>{
   <p class="note">${pv.skills.includes('legend')?'<b style="color:var(--gold)">10万人に1人の伝説が現れた。</b>3つの能力が95を超えていく器だ。':pv.skills.includes('monster')?'<b style="color:var(--gold)">天才が見つかった。</b>並の選手より限界がはるかに高い。':d.custom?'条件を変えるたびに、能力は引き直される。':'新しい才能が見つかった。この選手の人生を歩むか、別の選手を探すか。'}</p>
   ${pcard(pv,'preview')}
   <dl class="scout"><div><dt>守備位置</dt><dd>${d.pos}<small>${P.n}</small></dd></div><div><dt>プレースタイル</dt><dd>${sty.n}<small>${sty.d}</small></dd></div><div><dt>成長タイプ</dt><dd>${g.n}<small>${g.d}</small></dd></div><div><dt>スカウト評価</dt><dd>${pv.flags.potEst}<small>伸びしろの見立て（SS〜D）</small></dd></div></dl>
+  ${legBlock(d)}
   ${inhBlock(d,'pl','inhPl')}
   <div class="stack" style="margin-top:16px"><button class="btn red" data-act="start">この選手で始める</button><button class="btn ghost" data-act="reroll">${d.custom?'能力を引き直す':'別の選手を探す'}</button></div>
   <button class="linkbtn center" data-act="toggleCustom" aria-expanded="${d.custom?'true':'false'}">${d.custom?'スカウトにおまかせに戻す':'名前や守備位置を自分で決める'}</button>
@@ -2742,6 +2767,15 @@ function render(){
 }
 
 /* ========== 操作 ========== */
+function legBlock(d){
+  const own=legOwned(),sel=(d.leg||[]).filter(id=>own.some(c=>c.id===id));d.leg=sel;
+  const head=`<div class="kick" style="margin-top:18px">レジェンドの教え<span class="r">${sel.length}/${LEG_MAX}人</span></div>`;
+  if(!own.length)return head+`<p class="note">ガチャの「レジェンド」でレジェンド選手を引くと、ここで3人まで連れて行ける。連れて行ったレジェンドの得意な能力が、最初から高く、伸びしろも大きくなる。</p>`;
+  const tx=c=>{const b=legBonus(c);return `${LBL[b.k]} 初期+${b.st}・限界+${b.cap}`};
+  return head+`<p class="note">連れて行ったレジェンドの得意な能力が、最初から高く、伸びしろも大きくなる（強化しているほど大きい）。</p>
+  <div class="picks">${own.map(c=>{const on=sel.includes(c.id),full=!on&&sel.length>=LEG_MAX;return `<button class="pk" aria-pressed="${on}" data-act="legPl" data-v="${c.id}" ${full?'disabled':''}><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="num">+${legBonus(c).st}</span></button>`}).join('')}</div>
+  ${sel.length?`<div class="chips">${sel.map(id=>{const c=cardById(id);return `<span class="chip gold">${esc(c.name)} → ${tx(c)}</span>`}).join('')}</div>`:''}`;
+}
 function inhBlock(d,mode,act){
   const ov=c=>isMgr(c)?mgrOvr(c):cardOvr(c);
   const ps=inhParents(mode).slice().sort((a,b)=>ov(b)-ov(a)),T=mode==='pl'?SKILLS:MTRAITS,sel=d.inh||[],res=inhRoll(d,mode);
@@ -2751,7 +2785,7 @@ function inhBlock(d,mode,act){
   <div class="picks">${ps.map(c=>{const on=sel.includes(c.id),full=!on&&sel.length>=INH_MAX;return `<button class="pk" aria-pressed="${on}" data-act="${act}" data-v="${c.id}" ${full?'disabled':''}><span class="po">${isMgr(c)?'監督':c.pos}</span><b>${esc(c.name)}</b><span class="num">${ov(c)}</span></button>`}).join('')}</div>
   ${res.length?`<div class="chips">${res.map(r=>`<span class="chip gold">${esc(r.name)} → ${esc(T[r.k].n)}</span>`).join('')}</div><p class="note">${res.map(r=>`<b>${esc(T[r.k].n)}</b>：${esc(T[r.k].d)}`).join('<br>')}</p>`:''}`;
 }
-function newDraft(prev){const d={sei:pick(SEI),mei:pick(MEI),pos:wpick(['FW','MF','DF','GK'],k=>({FW:3,MF:3,DF:2.8,GK:1.2})[k]),foot:wpick(['R','L','B'],k=>({R:7,L:2.2,B:.8})[k]),style:ri(0,2),growth:pick(Object.keys(GROWTH)),custom:false,n:(prev&&prev.n||0)+1,inh:prev&&prev.inh?prev.inh.slice():[],iseed:inhSeed(prev)};d.prev=makePlayer(d);return d}
+function newDraft(prev){const d={sei:pick(SEI),mei:pick(MEI),pos:wpick(['FW','MF','DF','GK'],k=>({FW:3,MF:3,DF:2.8,GK:1.2})[k]),foot:wpick(['R','L','B'],k=>({R:7,L:2.2,B:.8})[k]),style:ri(0,2),growth:pick(Object.keys(GROWTH)),custom:false,n:(prev&&prev.n||0)+1,inh:prev&&prev.inh?prev.inh.slice():[],leg:prev&&prev.leg?prev.leg.slice():[],iseed:inhSeed(prev)};d.prev=makePlayer(d);return d}
 function syncNames(){const a=document.getElementById('sei'),b=document.getElementById('mei');if(a&&S.draft){S.draft.sei=a.value.trim()||S.draft.sei;S.draft.mei=b.value.trim()||S.draft.mei}if(S.draft&&S.draft.prev){S.draft.prev.sei=S.draft.sei;S.draft.prev.mei=S.draft.mei}}
 const toTop=()=>{try{window.scrollTo(0,0)}catch(e){}};
 const ACT={
@@ -2767,9 +2801,10 @@ const ACT={
  setFoot:v=>{syncNames();S.draft.foot=v;S.draft.prev=makePlayer(S.draft)},
  setStyle:v=>{syncNames();S.draft.style=+v;S.draft.prev=makePlayer(S.draft)},
  inhPl:v=>{syncNames();inhToggle(S.draft,v)},
+ legPl:v=>{syncNames();legToggle(S.draft,v)},
  setGrowth:v=>{syncNames();S.draft.growth=v;S.draft.prev=makePlayer(S.draft)},
  reroll:()=>{syncNames();if(S.draft.custom){S.draft.prev=makePlayer(S.draft);S.draft.n++}else S.draft=newDraft(S.draft)},
- start:()=>{syncNames();const p=S.draft.prev;p.sei=S.draft.sei;p.mei=S.draft.mei;const ih=inhRoll(S.draft,'pl');p.inh=ih.map(r=>r.k);ih.forEach(r=>{if(!p.skills.includes(r.k))p.skills.push(r.k)});S.p=p;if(ih.length)pushNews(`【継承】${p.sei}${p.mei}、${ih.map(r=>r.name+'から「'+SKILLS[r.k].n+'」').join('、')}を受け継ぐ`);S.draft=null;pushNews(`【高校】${p.school}の${p.pos}${p.sei}${p.mei}に注目集まる`);newSeason(true);toTop()},
+ start:()=>{syncNames();const p=S.draft.prev;p.sei=S.draft.sei;p.mei=S.draft.mei;const lg=legApply(p,S.draft);if(lg.length)pushNews(`【伝説】${p.sei}${p.mei}、${lg.map(x=>x.n).join('・')}の教えを受ける`);const ih=inhRoll(S.draft,'pl');p.inh=ih.map(r=>r.k);ih.forEach(r=>{if(!p.skills.includes(r.k))p.skills.push(r.k)});S.p=p;if(ih.length)pushNews(`【継承】${p.sei}${p.mei}、${ih.map(r=>r.name+'から「'+SKILLS[r.k].n+'」').join('、')}を受け継ぐ`);S.draft=null;pushNews(`【高校】${p.school}の${p.pos}${p.sei}${p.mei}に注目集まる`);newSeason(true);toTop()},
  setFocus:v=>{S.p.train.focus=v},
  setInt:v=>{S.p.train.int=v},
  toMonth:()=>{S.p.month=0;startMonth();toTop()},
@@ -2822,28 +2857,34 @@ function cardTile(c,opts={}){
 }
 
 /* ---------- ガチャ ---------- */
-const puCard=id=>id==='shanchi'?SHANCHI:id==='mao'?MAO:ICHIKAWA;
-const puSkill=id=>id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:CAP_SKILL;
+const puCard=id=>GLEGS.find(l=>l.id===id)||(id==='shanchi'?SHANCHI:id==='mao'?MAO:ICHIKAWA);
+const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと、${LBL[l.sup]}が最初から高く、伸びしろも大きくなる`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:CAP_SKILL};
 H.gacha=()=>{
   const bk=G.ga.bk||'ich',BN=BANNERS[bk],pu=BN.card(),sk=BN.skill(),R=G.ga.res,owned=M.roster.some(c=>c.id===pu.id);
   const resHtml=R?`<div class="kick">結果<span class="r">${R.length}回</span></div><div class="gres">${R.map((x,i)=>x.type==='pu'
     ?`<div class="gr ich" style="animation-delay:${i*90}ms"><small>${x.dup?'2枚目→全素材×2':'NEW'}</small><b>${esc(puCard(x.id).name).replace(' ','<br>').replace('MAO','<br>MAO')}</b><span>SSR</span></div>`
     :`<div class="gr q${x.q}" style="animation-delay:${i*90}ms"><small>${MAT[x.k].s}</small><b>${MAT[x.k].n}</b><span>×${x.q}</span></div>`).join('')}</div>
     ${R.filter(x=>x.type==='pu'&&!x.dup).map(x=>{const c=puCard(x.id),k=puSkill(x.id);return `<div class="toast"><b>${esc(c.name)}が仲間になった。</b>特別スキル「${k.n}」：${k.d}。</div>`}).join('')}`:'';
-  return `<div class="seg c3 subnav">${Object.entries(BANNERS).map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${M.roster.some(c=>c.id===B.card().id)?'所持':'ピックアップ 1%'}</span></button>`).join('')}</div>
-  <article class="front gban"><div><div class="dateline"><span>ピックアップ・${pu.style?esc(pu.style):pu.pos}</span><span>排出率 1%</span></div>
+  const legArt=`<article class="front gban"><div><div class="dateline"><span>レジェンド6人</span><span>排出率 合計3%</span></div>
+   <p class="deck">レジェンド集結</p>
+   <p class="lede">引いたレジェンドは、スカッドで使えるうえ、<b class="gold">育成のときに3人まで連れて行ける</b>。連れて行くと、そのレジェンドの得意な能力が最初から高く、伸びしろも大きくなる。</p>
+</div>
+   ${vhead(BN.head[0],BN.head[1],'gold')}</article>
+  <div class="plist" style="margin-top:10px">${GLEGS.map(l=>{const o=M.roster.find(c=>c.id===l.id);return `<div class="prow" style="cursor:default"><span class="po">${l.pos}</span><b>${esc(l.name)}</b><span class="sub">得意：${LBL[l.sup]}${o?'・所持':''}</span><span class="num">${cardOvr(l)}</span></div>`}).join('')}</div>`;
+  return `<div class="seg c4 subnav">${Object.entries(BANNERS).map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${B.multi?`${legOwned().length}/${GLEGS.length}人`:M.roster.some(c=>c.id===B.card().id)?'所持':'1%'}</span></button>`).join('')}</div>
+  ${BN.multi?legArt:`<article class="front gban"><div><div class="dateline"><span>ピックアップ・${pu.style?esc(pu.style):pu.pos}</span><span>排出率 1%</span></div>
    <p class="deck">${esc(pu.name)}</p>
    <div class="ichst">${KEYS.map(k=>`<span>${LBL[k]}<b>${pu.st[k]}</b></span>`).join('')}</div>
    <p class="lede"><b class="gold">特別スキル「${sk.n}」</b><br>「${esc(sk.q)}」<br>${sk.d}。</p>${owned?'<div class="chips"><span class="chip gold">所持している</span></div>':''}</div>
-   ${vhead(BN.head[0],BN.head[1],'gold')}</article>
+   ${vhead(BN.head[0],BN.head[1],'gold')}</article>`}
   <div class="gbar">${freeReady()?`<button class="btn red free" data-act="gachaFree">無料10連を引く（今日の分）</button>`:'<div class="freedone">今日の無料10連は受け取り済み。また明日。</div>'}<div>${coinPill()}<span class="sub">通算${M.pulls}回</span></div>
    <div class="seg c2"><button class="btn red" data-act="gacha" data-v="1" ${M.coins<GACHA_COST?'disabled':''}>1回 <small>100コイン</small></button><button class="btn red" data-act="gacha" data-v="10" ${M.coins<GACHA_COST*10?'disabled':''}>10回 <small>1,000コイン</small></button></div></div>
   ${resHtml}
   <div class="kick">手持ちの育成素材<span class="r">スカッドの「強化」で使う</span></div>
   <div class="mats">${MATK.map(k=>`<div class="mat"><b class="num">${M.mats[k]}</b><span>${MAT[k].n}</span><small>${MAT[k].s}用</small></div>`).join('')}</div>
   <div class="kick">排出率<span class="r">${BN.short}ガチャ</span></div>
-  <table class="st"><tbody>${RATES.map(([k,p,n])=>`<tr><th>${k==='pu'?esc(pu.name):n}</th><td class="n">${(p*100).toFixed(0)}%</td></tr>`).join('')}</tbody></table>
-  <p class="note" style="margin-top:8px">素材の種類（7種）は等しい確率。ピックアップ選手の2枚目は全種類の素材×2に変わる。無料10連は1日1回、どちらのガチャでも使える。</p>
+  <table class="st"><tbody>${ratesFor(BN.multi?LEG_RATE:null).map(([k,p,n])=>`<tr><th>${k==='pu'?(BN.multi?n:esc(pu.name)):n}</th><td class="n">${(p*100).toFixed(0)}%</td></tr>`).join('')}</tbody></table>
+  <p class="note" style="margin-top:8px">素材の種類（7種）は等しい確率。ピックアップ選手・レジェンドの2枚目は全種類の素材×2に変わる。無料10連は1日1回、どのガチャでも使える。</p>
   <div class="kick">コインの集め方</div>
   <ul class="plan"><li>毎日1回、無料で10連が引ける（日付が変わると復活）</li><li>育成モードで選手を1人引退させる：1,000コイン</li><li>監督業を最後まで務める：1,000コイン</li><li>ルーム対戦：勝ち200・引き分け100・負け60</li><li>CPU練習試合：15〜200（相手が強いほど多い）</li></ul>`;
 };
