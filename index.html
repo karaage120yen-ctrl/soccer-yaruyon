@@ -1609,6 +1609,10 @@ const SHANCHI={id:'shanchi',kind:'pl',name:'シャン・チー',pos:'DF',special
  st:{spd:80,tec:80,sho:45,pas:80,phy:95,def:90}};
 const MAO={id:'mao',kind:'pl',name:'ゴールデンシューズMAO',pos:'FW',style:'ストライカー',special:'mao',from:'ガチャ',
  st:{spd:80,tec:66,sho:99,pas:50,phy:80,def:44}};
+const INKANSU={id:'inkansu',kind:'pl',name:'陰関数',pos:'MF',style:'スーパースターター',special:'starter',from:'ガチャ',
+ st:{spd:85,tec:90,sho:82,pas:65,phy:60,def:54}};
+const STARTER_SKILL={n:'スーパースターター',q:'最初の45分で、全部決めてやる！',d:'前半、本人のスピード・テクニック＋3、そのかわりパス・フィジカル・守備−2。後半は元に戻る'};
+const STARTER_D={spd:3,tec:3,pas:-2,phy:-2,def:-2};
 const MAO_SKILL={n:'俺の邪魔はさせない！！',q:'俺の邪魔はさせない！！',d:'試合中1回だけ、決定機でシュート＋25。発動した瞬間に本人の全能力−10。ベンチに下げると、チームの能力が全部＋2'};
 const EMP_SKILL={n:'シャンチー帝国',q:'ここから先は一歩も通さない。',d:'試合の後半、味方全員の守備＋6'};
 const CAP_SKILL={n:'キャプテンしー',q:'キャプテンとして絶対に俺が守るんだ！アッセンブル！！',d:'スタメンにいると、味方全員の能力＋4'};
@@ -1741,7 +1745,7 @@ function legApply(p,d){
   p.legSup=out;p.legFx=fx;return out;
 }
 /* ガチャの種類（ピックアップ1%、ほかは育成素材） */
-const BANNERS={ich:{card:()=>ICHIKAWA,skill:()=>CAP_SKILL,short:'イチカワ',head:['主将','降臨']},shan:{card:()=>SHANCHI,skill:()=>EMP_SKILL,short:'シャン・チー',head:['帝国','開門']},mao:{card:()=>MAO,skill:()=>MAO_SKILL,short:'MAO',head:['黄金の','右足']},leg:{multi:true,card:()=>GLEGS[0],skill:()=>null,short:'レジェンド',head:['伝説','集結']}};
+const BANNERS={ich:{card:()=>ICHIKAWA,skill:()=>CAP_SKILL,short:'イチカワ',head:['主将','降臨']},shan:{card:()=>SHANCHI,skill:()=>EMP_SKILL,short:'シャン・チー',head:['帝国','開門']},mao:{card:()=>MAO,skill:()=>MAO_SKILL,short:'MAO',head:['黄金の','右足']},ink:{card:()=>INKANSU,skill:()=>STARTER_SKILL,short:'陰関数',head:['超','先発']},leg:{multi:true,card:()=>GLEGS[0],skill:()=>null,short:'レジェンド',head:['伝説','集結']}};
 function doGacha(n,free,bk){
   const BN=BANNERS[bk]||BANNERS.ich;let pu=BN.card();
   if(free){if(!freeReady())return null;M.freeDay=todayKey();n=10}
@@ -1790,7 +1794,7 @@ function teamCalc(sq){
     for(const k of KEYS)st[k]=Math.min(99,effSt(c,k)+bonus);
     const tmp={st,pos:c.pos};
     const r=Math.round(cardOvr({st,plus:{},pos:role},role)*fitMul(c.pos,role)*10)/10;
-    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',filler:!!c.filler,legend:!!c.legend,id:c.id};
+    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',filler:!!c.filler,legend:!!c.legend,id:c.id};
   });
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
   const mgc=cardById(sq.mgr);const mg=mgc&&isMgr(mgc)?{n:mgc.name,st:Object.fromEntries(MKEYS.map(k=>[k,effSt(mgc,k)])),famous:!!mgc.famous}:null;
@@ -1810,7 +1814,9 @@ function teamSnap(){
   const T=teamCalc();
   return {v:1,name:T.name,form:T.form,tot:T.tot,atk:T.atk,mid:T.mid,def:T.def,hasCap:T.hasCap,hasEmp:!!T.hasEmp,hasMao:!!T.hasMao,maoSub:!!T.maoSub,sub:T.sub,
    mg:T.mg?{n:T.mg.n,st:T.mg.st,famous:T.mg.famous}:null,
-   pl:T.pl.map(x=>({n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0}))};
+   pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};
+     if(x.starter){const st={...x.st};for(const [k,v] of Object.entries(STARTER_D))st[k]=Math.min(99,Math.max(1,st[k]+v));o.st1={r:Math.round(cardOvr({st,plus:{},pos:x.role},x.role)*fitMul(x.pos,x.role)*10)/10,pas:st.pas}}
+     return o})};
 }
 
 /* ---------- 試合シミュレーション（シード付き：同じ入力なら同じ結果） ---------- */
@@ -1850,6 +1856,10 @@ function simBattle(A0,B0,seed){
   const ms=(X,k)=>X.mg&&X.mg.st?X.mg.st[k]:50;
   const atk=i=>T[i].atk-(ms(T[1-i],'ana')-50)*.05;
   const cond=battleCond(T,seed,ev);
+  // スーパースターター：前半だけ本人の能力が変わる（後半に戻す）
+  const starters=[];[A0,B0].forEach((X0,i)=>X0.pl.forEach((p0,j)=>{if(!p0.st1)return;const p=T[i].pl[j],dr=p0.st1.r-p0.r,dp=p0.st1.pas-p0.pas;
+    p.r+=dr;p.pas+=dp;shiftTeam(T[i],p.role,dr);const X=T[i];X.atk+=.6;X.mid-=.2;X.def-=.4;starters.push({i,p,dr,dp});
+    ev.push({m:0,s:i,ty:'skill',tx:`${p.n}「${STARTER_SKILL.q}」 前半はスピード・テクニック＋3、パス・フィジカル・守備−2`})}));
   T.forEach((X,i)=>{if(X.hasCap){const c=X.pl.find(p=>p.cap);ev.push({m:0,s:i,ty:'skill',tx:`${c?c.n:'キャプテン'}「${CAP_SKILL.q}」 味方の能力＋4`})}});
   const maoMin=T.map(X=>X.hasMao&&X.pl.some(p=>p.mao)?15+Math.floor(r()*66):-1),maoUsed=[false,false];
   let posA=0;
@@ -1899,7 +1909,7 @@ function simBattle(A0,B0,seed){
         else ev.push({m,s:i,ty:'miss',tx:`${sc1.n}のシュートは枠の外`});
       }
     }
-    if(seg===8){ev.push({m:45,s:-1,ty:'ht',tx:`前半終了 ${sc[0]}-${sc[1]}`});T.forEach((X,i)=>{if(X.hasEmp){const c=X.pl.find(p=>p.emp);ev.push({m:46,s:i,ty:'skill',tx:`${c?c.n:'シャン・チー'}の「${EMP_SKILL.n}」発動！ 後半は味方全員の守備＋6`})}})}
+    if(seg===8){ev.push({m:45,s:-1,ty:'ht',tx:`前半終了 ${sc[0]}-${sc[1]}`});starters.forEach(x=>{x.p.r-=x.dr;x.p.pas-=x.dp;shiftTeam(T[x.i],x.p.role,-x.dr);T[x.i].atk-=.6;T[x.i].mid+=.2;T[x.i].def+=.4;ev.push({m:46,s:x.i,ty:'skill',tx:`${x.p.n}の「${STARTER_SKILL.n}」が切れた。能力が元に戻る`})});T.forEach((X,i)=>{if(X.hasEmp){const c=X.pl.find(p=>p.emp);ev.push({m:46,s:i,ty:'skill',tx:`${c?c.n:'シャン・チー'}の「${EMP_SKILL.n}」発動！ 後半は味方全員の守備＋6`})}})}
   }
   ev.sort((a,b)=>a.m-b.m||(a.ty==='ht'?1:0)-(b.ty==='ht'?1:0));
   ev.push({m:90,s:-1,ty:'ft',tx:`試合終了 ${sc[0]}-${sc[1]}`});
@@ -2963,7 +2973,7 @@ function cardMini(c){
 }
 function cardTile(c,opts={}){
   const mg=isMgr(c),o=mg?mgrOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
-  const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
+  const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
   return `<div class="ctile ${gold?'gold':''}"><div class="ct-h"><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span></div></div>${tag?`<div class="tags">${tag}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
 }
 
@@ -2976,8 +2986,8 @@ function copyText(val){
   if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(val).then(()=>true).catch(()=>false);
   return Promise.resolve(false);
 }
-const puCard=id=>GLEGS.find(l=>l.id===id)||(id==='shanchi'?SHANCHI:id==='mao'?MAO:ICHIKAWA);
-const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと：${legText(l)}`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:CAP_SKILL};
+const puCard=id=>GLEGS.find(l=>l.id===id)||(id==='shanchi'?SHANCHI:id==='mao'?MAO:id==='inkansu'?INKANSU:ICHIKAWA);
+const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと：${legText(l)}`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:id==='inkansu'?STARTER_SKILL:CAP_SKILL};
 H.gacha=()=>{
   const bk=G.ga.bk||'ich',BN=BANNERS[bk],pu=BN.card(),sk=BN.skill(),R=G.ga.res,owned=M.roster.some(c=>c.id===pu.id);
   const resHtml=R?`<div class="kick">結果<span class="r">${R.length}回</span></div><div class="gres">${R.map((x,i)=>x.type==='pu'
@@ -2990,7 +3000,7 @@ H.gacha=()=>{
 </div>
    ${vhead(BN.head[0],BN.head[1],'gold')}</article>
   <div class="plist" style="margin-top:10px">${GLEGS.map(l=>{const o=M.roster.find(c=>c.id===l.id);return `<div class="prow" style="cursor:default"><span class="po">${l.pu?'PU':l.pos}</span><b>${esc(l.name)}</b><span class="sub">${esc(legText(l))}${o?'・所持':''}</span><span class="num">${cardOvr(l)}</span></div>`}).join('')}</div>`;
-  return `<div class="seg c4 subnav">${Object.entries(BANNERS).map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${B.multi?`${legOwned().length}/${GLEGS.length}人`:M.roster.some(c=>c.id===B.card().id)?'所持':'1%'}</span></button>`).join('')}</div>
+  return `<div class="seg c3 subnav">${Object.entries(BANNERS).map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${B.multi?`${legOwned().length}/${GLEGS.length}人`:M.roster.some(c=>c.id===B.card().id)?'所持':'1%'}</span></button>`).join('')}</div>
   ${BN.multi?legArt:`<article class="front gban"><div><div class="dateline"><span>ピックアップ・${pu.style?esc(pu.style):pu.pos}</span><span>排出率 1%</span></div>
    <p class="deck">${esc(pu.name)}</p>
    <div class="ichst">${KEYS.map(k=>`<span>${LBL[k]}<b>${pu.st[k]}</b></span>`).join('')}</div>
@@ -3013,7 +3023,7 @@ function slotLabel(i){const F=FORMS[M.squad.form];return F.s[i][0]}
 function pitchHtml(T){
   const F=FORMS[M.squad.form];
   return `<div class="pitch" role="group" aria-label="${F.n}の布陣">${F.s.map(([role,x,y],i)=>{const p=T.pl[i],sel=G.sq.slot===i;
-    return `<button class="slot ${p.filler?'empty':''} ${p.cap?'cap':''} ${p.emp||p.mao?'emp':''} ${p.legend?'leg':''}" style="left:${x}%;top:${y}%" aria-pressed="${sel}" data-act="sqSlot" data-v="${i}"><span class="sr">${role}</span><b class="num">${Math.round(p.r)}</b><span class="sn">${esc(p.filler?'空き':p.n.split(' ').pop())}</span></button>`}).join('')}</div>`;
+    return `<button class="slot ${p.filler?'empty':''} ${p.cap?'cap':''} ${p.emp||p.mao||p.starter?'emp':''} ${p.legend?'leg':''}" style="left:${x}%;top:${y}%" aria-pressed="${sel}" data-act="sqSlot" data-v="${i}"><span class="sr">${role}</span><b class="num">${Math.round(p.r)}</b><span class="sn">${esc(p.filler?'空き':p.n.split(' ').pop())}</span></button>`}).join('')}</div>`;
 }
 function pickerHtml(){
   const i=G.sq.slot;
