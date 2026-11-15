@@ -1,6 +1,6 @@
 // サッカーやるよん：オフラインでも開けるようにするサービスワーカー
 // ゲームを更新したら CACHE の番号を1つ上げる（v1 → v2）
-const CACHE = 'yaruyon-v2';
+const CACHE = 'yaruyon-v3';
 const SHELL = ['./', './index.html', './fb.js', './firebase-config.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png'];
 
