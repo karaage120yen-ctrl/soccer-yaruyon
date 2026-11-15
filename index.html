@@ -1116,6 +1116,7 @@ const qg=(a,b,h=0)=>poisson(1.3*Math.exp((a-b)/13+h));
 
 /* ========== 試合 ========== */
 function sim(p,{os,base,home,neutral,comp}){
+  const yh=!!(p.legFx&&p.legFx.yahho);if(yh)os-=2;// やっほー：相手のコンディションを1段階下げる
   const nat=comp==='nat';
   let min=0,start=false,inj=0;
   const out=p.inj>0||p.absent>0;
@@ -1124,6 +1125,7 @@ function sim(p,{os,base,home,neutral,comp}){
   const ts=base+(o-base)*.3*(min/90)+(has(p,'captain')&&min>45?1.5:0);
   const ha=neutral?0:home?.12:-.12;
   let gf=qg(ts,os,ha),ga=poisson(1.3*Math.exp((os-ts)/13-ha)*(has(p,'wall')&&min>45?.88:1));
+  if(yh&&gf===ga&&Math.random()<.3)gf++;// 勝負強さ：引き分けを終盤に勝ちへ
   let pg=0,pa=0,rt=null;
   if(min>0){
     const P=POS[p.pos],sty=P.styles[p.style],lv=clamp(1+(o-os)/32,.35,2);
@@ -1339,7 +1341,7 @@ function monthStep(a,res,first){
   grow(p,a.g,p._f,a);
   // 体力・調子・家族・お金
   const homeB={apart:1,tower:3,house:3,mansion:4}[p.home]||0;
-  p.sta=clamp(p.sta+12+(p.subs.nutri?3:0)+(p.items.capsule?5:0)+homeB+(p.car==='compact'?1:0),0,100);
+  p.sta=clamp(p.sta+12+(p.subs.nutri?3:0)+(p.items.capsule?5:0)+homeB+(p.car==='compact'?1:0)+(p.legFx&&p.legFx.kyuko?20:0),0,100);
   const mine=res.matches.filter(x=>x.mo===m&&x.rt).map(x=>x.rt),avg=mine.length?mine.reduce((s,x)=>s+x,0)/mine.length:null;
   let dc=(p.subs.mental?rnd(-3,3):rnd(-5,5))+(avg?(avg-6.5)*5:0)+(60-p.cond)*.1;
   if(P&&P.married)dc+=(p.fam.happy-50)/20;else if(P)dc+=(P.love-50)/30;
@@ -1711,11 +1713,13 @@ function pullOne(pu){
 }
 /* レジェンドガチャ：6人のうち誰か（合計3%）。育成のときに3人まで連れて行くと能力ボーナス */
 const LEG_RATE=.03,LEG_PU=.02;
-const LEG_SPECIAL={mameo:'全能力 初期+2／育成終了時に守備+3',inu:'スピード 初期+7／育成終了時に結婚していれば全能力+3',kame:'ケガをしにくくなる／すべての成功率+5%'};
+const LEG_SPECIAL={mameo:'全能力 初期+2／育成終了時に守備+3',inu:'スピード 初期+7／育成終了時に結婚していれば全能力+3',kame:'ケガをしにくくなる／すべての成功率+5%',kyuko:'全能力 初期+2／毎月、体力が20回復',yahho:'試合の相手のコンディションを1段階下げる／勝負強くなる'};
 const GLEGS=[
  {id:'lg_mameo',kind:'pl',name:'カカオ・マメオ',pos:'MF',style:'チョコの魔術師',legend:true,sup:'mameo',pu:true,from:'ガチャ',st:{spd:80,tec:84,sho:78,pas:86,phy:74,def:88}},
  {id:'lg_inu',kind:'pl',name:'かわいいいぬ',pos:'FW',style:'わんわんダッシュ',legend:true,sup:'inu',pu:true,from:'ガチャ',st:{spd:97,tec:78,sho:80,pas:70,phy:68,def:50}},
  {id:'lg_kame',kind:'pl',name:'アームストロングカメ',pos:'DF',style:'鉄の甲羅',legend:true,sup:'kame',pu:true,from:'ガチャ',st:{spd:45,tec:70,sho:55,pas:74,phy:95,def:94}},
+ {id:'lg_kyuko',kind:'pl',name:'一限休講',pos:'MF',style:'二度寝の達人',legend:true,sup:'kyuko',pu:true,from:'ガチャ',st:{spd:70,tec:82,sho:72,pas:84,phy:88,def:70}},
+ {id:'lg_yahho',kind:'pl',name:'やっほー',pos:'FW',style:'勝負師',legend:true,sup:'yahho',pu:true,from:'ガチャ',st:{spd:84,tec:80,sho:88,pas:76,phy:74,def:52}},
  {id:'lg_leon',kind:'pl',name:'疾風のレオン',pos:'FW',style:'スピードスター',legend:true,sup:'spd',from:'ガチャ',st:{spd:95,tec:85,sho:84,pas:72,phy:75,def:45}},
  {id:'lg_fabio',kind:'pl',name:'魔術師ファビオ',pos:'MF',style:'ドリブラー',legend:true,sup:'tec',from:'ガチャ',st:{spd:82,tec:96,sho:80,pas:88,phy:66,def:55}},
  {id:'lg_gabriel',kind:'pl',name:'大砲ガブリエル',pos:'FW',style:'ストライカー',legend:true,sup:'sho',from:'ガチャ',st:{spd:78,tec:80,sho:97,pas:68,phy:86,def:42}},
@@ -1728,7 +1732,7 @@ const LEG_MAX=3;
 // 強化しているほどボーナスが大きい（強化10回：初期+10・限界+5）
 const legBonus=c=>({k:c.sup,st:5+Math.floor((c.enh||0)/2),cap:2+Math.floor((c.enh||0)/3)});
 const legText=c=>{if(LEG_SPECIAL[c.sup])return LEG_SPECIAL[c.sup];const b=legBonus(c);return `${LBL[b.k]} 初期+${b.st}・限界+${b.cap}`};
-function ratesFor(pu){if(pu!==LEG_RATE)return RATES;return [['pu',LEG_PU,'ピックアップレジェンド（3人）'],['pu2',LEG_RATE-LEG_PU,'ほかのレジェンド（6人）'],['m5',.10,'育成素材×5'],['m2',.25,'育成素材×2'],['m1',.62,'育成素材×1']]}
+function ratesFor(pu){if(pu!==LEG_RATE)return RATES;const np=GLEGS.filter(l=>l.pu).length;return [['pu',LEG_PU,`ピックアップレジェンド（${np}人）`],['pu2',LEG_RATE-LEG_PU,`ほかのレジェンド（${GLEGS.length-np}人）`],['m5',.10,'育成素材×5'],['m2',.25,'育成素材×2'],['m1',.62,'育成素材×1']]}
 function legOwned(){return GLEGS.map(l=>M.roster.find(c=>c.id===l.id)).filter(Boolean)}
 function legToggle(d,id){d.leg=d.leg||[];const i=d.leg.indexOf(id);if(i>=0)d.leg.splice(i,1);else if(d.leg.length<LEG_MAX)d.leg.push(id)}
 function legApply(p,d){
@@ -1738,6 +1742,8 @@ function legApply(p,d){
     if(c.sup==='mameo'){KEYS.forEach(k=>addSt(k,2));fx.endDef=(fx.endDef||0)+3}
     else if(c.sup==='inu'){addSt('spd',7);fx.inuMarry=1}
     else if(c.sup==='kame'){fx.kame=1}
+    else if(c.sup==='kyuko'){KEYS.forEach(k=>addSt(k,2));fx.kyuko=1}
+    else if(c.sup==='yahho'){fx.yahho=1}
     else{const b=legBonus(c),k=b.k;
       p.cap[k]=Math.min(99,p.cap[k]+b.cap);p.capLim[k]=Math.min(99,Math.max(p.capLim[k],p.cap[k]));
       p.st[k]=Math.min(p.cap[k]-2,p.st[k]+b.st)}
@@ -2994,9 +3000,9 @@ H.gacha=()=>{
     ?`<div class="gr ich" style="animation-delay:${i*90}ms"><small>${x.dup?'2枚目→全素材×2':'NEW'}</small><b>${esc(puCard(x.id).name).replace(' ','<br>').replace('MAO','<br>MAO')}</b><span>SSR</span></div>`
     :`<div class="gr q${x.q}" style="animation-delay:${i*90}ms"><small>${MAT[x.k].s}</small><b>${MAT[x.k].n}</b><span>×${x.q}</span></div>`).join('')}</div>
     ${R.filter(x=>x.type==='pu'&&!x.dup).map(x=>{const c=puCard(x.id),k=puSkill(x.id);return `<div class="toast"><b>${esc(c.name)}が仲間になった。</b>特別スキル「${k.n}」：${k.d}。</div>`}).join('')}`:'';
-  const legArt=`<article class="front gban"><div><div class="dateline"><span>PU3人＋6人</span><span>合計3%</span></div>
+  const legArt=`<article class="front gban"><div><div class="dateline"><span>PU${GLEGS.filter(l=>l.pu).length}人＋${GLEGS.filter(l=>!l.pu).length}人</span><span>合計3%</span></div>
    <p class="deck">新レジェンド登場</p>
-   <p class="lede">引いたレジェンドは<b class="gold">育成専用</b>（スカッドには入れられない）。育成のときに3人まで連れて行けて、それぞれの「教え」（下の一覧）がつく。ピックアップの3人は出やすい（合わせて2%）。</p>
+   <p class="lede">引いたレジェンドは<b class="gold">育成専用</b>（スカッドには入れられない）。育成のときに3人まで連れて行けて、それぞれの「教え」（下の一覧）がつく。ピックアップの${GLEGS.filter(l=>l.pu).length}人は出やすい（合わせて2%）。</p>
 </div>
    ${vhead(BN.head[0],BN.head[1],'gold')}</article>
   <div class="plist" style="margin-top:10px">${GLEGS.map(l=>{const o=M.roster.find(c=>c.id===l.id);return `<div class="prow" style="cursor:default"><span class="po">${l.pu?'PU':l.pos}</span><b>${esc(l.name)}</b><span class="sub">${esc(legText(l))}${o?'・所持':''}</span><span class="num">${cardOvr(l)}</span></div>`}).join('')}</div>`;
