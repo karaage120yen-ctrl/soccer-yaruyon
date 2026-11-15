@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261115-183256';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261115-183442';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1781,7 +1781,7 @@ function canEnhance(c,k){
   return [true,''];
 }
 function enhance(id,k){
-  const c=cardById(id);const [ok]=canEnhance(c,k);if(!ok)return false;
+  const c=cardById(id);if(isLegSup(c))return false;const [ok]=canEnhance(c,k);if(!ok)return false;
   c.plus=c.plus||{};c.plus[k]=(c.plus[k]||0)+1;c.enh=(c.enh||0)+1;M.mats[matFor(c,k)]--;return true;
 }
 
@@ -2899,7 +2899,7 @@ function legBlock(d){
   const head=`<div class="kick" style="margin-top:18px">レジェンドの教え<span class="r">${sel.length}/${LEG_MAX}人</span></div>`;
   if(!own.length)return head+`<p class="note">ガチャの「レジェンド」でレジェンド選手を引くと、ここで3人まで連れて行ける。連れて行ったレジェンドの得意な能力が、最初から高く、伸びしろも大きくなる。</p>`;
   const tx=c=>legText(c);
-  return head+`<p class="note">連れて行ったレジェンドの得意な能力が、最初から高く、伸びしろも大きくなる（強化しているほど大きい）。</p>
+  return head+`<p class="note">連れて行ったレジェンドごとに、それぞれの「教え」がつく。</p>
   <div class="picks">${own.map(c=>{const on=sel.includes(c.id),full=!on&&sel.length>=LEG_MAX;return `<button class="pk" aria-pressed="${on}" data-act="legPl" data-v="${c.id}" ${full?'disabled':''}><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="num">${LEG_SPECIAL[c.sup]?'★':'+'+legBonus(c).st}</span></button>`}).join('')}</div>
   ${sel.length?`<div class="chips">${sel.map(id=>{const c=cardById(id);return `<span class="chip gold">${esc(c.name)} → ${tx(c)}</span>`}).join('')}</div>`:''}`;
 }
@@ -3072,7 +3072,7 @@ H.squad=()=>{
   <div class="stack" style="margin-top:18px"><button class="btn red" data-act="go" data-v="battle">このスカッドで対戦へ</button></div>`;
 };
 function enhHtml(){
-  const all=[...M.roster,...M.mgrs],c=cardById(G.sq.card);
+  const all=[...M.roster.filter(x=>!isLegSup(x)),...M.mgrs],c0=cardById(G.sq.card),c=isLegSup(c0)?null:c0;
   const matsBar=`<div class="mats sm">${MATK.map(k=>`<div class="mat"><b class="num">${M.mats[k]}</b><span>${MAT[k].n}</span></div>`).join('')}</div>`;
   if(!all.length)return `<p class="note" style="margin-top:16px">強化できる選手・監督がまだいない。</p>${matsBar}`;
   let detail='';
