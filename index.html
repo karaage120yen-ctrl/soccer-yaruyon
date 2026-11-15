@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261115-183442';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261115-191147';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -471,6 +471,15 @@ textarea.code{width:100%;min-height:90px;font:12px/1.4 var(--num);background:var
 .inapp .btn{display:inline-block;margin:6px 0;text-decoration:none}
 .upd{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 10px);z-index:60;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f2ede4;color:#111;border-radius:14px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.4);font-size:14px}
 .upd button{background:var(--accent);color:#fff;border:0;border-radius:99px;padding:8px 14px;font-weight:700;font-size:14px}
+.ixp{border:1px solid rgba(255,81,38,.6);background:rgba(255,81,38,.08);border-radius:14px;padding:12px 14px;margin:12px 0;font-size:14px;animation:pop .35s ease}
+.ixp>b{font-family:var(--display);font-size:20px;color:var(--accent)}
+.ixp.def{border-color:rgba(120,170,230,.6);background:rgba(120,170,230,.08)}
+.ixp.def>b{color:#a9c8ee}
+.ixp.ht{border-color:var(--line);background:var(--surface)}
+.ixp.ht>b{color:var(--text)}
+.ixp p{margin:6px 0}
+.ixp .seg .opt{font-size:13px;padding:10px 6px}
+.bev.chance{border-color:rgba(255,81,38,.35)}
 
 </style>
 </head>
@@ -1819,8 +1828,8 @@ function teamCalc(sq){
   if(maoP&&!sub){const f=filler(maoP.role);sub={n:`控え${maoP.role}`,r:cardOvr(f,maoP.role),sho:f.st.sho,pas:f.st.pas}}
   return {pl,atk:Math.round(atk*10)/10,mid:Math.round(mid*10)/10,def:Math.round(def*10)/10,tot,mg,hasCap,hasEmp,hasMao:!!maoP,sub,maoSub:sq.maoSub!==false,bench:bench.map(c=>c.id),form:F.n,name:sq.name||'マイイレブン',real:pl.filter(x=>!x.filler).length};
 }
-function teamSnap(){
-  const T=teamCalc();
+function teamSnap(sq){
+  const T=teamCalc(sq);
   return {v:1,name:T.name,form:T.form,tot:T.tot,atk:T.atk,mid:T.mid,def:T.def,hasCap:T.hasCap,hasEmp:!!T.hasEmp,hasMao:!!T.hasMao,maoSub:!!T.maoSub,sub:T.sub,
    mg:T.mg?{n:T.mg.n,st:T.mg.st,famous:T.mg.famous}:null,
    pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};
@@ -1848,7 +1857,7 @@ function battleCond(T,seed,ev){
     // 相手より強いほど落差が大きく、相手より少し下まで落ちる
     const bad=rc()<.05,badD=bad?-Math.round(14+Math.max(0,base[i]-base[1-i])):0;if(bad)add(badD);
     const avg=X.pl.reduce((s,p)=>s+(COND.find(c=>c.n===p.cond)||{d:0}).d,0)/(X.pl.length||1)+(mc?mc.d:0)+badD;
-    const lbl=condLbl(avg);out.push({lbl,v:Math.round(avg*10)/10,mg:mc?mc.n:null,bad});
+    const lbl=condLbl(avg);out.push({lbl,v:Math.round(avg*10)/10,mg:mc?mc.n:null,bad,adj:(mc?mc.d:0)+badD});
     const by=n=>X.pl.filter(p=>p.cond===n).map(p=>p.n);
     const parts=[];const g=by('絶好調'),b=by('絶不調');
     if(g.length)parts.push(`絶好調 ${g.join('・')}`);if(b.length)parts.push(`絶不調 ${b.join('・')}`);
@@ -1859,73 +1868,147 @@ function battleCond(T,seed,ev){
   });
   return out;
 }
-function simBattle(A0,B0,seed){
-  const A=JSON.parse(JSON.stringify(A0)),B=JSON.parse(JSON.stringify(B0));
-  const r=rng(seed),T=[A,B],ev=[],sc=[0,0],sh=[0,0],gl=[{},{}],as=[{},{}];
-  const ms=(X,k)=>X.mg&&X.mg.st?X.mg.st[k]:50;
-  const atk=i=>T[i].atk-(ms(T[1-i],'ana')-50)*.05;
-  const cond=battleCond(T,seed,ev);
+/* ---------- 試合エンジン（場面ごとに止められる）。human=-1 なら全部自動（ルーム・コード対戦はこれで同じ結果になる） ---------- */
+const BIG_P=.3;
+const SHOT_OPT=['右隅に流し込む','左隅に流し込む','ループで浮かす'];
+const DEF_OPT=['右へのシュートを読む','左へのシュートを読む','ループを読む（GKは動かない）'];
+const PK_OPT=['左','真ん中','右'];
+const msOf=(X,k)=>X.mg&&X.mg.st?X.mg.st[k]:50;
+function mStart(A0,B0,seed,human){
+  const A=JSON.parse(JSON.stringify(A0)),B=JSON.parse(JSON.stringify(B0)),T=[A,B],ev=[],r=rng(seed);
+  const X={seed,r,T,ev,sc:[0,0],sh:[0,0],gl:[{},{}],as:[{},{}],posA:0,seg:0,si:0,human:human==null?-1:human,pend:null,done:false,res:null,subs:0};
+  X.cond=battleCond(T,seed,ev);
   // スーパースターター：前半だけ本人の能力が変わる（後半に戻す）
-  const starters=[];[A0,B0].forEach((X0,i)=>X0.pl.forEach((p0,j)=>{if(!p0.st1)return;const p=T[i].pl[j],dr=p0.st1.r-p0.r,dp=p0.st1.pas-p0.pas;
-    p.r+=dr;p.pas+=dp;shiftTeam(T[i],p.role,dr);const X=T[i];X.atk+=.6;X.mid-=.2;X.def-=.4;starters.push({i,p,dr,dp});
+  X.starters=[];[A0,B0].forEach((X0,i)=>X0.pl.forEach((p0,j)=>{if(!p0.st1)return;const p=T[i].pl[j],dr=p0.st1.r-p0.r,dp=p0.st1.pas-p0.pas;
+    p.r+=dr;p.pas+=dp;shiftTeam(T[i],p.role,dr);const Y=T[i];Y.atk+=.6;Y.mid-=.2;Y.def-=.4;X.starters.push({i,p,dr,dp});
     ev.push({m:0,s:i,ty:'skill',tx:`${p.n}「${STARTER_SKILL.q}」 前半はスピード・テクニック＋3、パス・フィジカル・守備−2`})}));
-  T.forEach((X,i)=>{if(X.hasCap){const c=X.pl.find(p=>p.cap);ev.push({m:0,s:i,ty:'skill',tx:`${c?c.n:'キャプテン'}「${CAP_SKILL.q}」 味方の能力＋4`})}});
-  const maoMin=T.map(X=>X.hasMao&&X.pl.some(p=>p.mao)?15+Math.floor(r()*66):-1),maoUsed=[false,false];
-  let posA=0;
-  for(let seg=0;seg<18;seg++){
-    const pa=1/(1+Math.exp(-(T[0].mid-T[1].mid)/9));posA+=pa;
-    for(const i of [0,1]){
-      const X=T[i],Y=T[1-i],poss=i===0?pa:1-pa,ydef=Y.def+(Y.hasEmp&&seg>=9?6:0);
-      const late=seg>=12?(ms(X,'gam')-50)*.004:0,steady=(ms(X,'lea')-50)*.001;
-      if(!maoUsed[i]&&maoMin[i]>=seg*5+1&&maoMin[i]<=seg*5+5){
-        maoUsed[i]=true;const m=maoMin[i],mao=X.pl.find(p=>p.mao);
-        if(mao){
-          sh[i]++;
-          const gk=(Y.pl.find(p=>p.role==='GK')||{n:'GK'}).n;
-          ev.push({m,s:i,ty:'skill',tx:`決定機！ ${mao.n}「${MAO_SKILL.q}」 シュート＋25`});
-          const pg=clamp(.42+(atk(i)-ydef)*.0075+(mao.sho+25-75)*.004,.3,.88);
-          if(r()<pg){sc[i]++;gl[i][mao.n]=(gl[i][mao.n]||0)+1;ev.push({m,s:i,ty:'goal',tx:`${mao.n}の黄金の右足が炸裂！ ネットを突き破るような一撃！`,sc:[sc[0],sc[1]]})}
-          else ev.push({m,s:i,ty:'save',tx:`${mao.n}の渾身のシュートを${gk}が奇跡的に止めた！`});
-          mao.r-=10;mao.sho-=10;mao.pas-=10;shiftTeam(X,mao.role,-10);
-          ev.push({m,s:i,ty:'down',tx:`${mao.n}は力を使い果たした。全能力−10`});
-          if(X.maoSub&&X.sub){
-            const sb=X.sub,d=sb.r-mao.r;shiftTeam(X,mao.role,d);X.atk+=2;X.mid+=2;X.def+=2;
-            X.out=(X.out||[]).concat([{...mao}]);Object.assign(mao,{n:sb.n,r:sb.r,sho:sb.sho,pas:sb.pas,mao:0});
-            ev.push({m,s:i,ty:'sub',tx:`${MAO.name}がベンチに下がり、${sb.n}が入る。チームの能力が全部＋2`});
-          }
-          continue;
-        }
-      }
-      const pc=clamp(.17+poss*.24+(atk(i)-ydef)*.0042+late+steady,.05,.6);
-      if(r()<pc){
-        sh[i]++;
-        const m=seg*5+1+Math.floor(r()*5);
-        const att=X.pl.filter(p=>p.role!=='GK');
-        const sc1=wPick(r,att,p=>({FW:5,MF:2.4,DF:.55}[p.role]||1)*Math.pow(Math.max(30,p.sho)/60,3));
-        const pg=clamp(.27+(atk(i)-ydef)*.0075+(sc1.sho-75)*.003,.08,.58);
-        const gk=(Y.pl.find(p=>p.role==='GK')||{n:'GK'}).n;
-        const x=r();
-        if(x<pg){
-          sc[i]++;gl[i][sc1.n]=(gl[i][sc1.n]||0)+1;
-          const mates=att.filter(p=>p!==sc1);
-          let txt;
-          if(mates.length&&r()<.72){const a1=wPick(r,mates,p=>Math.pow(Math.max(30,p.pas)/60,3)*({MF:3,FW:1.6,DF:1}[p.role]||1));as[i][a1.n]=(as[i][a1.n]||0)+1;
-            txt=pickR(r,[`${a1.n}のスルーパスから${sc1.n}が冷静に流し込む！`,`${a1.n}のクロスに${sc1.n}が頭で合わせた！`,`${a1.n}が崩して、最後は${sc1.n}！`])}
-          else txt=pickR(r,[`${sc1.n}の強烈なミドルシュートが突き刺さる！`,`${sc1.n}がドリブルで3人かわしてゴール！`,`${sc1.n}がこぼれ球を押し込んだ！`]);
-          ev.push({m,s:i,ty:'goal',tx:txt,sc:[sc[0],sc[1]]});
-        }else if(x<pg+.18)ev.push({m,s:i,ty:'save',tx:`${sc1.n}のシュートは${gk}がビッグセーブ`});
-        else if(x<pg+.24)ev.push({m,s:i,ty:'post',tx:`${sc1.n}のシュートはポスト直撃！`});
-        else ev.push({m,s:i,ty:'miss',tx:`${sc1.n}のシュートは枠の外`});
-      }
-    }
-    if(seg===8){ev.push({m:45,s:-1,ty:'ht',tx:`前半終了 ${sc[0]}-${sc[1]}`});starters.forEach(x=>{x.p.r-=x.dr;x.p.pas-=x.dp;shiftTeam(T[x.i],x.p.role,-x.dr);T[x.i].atk-=.6;T[x.i].mid+=.2;T[x.i].def+=.4;ev.push({m:46,s:x.i,ty:'skill',tx:`${x.p.n}の「${STARTER_SKILL.n}」が切れた。能力が元に戻る`})});T.forEach((X,i)=>{if(X.hasEmp){const c=X.pl.find(p=>p.emp);ev.push({m:46,s:i,ty:'skill',tx:`${c?c.n:'シャン・チー'}の「${EMP_SKILL.n}」発動！ 後半は味方全員の守備＋6`})}})}
-  }
-  ev.sort((a,b)=>a.m-b.m||(a.ty==='ht'?1:0)-(b.ty==='ht'?1:0));
-  ev.push({m:90,s:-1,ty:'ft',tx:`試合終了 ${sc[0]}-${sc[1]}`});
-  let mvp=null,best=-1;
-  [0,1].forEach(i=>{const win=sc[i]>sc[1-i]?1.5:sc[i]===sc[1-i]?.5:0;T[i].pl.concat(T[i].out||[]).forEach(p=>{const v=(gl[i][p.n]||0)*3+(as[i][p.n]||0)*2+win+p.r/100;if(v>best){best=v;mvp={n:p.n,s:i}}})});
-  return {sc,ev,sh,poss:[Math.round(posA/18*100),100-Math.round(posA/18*100)],mvp,seed,cond};
+  T.forEach((Y,i)=>{if(Y.hasCap){const c=Y.pl.find(p=>p.cap);ev.push({m:0,s:i,ty:'skill',tx:`${c?c.n:'キャプテン'}「${CAP_SKILL.q}」 味方の能力＋4`})}});
+  X.maoMin=T.map(Y=>Y.hasMao&&Y.pl.some(p=>p.mao)?15+Math.floor(r()*66):-1);X.maoUsed=[false,false];
+  return X;
 }
+const mAtk=(X,i)=>X.T[i].atk-(msOf(X.T[1-i],'ana')-50)*.05;
+const mDef=(X,i)=>{const Y=X.T[i];return Y.def+(Y.hasEmp&&X.seg>=9?6:0)};
+function mRun(X){
+  while(!X.done&&!X.pend){
+    if(X.seg>=18){mEnd(X);break}
+    if(X.si===0){X.pa=1/(1+Math.exp(-(X.T[0].mid-X.T[1].mid)/9));X.posA+=X.pa}
+    if(X.si<2){const i=X.si;X.si++;mTeam(X,i);continue}
+    const seg=X.seg;X.seg++;X.si=0;
+    if(seg===8){
+      X.ev.push({m:45,s:-1,ty:'ht',tx:`前半終了 ${X.sc[0]}-${X.sc[1]}`});
+      X.starters.forEach(x=>{x.p.r-=x.dr;x.p.pas-=x.dp;shiftTeam(X.T[x.i],x.p.role,-x.dr);X.T[x.i].atk-=.6;X.T[x.i].mid+=.2;X.T[x.i].def+=.4;X.ev.push({m:46,s:x.i,ty:'skill',tx:`${x.p.n}の「${STARTER_SKILL.n}」が切れた。能力が元に戻る`})});X.starters=[];
+      X.T.forEach((Y,i)=>{if(Y.hasEmp){const c=Y.pl.find(p=>p.emp);X.ev.push({m:46,s:i,ty:'skill',tx:`${c?c.n:'シャン・チー'}の「${EMP_SKILL.n}」発動！ 後半は味方全員の守備＋6`})}});
+      if(X.human>=0)X.pend={ty:'ht',m:45};
+    }
+  }
+  return X;
+}
+function mTeam(X,i){
+  const T=X.T,Y=T[i],O=T[1-i],r=X.r,seg=X.seg;
+  const poss=i===0?X.pa:1-X.pa,odef=mDef(X,1-i);
+  const late=seg>=12?(msOf(Y,'gam')-50)*.004:0,steady=(msOf(Y,'lea')-50)*.001;
+  if(!X.maoUsed[i]&&X.maoMin[i]>=seg*5+1&&X.maoMin[i]<=seg*5+5){
+    X.maoUsed[i]=true;const m=X.maoMin[i],mao=Y.pl.find(p=>p.mao);
+    if(mao){
+      X.sh[i]++;
+      const gk=(O.pl.find(p=>p.role==='GK')||{n:'GK'}).n;
+      X.ev.push({m,s:i,ty:'skill',tx:`決定機！ ${mao.n}「${MAO_SKILL.q}」 シュート＋25`});
+      const pg=clamp(.42+(mAtk(X,i)-odef)*.0075+(mao.sho+25-75)*.004,.3,.88);
+      if(r()<pg){X.sc[i]++;X.gl[i][mao.n]=(X.gl[i][mao.n]||0)+1;X.ev.push({m,s:i,ty:'goal',tx:`${mao.n}の黄金の右足が炸裂！ ネットを突き破るような一撃！`,sc:X.sc.slice()})}
+      else X.ev.push({m,s:i,ty:'save',tx:`${mao.n}の渾身のシュートを${gk}が奇跡的に止めた！`});
+      mao.r-=10;mao.sho-=10;mao.pas-=10;shiftTeam(Y,mao.role,-10);
+      X.ev.push({m,s:i,ty:'down',tx:`${mao.n}は力を使い果たした。全能力−10`});
+      if(Y.maoSub&&Y.sub){
+        const sb=Y.sub,d=sb.r-mao.r;shiftTeam(Y,mao.role,d);Y.atk+=2;Y.mid+=2;Y.def+=2;
+        Y.out=(Y.out||[]).concat([{...mao}]);Object.assign(mao,{n:sb.n,r:sb.r,sho:sb.sho,pas:sb.pas,mao:0});
+        X.ev.push({m,s:i,ty:'sub',tx:`${MAO.name}がベンチに下がり、${sb.n}が入る。チームの能力が全部＋2`});
+      }
+      return;
+    }
+  }
+  const pc=clamp(.17+poss*.24+(mAtk(X,i)-odef)*.0042+late+steady,.05,.6);
+  if(r()>=pc)return;
+  X.sh[i]++;
+  const m=seg*5+1+Math.floor(r()*5);
+  const att=Y.pl.filter(p=>p.role!=='GK');
+  const sc1=wPick(r,att,p=>({FW:5,MF:2.4,DF:.55}[p.role]||1)*Math.pow(Math.max(30,p.sho)/60,3));
+  const pg=clamp(.27+(mAtk(X,i)-odef)*.0075+(sc1.sho-75)*.003,.08,.58);
+  const gk=(O.pl.find(p=>p.role==='GK')||{n:'GK'}).n;
+  // 決定機：攻める側はどこを狙うか、守る側はどこを読むかを選ぶ
+  if(r()<BIG_P){
+    const info={i,m,n:sc1.n,pg,gk};
+    if(X.human===i){X.pend={ty:'shot',...info};return}
+    if(X.human===1-i){X.pend={ty:'def',...info};return}
+    mBig(X,info,Math.floor(r()*3),Math.floor(r()*3));return;
+  }
+  const x=r();
+  if(x<pg){
+    X.sc[i]++;X.gl[i][sc1.n]=(X.gl[i][sc1.n]||0)+1;
+    const mates=att.filter(p=>p!==sc1);let txt;
+    if(mates.length&&r()<.72){const a1=wPick(r,mates,p=>Math.pow(Math.max(30,p.pas)/60,3)*({MF:3,FW:1.6,DF:1}[p.role]||1));X.as[i][a1.n]=(X.as[i][a1.n]||0)+1;
+      txt=pickR(r,[`${a1.n}のスルーパスから${sc1.n}が冷静に流し込む！`,`${a1.n}のクロスに${sc1.n}が頭で合わせた！`,`${a1.n}が崩して、最後は${sc1.n}！`])}
+    else txt=pickR(r,[`${sc1.n}の強烈なミドルシュートが突き刺さる！`,`${sc1.n}がドリブルで3人かわしてゴール！`,`${sc1.n}がこぼれ球を押し込んだ！`]);
+    X.ev.push({m,s:i,ty:'goal',tx:txt,sc:X.sc.slice()});
+  }else if(x<pg+.18)X.ev.push({m,s:i,ty:'save',tx:`${sc1.n}のシュートは${gk}がビッグセーブ`});
+  else if(x<pg+.24)X.ev.push({m,s:i,ty:'post',tx:`${sc1.n}のシュートはポスト直撃！`});
+  else X.ev.push({m,s:i,ty:'miss',tx:`${sc1.n}のシュートは枠の外`});
+}
+// 決定機の決着：守る側に読まれると入りにくく、読みが外れると入りやすい
+function mBig(X,info,a,d){
+  const {i,m,n,pg,gk}=info,read=a===d,p=read?pg*.4:Math.min(.85,pg+.28);
+  X.ev.push({m,s:i,ty:'chance',tx:`決定機！ ${n}が${SHOT_OPT[a]}`});
+  if(X.r()<p){X.sc[i]++;X.gl[i][n]=(X.gl[i][n]||0)+1;X.ev.push({m,s:i,ty:'goal',tx:read?`読まれていたが、${n}が力でねじ込んだ！`:`${gk}の読みの逆を突いた！ ${n}が決めた！`,sc:X.sc.slice()})}
+  else X.ev.push({m,s:i,ty:'save',tx:read?`${gk}が完全に読み切った！ ${n}のシュートを止めた`:`${n}のシュートはわずかに枠の外…`});
+}
+// 後半の選手交代（human側だけ）。コンディションは試合前に決まったものを引き継ぐ
+function mResub(X,sq,swaps){
+  const h=X.human,old=X.T[h],S=teamSnap(sq),cm={};old.pl.forEach(p=>{cm[p.n]=p.cond});
+  S.pl.forEach(p=>{let c=cm[p.n];if(!c)c=wPick(X.r,COND,x=>x.w).n;p.cond=c;const d=(COND.find(x=>x.n===c)||{d:0}).d;if(d){p.r+=d;p.sho+=d;p.pas+=d;shiftTeam(S,p.role,d)}});
+  const adj=(X.cond[h]&&X.cond[h].adj)||0;S.atk+=adj;S.mid+=adj;S.def+=adj;
+  S.out=(old.out||[]).concat(old.pl.filter(p=>!S.pl.some(q=>q.n===p.n)));
+  if(S.hasMao&&!X.maoUsed[h]&&X.maoMin[h]<46)X.maoMin[h]=46+Math.floor(X.r()*35);
+  X.T[h]=S;(swaps||[]).forEach(s=>X.ev.push({m:46,s:h,ty:'sub',tx:`選手交代：${s[0]} → ${s[1]}`}));
+}
+function mEnd(X){
+  const sc=X.sc;
+  if(!X.ftDone){X.ftDone=true;X.ev.push({m:90,s:-1,ty:'ft',tx:`試合終了 ${sc[0]}-${sc[1]}`})}
+  if(sc[0]===sc[1]&&X.human>=0&&!X.pk){X.pk={g:[0,0],n:[0,0],log:[]};X.ev.push({m:90,s:-1,ty:'ht',tx:'引き分け。PK戦へ！'});mPkNext(X);return}
+  mFinish(X);
+}
+function mFinish(X){
+  const T=X.T,sc=X.sc;let mvp=null,best=-1;
+  const pkw=X.pk?(X.pk.g[0]>X.pk.g[1]?0:1):-1;
+  [0,1].forEach(i=>{const win=sc[i]>sc[1-i]||pkw===i?1.5:sc[i]===sc[1-i]?.5:0;T[i].pl.concat(T[i].out||[]).forEach(p=>{const v=(X.gl[i][p.n]||0)*3+(X.as[i][p.n]||0)*2+win+p.r/100;if(v>best){best=v;mvp={n:p.n,s:i}}})});
+  const ev=X.ev.slice().sort((a,b)=>a.m-b.m||(a.ty==='ft'||a.ty==='pk'?1:0)-(b.ty==='ft'||b.ty==='pk'?1:0));
+  X.res={sc:sc.slice(),ev,sh:X.sh.slice(),poss:[Math.round(X.posA/18*100),100-Math.round(X.posA/18*100)],mvp,seed:X.seed,cond:X.cond,pk:X.pk?X.pk.g.slice():null};
+  X.done=true;X.pend=null;
+}
+// PK戦：5人ずつ、決まらなければサドンデス。キッカーはシュートの高い順
+function pkKicker(X,s){const l=X.T[s].pl.filter(p=>p.role!=='GK').sort((a,b)=>b.sho-a.sho);return l.length?l[X.pk.n[s]%l.length]:{n:'キッカー',sho:70}}
+function pkOver(X){const {g,n}=X.pk;const r0=Math.max(0,5-n[0]),r1=Math.max(0,5-n[1]);
+  if(n[0]<=5&&n[1]<=5){if(g[0]>g[1]+r1||g[1]>g[0]+r0)return true;if(n[0]===5&&n[1]===5)return g[0]!==g[1];return false}
+  return n[0]===n[1]&&g[0]!==g[1]}
+function mPkNext(X){
+  if(pkOver(X)){mFinish(X);return}
+  const s=X.pk.n[0]>X.pk.n[1]?1:0,k=pkKicker(X,s),gk=(X.T[1-s].pl.find(p=>p.role==='GK')||{n:'GK'}).n;
+  X.pend={ty:'pk',m:90,s,n:k.n,sho:k.sho,gk,role:s===X.human?'kick':'save'};
+}
+function mPk(X,kick,dive){
+  const P=X.pend,s=P.s,hit=kick!==dive?.86+(P.sho-75)*.003:(kick===1?.18:.28);
+  const goal=X.r()<clamp(hit,.1,.95);X.pk.n[s]++;if(goal)X.pk.g[s]++;
+  X.ev.push({m:90,s,ty:goal?'goal':'save',pk:1,tx:`PK ${X.pk.g[0]}-${X.pk.g[1]}：${P.n}が${PK_OPT[kick]}へ。${P.gk}は${PK_OPT[dive]}へ跳んだ。${goal?'決めた！':kick!==dive?'外した…':'止めた！'}`,sc:X.sc.slice()});
+  X.pend=null;mPkNext(X);
+}
+// 選んだ内容で場面を進める
+function mDecide(X,v){
+  const P=X.pend;if(!P)return;
+  if(P.ty==='shot'){X.pend=null;mBig(X,P,+v,Math.floor(X.r()*3))}
+  else if(P.ty==='def'){X.pend=null;mBig(X,P,Math.floor(X.r()*3),+v)}
+  else if(P.ty==='pk'){const c=Math.floor(X.r()*3);if(P.role==='kick')mPk(X,+v,c);else mPk(X,c,+v);return}
+  else if(P.ty==='ht'){X.pend=null;if(v&&v.sq)mResub(X,v.sq,v.swaps)}
+  mRun(X);
+}
+function simBattle(A0,B0,seed){const X=mStart(A0,B0,seed,-1);mRun(X);return X.res}
 function pickR(r,a){return a[Math.floor(r()*a.length)]}
 
 /* ---------- CPU相手 ---------- */
@@ -1943,7 +2026,8 @@ function cpuTeam(L,seed){
   return {v:1,name:L.n,form:F.n,tot:Math.round((atk+mid+def)/3),atk,mid,def,hasCap:false,mg:{n:'CPU監督',st:{tac:L.lv-10,coa:50,lea:L.lv-10,gam:L.lv-10,ana:L.lv-10}},pl};
 }
 function battleReward(kind,res,side,lvIdx){
-  const me=res.sc[side],op=res.sc[1-side],o=me>op?0:me===op?1:2;
+  const me=res.sc[side],op=res.sc[1-side];let o=me>op?0:me===op?1:2;
+  if(o===1&&res.pk)o=res.pk[side]>res.pk[1-side]?0:1;// PK勝ちは勝ち、PK負けは引き分け
   const rw=kind==='room'||kind==='code'?[200,100,60]:CPU_LV[lvIdx].rw;
   return {coins:rw[o],o};
 }
@@ -1951,7 +2035,7 @@ function recordBattle(key,kind,res,side,opp,lvIdx){
   if(M.claimed[key])return M.claimed[key];
   const {coins,o}=battleReward(kind,res,side,lvIdx);
   M.coins+=coins;M.rec[['w','d','l'][o]]++;
-  M.hist.unshift({t:Date.now(),kind,opp,gf:res.sc[side],ga:res.sc[1-side],o});M.hist=M.hist.slice(0,15);
+  M.hist.unshift({t:Date.now(),kind,opp,gf:res.sc[side],ga:res.sc[1-side],o,pk:res.pk?res.pk[side]+'-'+res.pk[1-side]:null});M.hist=M.hist.slice(0,15);
   M.claimed[key]={coins,o};
   const ks=Object.keys(M.claimed);if(ks.length>60)delete M.claimed[ks[0]];
   return M.claimed[key];
@@ -2047,11 +2131,12 @@ function showRoomResult(code,d,side){
   metaSave();render();startPlayback();
 }
 function cpuBattle(i){
-  const L=CPU_LV[i],seed=Math.floor(Math.random()*4294967295),A=teamSnap(),Bt=cpuTeam(L,seed^0x5bd1e995),res=simBattle(A,Bt,seed);
-  const key='cpu:'+seed,rw=recordBattle(key,'cpu',res,0,L.n,i);
-  G.bt.view='match';G.bt.match={A,B:Bt,res,side:0,kind:'cpu',rw,lv:i};G.bt.play={t0:Date.now()};
-  metaSave();
+  // CPU戦は自分で選べる（決定機・守備・後半の交代・PK）。結果は試合が終わったときに記録する
+  const L=CPU_LV[i],seed=Math.floor(Math.random()*4294967295),A=teamSnap(),Bt=cpuTeam(L,seed^0x5bd1e995);
+  const X=mStart(A,Bt,seed,0);mRun(X);
+  G.bt.view='match';G.bt.match={A,B:Bt,res:null,live:X,side:0,kind:'cpu',rw:null,lv:i,key:'cpu:'+seed};G.bt.play={t0:Date.now()};G.bt.ht=null;
 }
+function cpuFinish(){const X=G.bt.match;if(!X||!X.live||!X.live.done||X.res)return;X.res=X.live.res;X.rw=recordBattle(X.key,'cpu',X.res,0,CPU_LV[X.lv].n,X.lv);metaSave()}
 
 /* ---------- 自動保存（ブラウザ＋アカウント）とバックアップ ---------- */
 const AUTO={last:0,cloudLast:0,cloudOk:null,timers:{},busy:{},pend:{},sent:{},ready:false};
@@ -2889,7 +2974,7 @@ function render(){
   else if(G.mode==='career'&&S.modal==='retire'&&S.p)m.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="box"><h3 id="mt">${S.p.stage==='pro'?'現役を引退しますか':'就職しますか'}</h3><p class="note">${S.p.age}歳。この決断は取り消せない。引退した選手はマイ選手としてスカッドに入れられる。</p><div class="stack"><button class="btn red" data-act="doRetire">引退する</button><button class="btn ghost" data-act="closeModal">まだ続ける</button></div></div></div>`;
   else if(G.mode==='career'&&S.p&&S.p.dog&&S.p.dog.alive&&!S.p.dog.n)m.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="box"><h3 id="mt">🐶 子犬の名前を決める</h3><p class="note">これから一緒に暮らす子犬の名前。あとから変えられない。</p><div class="field"><input id="dogn" aria-label="犬の名前" maxlength="8" value="${esc(S.p.dog._sug||'')}" placeholder="例：ポチ"><button class="opt" data-act="dogRand">おまかせ</button></div><div class="stack" style="margin-top:12px"><button class="btn red" data-act="dogOk">この名前にする</button></div></div></div>`;
   else m.innerHTML='';
-  if(G.mode==='battle'&&G.bt.view==='match'&&G.bt.play&&!G.bt.play.done&&!PB)startPlayback();
+  if(G.mode==='battle'&&G.bt.view==='match'&&G.bt.play&&!G.bt.play.done&&!PB){const L=G.bt.match&&G.bt.match.live;if(!(L&&L.pend&&matchMin()>=L.pend.m))startPlayback()}
   let tt=document.getElementById('kjtoast');if(G.toastMsg){if(!tt){tt=document.createElement('div');tt.id='kjtoast';tt.className='ftoast';document.body.appendChild(tt)}tt.textContent=G.toastMsg}else if(tt)tt.remove();
 }
 
@@ -3087,7 +3172,7 @@ function enhHtml(){
 }
 
 /* ---------- 対戦 ---------- */
-function matchMin(){const B=G.bt;if(!B.play)return 90;if(B.play.done)return 90;return Math.min(90,Math.floor((Date.now()-B.play.t0)/PLAY_MS*90))}
+function matchMin(){const B=G.bt;if(!B.play)return 90;const L=B.match&&B.match.live;let m=B.play.done?90:Math.min(90,Math.floor((Date.now()-B.play.t0)/PLAY_MS*90));if(L&&L.pend)m=Math.min(m,L.pend.m);return m}
 H.battle=()=>{
   const B=G.bt;
   if(B.view==='match')return matchHtml();
@@ -3120,17 +3205,41 @@ function codeBattleHtml(){
   ${B.cIn?`<div class="label">対戦コードか結果コードを貼り付ける</div><textarea class="code" id="cdin" placeholder="KJ1:..."></textarea><div class="stack" style="margin-top:8px"><button class="btn red" data-act="cdGo">試合を始める</button></div>`:''}
   ${B.cMsg?`<p class="note ${B.cErr?'bad':''}" style="margin-top:8px">${esc(B.cMsg)}</p>`:''}`;
 }
+function matchRes(X){const L=X.live;return X.res||{sc:L.sc,ev:L.ev.slice().sort((a,b)=>a.m-b.m||(a.ty==='ft'||a.pk?1:0)-(b.ty==='ft'||b.pk?1:0)),sh:L.sh,poss:[50,50],mvp:null,cond:L.cond,pk:L.pk?L.pk.g:null}}
+function ixPanel(L,side){
+  const P=L.pend,B=G.bt;
+  if(P.ty==='shot')return `<div class="ixp"><b>決定機！</b><p>${esc(P.n)}がゴール前でフリーに。GKの${esc(P.gk)}と1対1。どこを狙う？</p><div class="seg c3">${SHOT_OPT.map((t,i)=>`<button class="opt" data-act="ixPick" data-v="${i}">${t}</button>`).join('')}</div><p class="sub">GKに読まれると入りにくい。読みを外せば入りやすい。</p></div>`;
+  if(P.ty==='def')return `<div class="ixp def"><b>ピンチ！</b><p>相手の${esc(P.n)}がシュート体勢。GKの${esc(P.gk)}はどこを読む？</p><div class="seg c3">${DEF_OPT.map((t,i)=>`<button class="opt" data-act="ixPick" data-v="${i}">${t}</button>`).join('')}</div><p class="sub">相手の狙いを当てれば止めやすい。</p></div>`;
+  if(P.ty==='pk'){const g=L.pk.g,n=L.pk.n;return `<div class="ixp ${P.role==='kick'?'':'def'}"><b>PK戦 ${g[0]}-${g[1]}</b><span class="sub">（${n[0]}本目まで・${n[1]}本目まで）</span><p>${P.role==='kick'?`キッカーは${esc(P.n)}。どこに蹴る？`:`相手のキッカーは${esc(P.n)}。GKの${esc(P.gk)}はどっちに跳ぶ？`}</p><div class="seg c3">${PK_OPT.map((t,i)=>`<button class="opt" data-act="ixPick" data-v="${i}">${t}</button>`).join('')}</div></div>`}
+  if(P.ty==='ht'){
+    if(!B.ht)B.ht={slots:M.squad.slots.slice(),bench:M.squad.bench.map(id=>{const c=cardById(id);return c&&!isMgr(c)&&!isLegSup(c)&&!M.squad.slots.includes(id)?id:null}),sel:null,swaps:[]};
+    const h=B.ht,T=teamCalc({...M.squad,slots:h.slots,bench:h.bench}),left=3-h.swaps.length;
+    const bench=h.bench.map((id,i)=>[id,i]).filter(([id])=>id);
+    return `<div class="ixp ht"><b>ハーフタイム ${L.sc[0]}-${L.sc[1]}</b><p>後半に向けて選手を入れ替えられる（あと${left}人）。下げる選手を選んでから、ベンチの選手を選ぶ。</p>
+    <div class="label">ピッチ（総合${T.tot}）</div><div class="picks">${T.pl.map((p,i)=>`<button class="pk" aria-pressed="${h.sel===i}" data-act="ixOut" data-v="${i}" ${left?'':'disabled'}><span class="po">${p.role}</span><b>${esc(p.filler?'空き（控え）':p.n)}</b><span class="num">${Math.round(p.r)}</span></button>`).join('')}</div>
+    <div class="label">ベンチ</div>${bench.length?`<div class="picks">${bench.map(([id,i])=>{const c=cardById(id);return `<button class="pk" data-act="ixIn" data-v="${i}" ${h.sel==null||!left?'disabled':''}><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="num">${cardOvr(c)}</span></button>`}).join('')}</div>`:'<p class="note">ベンチに選手がいない。スカッドの「ベンチ」に選手を入れておくと、ここで交代できる。</p>'}
+    ${h.swaps.length?`<div class="chips">${h.swaps.map(s=>`<span class="chip">${esc(s[0])} → ${esc(s[1])}</span>`).join('')}</div>`:''}
+    <div class="stack" style="margin-top:10px"><button class="btn red" data-act="ixGo">${h.swaps.length?'この布陣で後半開始':'交代せずに後半開始'}</button>${h.swaps.length?'<button class="btn ghost" data-act="ixReset">交代を取り消す</button>':''}</div></div>`;
+  }
+  return '';
+}
 function matchHtml(){
-  const B=G.bt,X=B.match,res=X.res,side=X.side,min=matchMin(),done=min>=90;
+  const B=G.bt,X=B.match,L=X.live,side=X.side,min=matchMin();
+  if(L&&L.done&&min>=90)cpuFinish();
+  const res=matchRes(X);
+  const done=min>=90&&!!X.res,ask=L&&L.pend&&min>=L.pend.m;
   const nm=[X.A.name,X.B.name];
   const evs=res.ev.slice().reverse().map(e=>`<li class="bev ${e.ty} ${e.s===side?'mine':e.s<0?'neu':'opp'} ${e.m<=min?'on':''}" data-m="${e.m}"><span class="num">${e.m}'</span><span>${e.s>=0?`<small>${esc(nm[e.s])}</small>`:''}${e.ty==='goal'?'<b>GOAL</b> ':''}${esc(e.tx)}</span></li>`).join('');
-  const mine=res.sc[side],op=res.sc[1-side],o=mine>op?'勝利':mine===op?'引き分け':'敗戦';
+  const mine=res.sc[side],op=res.sc[1-side],pkW=res.pk&&mine===op?res.pk[side]>res.pk[1-side]:null,o=mine>op?'勝利':mine<op?'敗戦':pkW===true?'PK勝ち':pkW===false?'PK負け':'引き分け';
+  const pkTx=res.pk?`（PK ${res.pk[side]}-${res.pk[1-side]}）`:'';
   return `<div class="kick">${X.kind==='room'?`ルーム対戦 ${esc(X.code)}`:X.kind==='code'?'コード対戦':'CPU練習試合'}<span class="r">${esc(X.A.form)} vs ${esc(X.B.form)}</span></div>
   <div class="board"><div class="bt ${side===0?'me':''}"><b>${esc(nm[0])}</b><span class="sub">総合${X.A.tot}${res.cond?`・${res.cond[0].lbl}`:''}</span></div><div class="bs"><span class="num" id="bscore">${scoreAt(res,min).join(' - ')}</span><span class="num clock" id="bclock">${min}'</span></div><div class="bt ${side===1?'me':''}"><b>${esc(nm[1])}</b><span class="sub">総合${X.B.tot}${res.cond?`・${res.cond[1].lbl}`:''}</span></div></div>
-  ${done?'':`<button class="linkbtn center" data-act="btSkip">結果まで飛ばす</button>`}
+  ${res.pk?`<p class="note center" style="text-align:center;margin:6px 0 0">PK戦 ${res.pk[0]} - ${res.pk[1]}</p>`:''}
+  ${ask?ixPanel(L,side):''}
+  ${done||ask?'':`<button class="linkbtn center" data-act="btSkip">${L?'次の場面まで飛ばす':'結果まで飛ばす'}</button>`}
   <ul class="bevs" id="bevs">${evs}</ul>
   <div id="bend" class="${done?'':'hide'}">
-   <div class="verdict big ${mine>op?'ok':mine<op?'ng':'safe'}"><span class="vbig">${o}</span><span class="sub">${mine}-${op}・MVP ${res.mvp?esc(res.mvp.n):'—'}</span></div>
+   <div class="verdict big ${mine>op||pkW===true?'ok':mine<op?'ng':'safe'}"><span class="vbig">${o}</span><span class="sub">${mine}-${op}${pkTx}・MVP ${res.mvp?esc(res.mvp.n):'—'}</span></div>
    <table class="st"><tbody><tr><th>ボール支配率</th><td class="n">${res.poss[0]}% - ${res.poss[1]}%</td></tr><tr><th>シュート</th><td class="n">${res.sh[0]} - ${res.sh[1]}</td></tr><tr><th>獲得コイン</th><td class="n"><b class="gold">+${X.rw?X.rw.coins:0}</b></td></tr></tbody></table>
    ${X.kind==='code'&&X.reply?`<div class="toast"><b>結果コードを相手に送り返そう。</b>相手が貼り付けると、同じ試合が見られて報酬ももらえる。</div><textarea class="code" id="rpout" readonly>${esc(X.reply)}</textarea><div class="stack" style="margin-top:8px"><button class="btn red" data-act="copyFrom" data-v="rpout">結果コードをコピー</button></div>`:''}
    ${X.own?'<p class="note">自分の対戦コードなので報酬はない。</p>':''}${X.watch?'<p class="note">ほかの人どうしの試合なので観戦のみ。</p>':''}
@@ -3144,12 +3253,14 @@ function tickPlayback(){
   const B=G.bt,el=typeof document!=='undefined'&&document.getElementById('bclock');
   if(!el||B.view!=='match'||!B.play){clearInterval(PB);PB=null;return}
   const min=matchMin();applyPlayback(min);
-  if(min>=90){B.play.done=true;clearInterval(PB);PB=null;render()}
+  const L=B.match&&B.match.live;
+  if(L&&L.pend&&min>=L.pend.m){clearInterval(PB);PB=null;render();return}
+  if(min>=90){B.play.done=true;clearInterval(PB);PB=null;if(L)cpuFinish();render()}
 }
 function applyPlayback(min){
   const B=G.bt;if(!B.match)return;
   const c=document.getElementById('bclock'),s=document.getElementById('bscore');
-  if(c)c.textContent=min+"'";if(s)s.textContent=scoreAt(B.match.res,min).join(' - ');
+  if(c)c.textContent=min+"'";if(s)s.textContent=scoreAt(matchRes(B.match),min).join(' - ');
   document.querySelectorAll('.bev').forEach(e=>{if(+e.dataset.m<=min)e.classList.add('on')});
 }
 
@@ -3224,7 +3335,15 @@ Object.assign(ACT,{
  cdOpen:()=>{const B=G.bt;B.cIn=!B.cIn;B.cMsg='';B.cErr=0},
  cdGo:()=>{const B=G.bt,t=document.getElementById('cdin'),v=t?t.value:'';B.cMsg='読み込み中…';B.cErr=0;acceptBattleCode(v).then(()=>{B.cMsg='';B.cIn=false;toTop();render();startPlayback()}).catch(e=>{B.cMsg=e&&e.message||'読み込めなかった。';B.cErr=1;render()})},
  copyFrom:v=>{const t=document.getElementById(v),val=t?t.value:'';copyText(val).then(ok=>{G.toastMsg=ok?`コピーした（${val.length.toLocaleString('ja-JP')}文字）`:'自動でコピーできなかった。コード欄を長押し→「すべてを選択」→「コピー」してほしい';render();setTimeout(()=>{G.toastMsg=null;render()},ok?1800:5000)})},
- btSkip:()=>{if(G.bt.play)G.bt.play.done=true},
+ btSkip:()=>{const B=G.bt,L=B.match&&B.match.live;if(!B.play)return;if(L&&L.pend)B.play.t0=Date.now()-L.pend.m/90*PLAY_MS;else B.play.done=true;if(L&&L.done)cpuFinish()},
+ ixPick:v=>{const B=G.bt,L=B.match&&B.match.live;if(!L||!L.pend)return;const m0=L.pend.m;mDecide(L,+v);B.play.t0=Date.now()-m0/90*PLAY_MS;B.play.done=false;if(L.done&&m0>=90){B.play.done=true;cpuFinish()}else setTimeout(startPlayback,0)},
+ ixOut:v=>{const h=G.bt.ht;if(h)h.sel=h.sel===+v?null:+v},
+ ixIn:v=>{const h=G.bt.ht;if(!h||h.sel==null||h.swaps.length>=3)return;const b=+v,id=h.bench[b];if(!id)return;const outId=h.slots[h.sel];
+   const T=teamCalc({...M.squad,slots:h.slots,bench:h.bench}),outN=T.pl[h.sel].n,inN=(cardById(id)||{}).name||'控え';
+   h.slots[h.sel]=id;h.bench[b]=outId||null;h.swaps.push([outN,inN]);h.sel=null},
+ ixReset:()=>{G.bt.ht=null},
+ ixGo:()=>{const B=G.bt,L=B.match&&B.match.live;if(!L||!L.pend||L.pend.ty!=='ht')return;const h=B.ht;
+   mDecide(L,h&&h.swaps.length?{sq:{...M.squad,slots:h.slots.slice(),bench:h.bench.slice()},swaps:h.swaps}:null);B.ht=null;B.play.t0=Date.now()-45/90*PLAY_MS;setTimeout(startPlayback,0)},
  btMenu:()=>{G.bt.view='menu';G.bt.match=null;G.bt.play=null;G.bt.code='';G.bt.cOut='';toTop()},
  bkExport:()=>{G.bk={msg:'作成中…'};exportCode().then(c=>{G.bk={out:c,msg:'このコードをメモやLINEに保存しておけば、別の端末やデータが消えたときに戻せる。'};render()}).catch(()=>{G.bk={msg:'コードを作れなかった。',err:1};render()})},
  bkCopy:()=>{const t=document.getElementById('bkout');const v=t?t.value:'';copyText(v).then(ok=>{G.bk.msg=ok?`コピーした（${v.length.toLocaleString('ja-JP')}文字）。メモやLINEに貼り付けて保存しておこう。`:'自動でコピーできなかった。コード欄を長押し→「すべてを選択」→「コピー」してほしい。';render()})},
