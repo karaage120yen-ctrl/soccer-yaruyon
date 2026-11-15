@@ -1615,9 +1615,45 @@ function addPlayerCard(p,sum){
   M.coins+=coins;
   return {card:c,coins};
 }
+/* ---------- 特性継承 ---------- */
+const INH_MAX=3;
+const INH_PL=['goal','vision','iron','speed','wall','fk','big','captain','heir'];
+const INH_FALL={FW:['goal','speed','fk'],MF:['vision','fk','captain'],DF:['wall','iron','captain'],GK:['wall','iron','big']};
+const MTRAITS={
+ atk:{n:'攻撃の哲学',d:'試合の得点が8%増える'},
+ dfn:{n:'守備の哲学',d:'試合の失点が1割減る'},
+ eye:{n:'戦術眼',d:'チーム力+1'},
+ heart:{n:'人心掌握',d:'監督の出来事の成功率+10%'},
+ cup:{n:'勝負師',d:'カップ戦でチーム力+1.5、PK戦に強い'},
+ grow:{n:'育成の名手',d:'クラブの底力が毎シーズン+0.4多く伸びる'},
+ kun:{n:'名将の薫陶',d:'シーズン後に能力が伸びやすい'},
+};
+const PL2M={goal:'atk',fk:'atk',speed:'atk',wall:'dfn',iron:'dfn',vision:'eye',captain:'heart',big:'cup',heir:'grow',legend:'kun',monster:'kun',zone:'kun'};
+const MSTY2M=['atk','dfn','grow'];
+const skKey=n=>Object.keys(SKILLS).find(k=>SKILLS[k].n===n);
+const mtKey=n=>Object.keys(MTRAITS).find(k=>MTRAITS[k].n===n);
+function inhParents(mode){const pl=M.roster.filter(c=>c.from==='育成');return mode==='mg'?[...pl,...M.mgrs]:pl}
+function inhCands(c,mode){
+  if(mode==='pl'){const own=(c.skills||[]).map(skKey).filter(k=>INH_PL.includes(k));return own.length?own:(INH_FALL[c.pos]||INH_PL)}
+  let own=[];
+  if(isMgr(c)){own=(c.traits||[]).map(mtKey).filter(Boolean);const si=MSTYLE.findIndex(s=>s.n===c.style);if(si>=0)own.push(MSTY2M[si]);if(c.famous)own.push('kun')}
+  else own=(c.skills||[]).map(n=>PL2M[skKey(n)]).filter(Boolean);
+  return own.length?[...new Set(own)]:['eye','heart','cup'];
+}
+function hstr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+// 選んだ順に1人1つ。同じ特性はかぶらない。結果は候補ごとに固定（選び直しで引き直しはできない）
+function inhRoll(d,mode){
+  const out=[],taken=new Set(),all=mode==='pl'?INH_PL:Object.keys(MTRAITS);
+  for(const id of d.inh||[]){const c=cardById(id);if(!c)continue;
+    let l=inhCands(c,mode).filter(k=>!taken.has(k));if(!l.length)l=all.filter(k=>!taken.has(k));if(!l.length)continue;
+    const k=l[hstr(d.iseed+':'+id)%l.length];taken.add(k);out.push({id,name:c.name,k})}
+  return out;
+}
+function inhToggle(d,id){d.inh=d.inh||[];const i=d.inh.indexOf(id);if(i>=0)d.inh.splice(i,1);else if(d.inh.length<INH_MAX)d.inh.push(id)}
+const inhSeed=prev=>prev&&prev.iseed||Math.random().toString(36).slice(2);
 function addMgrCard(m,sum){
   const st={};for(const k of MKEYS)st[k]=Math.round(m.st[k]);
-  const c={id:uidGen('m'),kind:'mg',name:`${m.sei} ${m.mei}`,st,plus:{},enh:0,famous:!!m.famous,style:MSTYLE[m.style].n,titles:{...m.titles},grade:sum.grade,from:'監督業',t:Date.now()};
+  const c={id:uidGen('m'),kind:'mg',name:`${m.sei} ${m.mei}`,st,plus:{},enh:0,famous:!!m.famous,style:MSTYLE[m.style].n,titles:{...m.titles},traits:(m.traits||[]).map(k=>MTRAITS[k].n),grade:sum.grade,from:'監督業',t:Date.now()};
   M.mgrs.unshift(c);
   const coins=CAREER_COINS;
   M.coins+=coins;
@@ -2036,19 +2072,20 @@ function makeMgr(d){
     st[k]=famous?ri(56,66)+(f?3:0):ri(37,48)+(f?5:0);}
   return {sei:d.sei,mei:d.mei,style:d.style,famous,st,cap};
 }
-function newMgrDraft(prev){const d={sei:pick(SEI),mei:pick(MEI),style:ri(0,2),n:(prev&&prev.n||0)+1};d.prev=makeMgr(d);return d}
+function newMgrDraft(prev){const d={sei:pick(SEI),mei:pick(MEI),style:ri(0,2),n:(prev&&prev.n||0)+1,inh:prev&&prev.inh?prev.inh.slice():[],iseed:inhSeed(prev)};d.prev=makeMgr(d);return d}
 const mgPot=m=>{const a=MKEYS.reduce((s,k)=>s+m.cap[k],0)/5;return a>=92?'SS':a>=86?'S':a>=82?'A':a>=78?'B':a>=74?'C':'D'};
+const mgHas=k=>!!(MC&&MC.m.traits||[]).includes(k);
 const mgLeague=()=>MC.lg||CLUBS[MC.club].lg;
 const mgClub=()=>CLUBS[MC.club];
 function mgMine(){return (MC.mine||[]).map(id=>M.roster.find(c=>c.id===id)).filter(Boolean)}
 function mgStr(){
   const m=MC.m,base=mgClub().rep+(MC.boost||0);
   const mine=mgMine().reduce((s,c)=>s+clamp((cardOvr(c)-base)*.12+.3,.3,2.5),0)+(mgMine().some(c=>c.special==='captain')?1.5:0)+(mgMine().some(c=>c.special==='empire')?1.2:0)+(mgMine().some(c=>c.special==='mao')?1:0);
-  const mg=(m.st.tac-50)*.08+(m.st.lea-50)*.03;
+  const mg=(m.st.tac-50)*.08+(m.st.lea-50)*.03+(mgHas('eye')?1:0);
   return {base:Math.round(base*10)/10,mine:Math.round(mine*10)/10,mg:Math.round(mg*10)/10,tot:Math.round((base+mine+mg)*10)/10};
 }
 function mgStart(){
-  const d=G.mdraft,m=d.prev;m.sei=d.sei;m.mei=d.mei;
+  const d=G.mdraft,m=d.prev;m.sei=d.sei;m.mei=d.mei;m.traits=inhRoll(d,'mg').map(r=>r.k);
   const pool=CLUBS.filter(c=>m.famous?(c.lg==='J2'||c.lg==='J1'&&c.rep<65):(c.lg==='J3'||c.lg==='J2'&&c.rep<53));
   MC={m,season:0,year:2035,age:41,club:null,lg:null,boost:0,pts:7,mine:[],rep:m.famous?45:30,titles:{league:0,cup:0,promo:0},hist:[],
     offers:shuffle(pool.slice()).slice(0,3).map(c=>c.id),screen:'moffer',first:true,seen:{}};
@@ -2104,7 +2141,7 @@ const MEV=[
   {l:'チームに集中する',k:null,b:1,ok:{m:'選手たちとの時間を優先した。',fx:{mod:1,st:{lea:1}}}}]},
 ];
 function mgPickEv(){const l=MEV.filter(e=>(MC.seen[e.id]||-9)<MC.season-1);const e=pick(l.length?l:MEV);MC.seen[e.id]=MC.season;return e.id}
-const mgPr=ch=>ch.k?clamp(ch.b+MC.m.st[ch.k]/140,.1,.95):ch.b;
+const mgPr=ch=>{const v=ch.k?clamp(ch.b+MC.m.st[ch.k]/140,.1,.95):ch.b;return mgHas('heart')&&v<1?Math.min(.97,v+.1):v};
 function mgApply(fx){
   const out=[];
   if(fx.mod){MC.cur.mod+=fx.mod;out.push(['この期間のチーム力',Math.round(fx.mod*10)/10])}
@@ -2121,7 +2158,7 @@ function mgMatch(my,opp,P){
   const m=MC.m,ana=(m.st.ana-50)*.05,late=1+(m.st.gam-50)*.004;
   const sd=clamp(3-(m.st.lea-50)*.03,1,4);
   const a=my+rnd(-sd,sd),b=opp-ana+rnd(-2.5,2.5);
-  return [poisson(1.3*Math.exp((a-b)/13)*P.f*late),poisson(1.3*Math.exp((b-a)/13)*P.a)];
+  return [poisson(1.3*Math.exp((a-b)/13)*P.f*late*(mgHas('atk')?1.08:1)),poisson(1.3*Math.exp((b-a)/13)*P.a*(mgHas('dfn')?.9:1))];
 }
 function mgRunPhase(){
   const c=MC.cur,P=MPLAN[c.plan],ph=c.phase,n=c.sched[ph],S0=mgStr();
@@ -2139,8 +2176,8 @@ function mgRunPhase(){
   // カップ戦
   const cup=c.cup;
   while(cup.alive&&cup.i<cup.rounds.length&&cup.rounds[cup.i].ph===ph){
-    const R=cup.rounds[cup.i];let [x,y]=mgMatch(my,R.os,P);let pk='';
-    if(x===y){const win=Math.random()<.5+(MC.m.st.gam-50)*.006;pk=win?'（PK勝ち）':'（PK負け）';if(win)x+=.001;else y+=.001}
+    const R=cup.rounds[cup.i];let [x,y]=mgMatch(my+(mgHas('cup')?1.5:0),R.os,P);let pk='';
+    if(x===y){const win=Math.random()<.5+(MC.m.st.gam-50)*.006+(mgHas('cup')?.1:0);pk=win?'（PK勝ち）':'（PK負け）';if(win)x+=.001;else y+=.001}
     out.cup.push({nm:R.nm,opp:R.opp,gf:Math.floor(x),ga:Math.floor(y),pk,res:x>y?'w':'l'});
     if(x>y){cup.i++;if(cup.i>=cup.rounds.length){cup.alive=false;cup.won=true;cup.res='優勝'}}
     else{cup.alive=false;cup.res=R.nm==='決勝'?'準優勝':`${R.nm}敗退`}
@@ -2170,8 +2207,8 @@ function mgSeasonEnd(){
   MC.rep=clamp(MC.rep+perf*1.5+(rank===1?5:0)+(c.cup.won?3:0)+(R.notes.some(n=>/昇格/.test(n))?4:0),0,100);
   const bonus=clamp(perf,-2,4)+(rank===1?2:0)+(c.cup.won?1:0);
   MC.pts+=Math.max(2,5+bonus);
-  for(const k of MKEYS){const m=MC.m;if(m.st[k]>=m.cap[k])continue;const p=sty.f.includes(k)?.85:.45;if(Math.random()<p){m.st[k]++;R.grow.push(MLBL[k])}}
-  MC.boost=clamp((MC.boost||0)+(MC.m.st.coa-55)*.035+c.young*.6,-3,10);
+  for(const k of MKEYS){const m=MC.m;if(m.st[k]>=m.cap[k])continue;const p=(sty.f.includes(k)?.85:.45)+(mgHas('kun')?.15:0);if(Math.random()<p){m.st[k]++;R.grow.push(MLBL[k])}}
+  MC.boost=clamp((MC.boost||0)+(MC.m.st.coa-55)*.035+c.young*.6+(mgHas('grow')?.4:0),-3,10);
   R.fired=perf<=-6&&rank>L.t-4&&!MC.first;
   MC.hist.push({y:MC.year,club:mgClub().n,lgn:L.n,rank,teams:L.t,cup:R.cup,notes:R.notes.slice()});
   MC.sum=R;MC.screen='msum';mgSave();
@@ -2205,7 +2242,7 @@ function mgBars(m,showCap){
 function mgCard(m,extra=''){
   const o=Math.round(MKEYS.reduce((s,k)=>s+m.st[k],0)/5);
   return `<section class="pcard ${m.famous?'legendary':''}" aria-label="監督情報"><div class="pc-top"><div class="pc-ovr"><span class="n">${o}</span><span class="pos">監督</span><span class="tier">${m.famous?'名監督':MSTYLE[m.style].n}</span></div>
-  <div class="pc-id"><div class="name">${esc(m.sei)}<b>${esc(m.mei)}</b></div><div class="sub">${extra}</div><div class="tags"><span>${esc(MSTYLE[m.style].n)}</span><span class="pot">伸びしろ ${mgPot(m)}</span>${m.famous?'<span class="sk">名将の器</span>':''}</div></div></div>${mgBars(m,false)}</section>`;
+  <div class="pc-id"><div class="name">${esc(m.sei)}<b>${esc(m.mei)}</b></div><div class="sub">${extra}</div><div class="tags"><span>${esc(MSTYLE[m.style].n)}</span><span class="pot">伸びしろ ${mgPot(m)}</span>${m.famous?'<span class="sk">名将の器</span>':''}${(m.traits||[]).map(k=>`<span class="sk" title="${esc(MTRAITS[k].d)}">${esc(MTRAITS[k].n)}</span>`).join('')}</div></div></div>${mgBars(m,false)}</section>`;
 }
 H.mgTitle=()=>{
   return `<article class="front hero"><div><div class="dateline"><span>監督業</span></div><p class="deck">クラブを率い、8シーズンで名将を目指す。1回10〜15分。</p>
@@ -2221,6 +2258,7 @@ H.mgCreate=()=>{
   ${mgCard(m,'41歳・就任先未定')}
   <div class="label">名前</div><div class="field"><input id="msei" aria-label="姓" value="${esc(d.sei)}" maxlength="6"><input id="mmei" aria-label="名" value="${esc(d.mei)}" maxlength="6"><button class="opt" data-act="mgRandName">おまかせ</button></div>
   <div class="label">チームづくりの方針</div><div class="seg c3">${MSTYLE.map((s,i)=>`<button class="opt" aria-pressed="${d.style===i}" data-act="mgStyle" data-v="${i}">${s.n}<span class="d">${s.d}</span></button>`).join('')}</div>
+  ${inhBlock(d,'mg','mgInh')}
   <div class="stack" style="margin-top:18px"><button class="btn red" data-act="mgStart">この監督で始める</button><button class="btn ghost" data-act="mgReroll">別の候補を探す</button><button class="btn ghost" data-act="mgBack">戻る</button></div>`;
 };
 function mgHead(){
@@ -2406,6 +2444,7 @@ H.create=()=>{
   <p class="note">${pv.skills.includes('legend')?'<b style="color:var(--gold)">10万人に1人の伝説が現れた。</b>3つの能力が95を超えていく器だ。':pv.skills.includes('monster')?'<b style="color:var(--gold)">天才が見つかった。</b>並の選手より限界がはるかに高い。':d.custom?'条件を変えるたびに、能力は引き直される。':'新しい才能が見つかった。この選手の人生を歩むか、別の選手を探すか。'}</p>
   ${pcard(pv,'preview')}
   <dl class="scout"><div><dt>守備位置</dt><dd>${d.pos}<small>${P.n}</small></dd></div><div><dt>プレースタイル</dt><dd>${sty.n}<small>${sty.d}</small></dd></div><div><dt>成長タイプ</dt><dd>${g.n}<small>${g.d}</small></dd></div><div><dt>スカウト評価</dt><dd>${pv.flags.potEst}<small>伸びしろの見立て（SS〜D）</small></dd></div></dl>
+  ${inhBlock(d,'pl','inhPl')}
   <div class="stack" style="margin-top:16px"><button class="btn red" data-act="start">この選手で始める</button><button class="btn ghost" data-act="reroll">${d.custom?'能力を引き直す':'別の選手を探す'}</button></div>
   <button class="linkbtn center" data-act="toggleCustom" aria-expanded="${d.custom?'true':'false'}">${d.custom?'スカウトにおまかせに戻す':'名前や守備位置を自分で決める'}</button>
   ${d.custom?customForm(d):''}`;
@@ -2675,7 +2714,16 @@ function render(){
 }
 
 /* ========== 操作 ========== */
-function newDraft(prev){const d={sei:pick(SEI),mei:pick(MEI),pos:wpick(['FW','MF','DF','GK'],k=>({FW:3,MF:3,DF:2.8,GK:1.2})[k]),foot:wpick(['R','L','B'],k=>({R:7,L:2.2,B:.8})[k]),style:ri(0,2),growth:pick(Object.keys(GROWTH)),custom:false,n:(prev&&prev.n||0)+1};d.prev=makePlayer(d);return d}
+function inhBlock(d,mode,act){
+  const ov=c=>isMgr(c)?mgrOvr(c):cardOvr(c);
+  const ps=inhParents(mode).slice().sort((a,b)=>ov(b)-ov(a)),T=mode==='pl'?SKILLS:MTRAITS,sel=d.inh||[],res=inhRoll(d,mode);
+  const head=`<div class="kick" style="margin-top:18px">特性継承<span class="r">${sel.length}/${INH_MAX}人</span></div>`;
+  if(!ps.length)return head+`<p class="note">${mode==='pl'?'育成モードで選手を引退まで育てる':'育成モードで選手を引退まで育てるか、監督生活を終える'}と、その人から特性を1つずつ受け継げる（最大3人・3つ）。</p>`;
+  return head+`<p class="note">育てたキャラを最大3人選ぶと、1人につき1つずつランダムで特性を受け継ぐ。</p>
+  <div class="picks">${ps.map(c=>{const on=sel.includes(c.id),full=!on&&sel.length>=INH_MAX;return `<button class="pk" aria-pressed="${on}" data-act="${act}" data-v="${c.id}" ${full?'disabled':''}><span class="po">${isMgr(c)?'監督':c.pos}</span><b>${esc(c.name)}</b><span class="num">${ov(c)}</span></button>`}).join('')}</div>
+  ${res.length?`<div class="chips">${res.map(r=>`<span class="chip gold">${esc(r.name)} → ${esc(T[r.k].n)}</span>`).join('')}</div><p class="note">${res.map(r=>`<b>${esc(T[r.k].n)}</b>：${esc(T[r.k].d)}`).join('<br>')}</p>`:''}`;
+}
+function newDraft(prev){const d={sei:pick(SEI),mei:pick(MEI),pos:wpick(['FW','MF','DF','GK'],k=>({FW:3,MF:3,DF:2.8,GK:1.2})[k]),foot:wpick(['R','L','B'],k=>({R:7,L:2.2,B:.8})[k]),style:ri(0,2),growth:pick(Object.keys(GROWTH)),custom:false,n:(prev&&prev.n||0)+1,inh:prev&&prev.inh?prev.inh.slice():[],iseed:inhSeed(prev)};d.prev=makePlayer(d);return d}
 function syncNames(){const a=document.getElementById('sei'),b=document.getElementById('mei');if(a&&S.draft){S.draft.sei=a.value.trim()||S.draft.sei;S.draft.mei=b.value.trim()||S.draft.mei}if(S.draft&&S.draft.prev){S.draft.prev.sei=S.draft.sei;S.draft.prev.mei=S.draft.mei}}
 const toTop=()=>{try{window.scrollTo(0,0)}catch(e){}};
 const ACT={
@@ -2690,9 +2738,10 @@ const ACT={
  setPos:v=>{syncNames();S.draft.pos=v;S.draft.style=0;S.draft.prev=makePlayer(S.draft)},
  setFoot:v=>{syncNames();S.draft.foot=v;S.draft.prev=makePlayer(S.draft)},
  setStyle:v=>{syncNames();S.draft.style=+v;S.draft.prev=makePlayer(S.draft)},
+ inhPl:v=>{syncNames();inhToggle(S.draft,v)},
  setGrowth:v=>{syncNames();S.draft.growth=v;S.draft.prev=makePlayer(S.draft)},
  reroll:()=>{syncNames();if(S.draft.custom){S.draft.prev=makePlayer(S.draft);S.draft.n++}else S.draft=newDraft(S.draft)},
- start:()=>{syncNames();const p=S.draft.prev;p.sei=S.draft.sei;p.mei=S.draft.mei;S.p=p;S.draft=null;pushNews(`【高校】${p.school}の${p.pos}${p.sei}${p.mei}に注目集まる`);newSeason(true);toTop()},
+ start:()=>{syncNames();const p=S.draft.prev;p.sei=S.draft.sei;p.mei=S.draft.mei;const ih=inhRoll(S.draft,'pl');p.inh=ih.map(r=>r.k);ih.forEach(r=>{if(!p.skills.includes(r.k))p.skills.push(r.k)});S.p=p;if(ih.length)pushNews(`【継承】${p.sei}${p.mei}、${ih.map(r=>r.name+'から「'+SKILLS[r.k].n+'」').join('、')}を受け継ぐ`);S.draft=null;pushNews(`【高校】${p.school}の${p.pos}${p.sei}${p.mei}に注目集まる`);newSeason(true);toTop()},
  setFocus:v=>{S.p.train.focus=v},
  setInt:v=>{S.p.train.int=v},
  toMonth:()=>{S.p.month=0;startMonth();toTop()},
@@ -2976,6 +3025,7 @@ Object.assign(ACT,{
  mgNew:()=>{G.mdraft=newMgrDraft();G.mgTop=false;toTop()},
  mgResume:()=>{G.mgTop=false},
  mgBack:()=>{G.mdraft=null},
+ mgInh:v=>{syncInputs();inhToggle(G.mdraft,v)},
  mgRandName:()=>{syncInputs();G.mdraft.sei=pick(SEI);G.mdraft.mei=pick(MEI)},
  mgStyle:v=>{syncInputs();G.mdraft.style=+v;G.mdraft.prev=makeMgr(G.mdraft)},
  mgReroll:()=>{syncInputs();const d=G.mdraft;G.mdraft=newMgrDraft(d);G.mdraft.style=d.style;G.mdraft.prev=makeMgr(G.mdraft);G.mdraft.sei=d.sei===G.mdraft.sei?d.sei:G.mdraft.sei},
