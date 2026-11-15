@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261115-191147';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261115-192755';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -480,6 +480,18 @@ textarea.code{width:100%;min-height:90px;font:12px/1.4 var(--num);background:var
 .ixp p{margin:6px 0}
 .ixp .seg .opt{font-size:13px;padding:10px 6px}
 .bev.chance{border-color:rgba(255,81,38,.35)}
+.spr{display:block;width:100%;height:auto;image-rendering:pixelated;border-radius:10px;background:#1b1b20}
+.spr.rare{box-shadow:0 0 0 1px rgba(205,167,94,.7),0 0 14px rgba(205,167,94,.35)}
+.pc-top.wf{grid-template-columns:auto 1fr 64px}
+.pc-face{width:64px;align-self:start}
+.ct-h.wf{grid-template-columns:40px auto auto 1fr}
+.ct-face{width:40px}
+.gface{width:112px;margin:8px 0 4px}
+.gr .gface-s{width:36px;margin:0 auto 2px}
+.prow.wf{grid-template-columns:36px auto 1fr auto}
+.prow.wf .pf{grid-row:span 2;width:36px}
+.prow.wf .sub{grid-column:3}
+.prow.wf .num{grid-column:4}
 
 </style>
 </head>
@@ -690,6 +702,151 @@ const EV=[
   {l:'ゴールを約束する',d:'',pr:c=>.32+(c.p.st.sho-55)/75,ok:{m:'約束のゴール。カメラに向かって少年の名前を叫んだ。',fx:{pop:15}},ng:{m:'約束は果たせなかったが、病室へ会いに行った。',fx:{pop:2}}},
   {l:'サイン入りユニフォームを贈る',d:'',pr:()=>1,ok:{m:'少年から写真付きのお礼が届いた。',fx:{pop:5}},ng:{m:'',fx:{}}}]},
 ];
+/* ---------- 追加イベント（ふだんの出来事） ---------- */
+
+EV.push(
+ {id:'n_fan',st:['pro'],t:'少年ファンからの手紙',x:'「いつかあなたみたいになりたい」。たどたどしい字で書かれた手紙がクラブに届いた。',ch:[
+  {l:'心を込めて返事を書く',d:'',pr:()=>1,ok:{m:'返事は少年の宝物になったらしい。読み返すと、こっちまで力が湧いた。',fx:{pop:3,cond:5}},ng:{m:'',fx:{}}},
+  {l:'スタジアムに招待する',d:'費用 10万円',pr:()=>.85,ok:{m:'少年はゴール裏で最後まで名前を叫んでくれた。いつもより足が動いた。',fx:{pop:7,cond:7,money:-10}},ng:{m:'急な熱で少年は来られなかった。次の約束をした。',fx:{cond:-2,money:-10}}}]},
+ {id:'n_referee',st:['hs','uni','pro'],t:'まさかの誤審',x:'明らかに相手のファウルなのに、笛が吹かれたのはこちらだった。PKを与えてしまう。',ch:[
+  {l:'主審に猛抗議する',d:'判定が覆るかもしれない',pr:()=>.3,ok:{m:'映像確認の結果、判定が取り消された。ベンチから拍手が起きた。',fx:{pop:3,cond:4}},ng:{m:'イエローカードをもらった。監督の顔が険しい。',fx:{coach:-4,cond:-4}}},
+  {l:'すぐに切り替える',d:'',pr:()=>.8,ok:{m:'「次のプレーで返せばいい」。その姿勢を監督が見ていた。',fx:{coach:3,cond:3}},ng:{m:'頭では分かっていても、しばらく引きずった。',fx:{cond:-3}}}]},
+ {id:'n_spikes',st:['hs','uni','pro'],t:'新作スパイクの試供品',x:'メーカーの担当者が、発売前のスパイクを置いていった。軽くて、足に吸いつくような感触だ。',ch:[
+  {l:'いきなり試合で履く',d:'',pr:()=>.55,ok:{m:'ボールタッチが別人のように柔らかい。いきなり相棒になった。',fx:{tec:2,key:1}},ng:{m:'靴擦れで足の皮がめくれた。',fx:{inj:2,cond:-3}}},
+  {l:'練習でじっくり慣らす',d:'',pr:()=>.9,ok:{m:'2週間かけて足になじませた。',fx:{tec:1}},ng:{m:'結局いつものスパイクに戻した。',fx:{}}}]},
+ {id:'n_lottery',st:['hs','uni','pro'],mo:ALLM,t:'宝くじの当選番号',x:'チームメイトに勧められて買った宝くじ。今日が当選発表の日だ。',ch:[
+  {l:'すぐに確かめる',d:'当たれば大きい',pr:()=>.12,ok:{m:'まさかの当選。チームに焼き肉をおごっても、まだお釣りが来た。',fx:{money:300,cond:8}},ng:{m:'ひとつも合っていなかった。',fx:{cond:-1}}},
+  {l:'気にせず練習に行く',d:'',pr:()=>1,ok:{m:'くじのことは忘れて、いつも通りボールを蹴った。',fx:{cond:2}},ng:{m:'',fx:{}}}]},
+ {id:'n_invest',st:['pro'],mo:ALLM,when:c=>c.p.money>=500,t:'うまい投資話',x:'知人の知人を名乗る男が「必ず倍になる」という話を持ってきた。',ch:[
+  {l:'400万円を預けてみる',d:'',pr:()=>.2,ok:{m:'信じられないことに本当に倍になって返ってきた。',fx:{money:400,cond:5}},ng:{m:'男とは二度と連絡がつかなかった。',fx:{money:-400,cond:-8}}},
+  {l:'丁寧に断る',d:'',pr:()=>1,ok:{m:'後日、その男が詐欺で捕まったというニュースを見た。',fx:{cond:3}},ng:{m:'',fx:{}}}]},
+ {id:'n_storm',st:['hs','uni','pro'],t:'豪雨の中の試合',x:'ピッチは水たまりだらけ。ボールが止まり、まともにパスがつながらない。',ch:[
+  {l:'ロングボールで割り切る',d:'',pr:()=>.6,ok:{m:'泥だらけの勝ち点。体の強さが生きた。',fx:{phy:1,pop:2}},ng:{m:'蹴り合いの末に競り負けた。',fx:{cond:-3}}},
+  {l:'それでもパスにこだわる',d:'',pr:c=>.35+(c.p.st.tec-50)/150,ok:{m:'水たまりを避けるパスで崩し切った。解説者が絶賛した。',fx:{tec:2,pas:1,pop:3}},ng:{m:'パスが水に止まり、ミスが失点につながった。',fx:{coach:-3,cond:-3}}}]},
+ {id:'n_ankle',st:['hs','uni','pro'],t:'練習中に足首をひねった',x:'着地で嫌な音がした。歩けないほどではないが、少し腫れている。',ch:[
+  {l:'すぐに病院で診てもらう',d:'',pr:()=>.85,ok:{m:'軽い捻挫。数日で戻れた。',fx:{inj:1}},ng:{m:'思ったより重く、少し長引いた。',fx:{inj:3}}},
+  {l:'テーピングで練習を続ける',d:'',pr:()=>.45,ok:{m:'痛みに耐えて練習を続けた姿勢を、監督が評価した。',fx:{coach:3,boost:1}},ng:{m:'悪化させてしまった。',fx:{inj:6,cond:-5}}}]},
+ {id:'n_tv',st:['pro'],mo:ALLM,when:c=>c.p.pop>=40,t:'バラエティ番組のオファー',x:'人気番組から出演依頼が来た。サッカー以外の自分を見せるチャンスでもある。',ch:[
+  {l:'思い切って出る',d:'',pr:()=>.6,ok:{m:'天然ぶりが大ウケ。翌日からサインを求める人が倍になった。',fx:{pop:7,money:'cmhalf'}},ng:{m:'緊張でほとんどしゃべれず、編集でカットされた。',fx:{pop:-2}}},
+  {l:'サッカーに集中したいと断る',d:'',pr:()=>1,ok:{m:'監督は「それでいい」とだけ言った。',fx:{coach:2}},ng:{m:'',fx:{}}}]},
+ {id:'n_youth',st:['pro'],mo:ALLM,t:'地元のサッカー教室',x:'オフの日に、地元の小学生向けサッカー教室の講師を頼まれた。',ch:[
+  {l:'引き受ける',d:'',pr:()=>1,ok:{m:'子どもたちの全力の笑顔に、サッカーを始めたころを思い出した。',fx:{pop:4,cond:4,sta:-4}},ng:{m:'',fx:{}}},
+  {l:'体を休める',d:'',pr:()=>1,ok:{m:'一日しっかり休んだ。',fx:{sta:7}},ng:{m:'',fx:{}}}]},
+ {id:'n_wedding',st:['hs','uni','pro'],mo:ALLM,when:c=>c.p.age>=21,t:'友人の結婚式でスピーチ',x:'中学時代からの親友に、結婚式のスピーチを頼まれた。',ch:[
+  {l:'引き受けて全力で準備する',d:'',pr:()=>.7,ok:{m:'会場が笑って泣いた。親友に抱きしめられた。',fx:{cond:6,pop:1}},ng:{m:'緊張で噛みまくった。でも親友は笑ってくれた。',fx:{cond:-1}}},
+  {l:'試合を理由に断る',d:'',pr:()=>1,ok:{m:'ビデオメッセージを送った。',fx:{}},ng:{m:'',fx:{}}}]},
+ {id:'n_tactic',st:['uni','pro'],t:'新しいフォーメーション',x:'監督が新しい布陣を試すと言い出した。慣れない位置で起用されるかもしれない。',ch:[
+  {l:'新しい役割に挑戦する',d:'',pr:()=>.5,ok:{m:'新しい景色が見えた。プレーの幅が一気に広がった。',fx:{all:1,coach:4}},ng:{m:'戸惑いが抜けず、出場機会が減った。',fx:{boost:-1,cond:-2}}},
+  {l:'慣れた位置を主張する',d:'',pr:()=>.75,ok:{m:'自分の武器を磨き続けることを認めてもらえた。',fx:{key:1}},ng:{m:'監督の機嫌を損ねた。',fx:{coach:-4}}}]},
+ {id:'n_heat',st:['hs','uni','pro'],mo:[0,1,10,11],t:'猛暑の連戦',x:'気温35度。ピッチの上はもっと暑い。連戦の疲れが重なっている。',ch:[
+  {l:'水分と休養を徹底する',d:'',pr:()=>.9,ok:{m:'こまめに体を冷やし、最後まで走り切れた。',fx:{sta:8}},ng:{m:'それでも体は重かった。',fx:{sta:-3}}},
+  {l:'気合いで走り抜く',d:'',pr:()=>.5,ok:{m:'誰より走った姿に、監督もサポーターも心を打たれた。',fx:{phy:2,coach:3}},ng:{m:'試合後に熱中症で倒れた。',fx:{inj:2,sta:-15}}}]},
+ {id:'n_game',st:['uni','pro'],mo:ALLM,t:'サッカーゲームに自分が登場',x:'人気サッカーゲームの最新作に、自分が実名で登場した。能力値が、なんだか低い。',ch:[
+  {l:'自分を使って遊びまくる',d:'',pr:()=>1,ok:{m:'ゲームの中の自分でハットトリック。少し元気が出た。',fx:{cond:4}},ng:{m:'',fx:{}}},
+  {l:'能力値にSNSで文句を言う',d:'',pr:()=>.5,ok:{m:'ユーモアたっぷりの投稿がバズった。次の更新で能力値が上がった。',fx:{pop:5}},ng:{m:'「大人げない」と叩かれた。',fx:{pop:-3}}}]},
+ {id:'n_rivalin',st:['pro'],t:'同じポジションに大物が加入',x:'クラブが同じポジションに代表クラスの選手を獲得した。ポジション争いが始まる。',ch:[
+  {l:'真っ向から競い合う',d:'',pr:c=>.35+(c.ovr-c.rep)/30,ok:{m:'紅白戦で何度も勝ち、レギュラーを守った。',fx:{key:2,boost:2}},ng:{m:'差を見せつけられ、ベンチが増えた。',fx:{boost:-2,cond:-4}}},
+  {l:'技を盗んで学ぶ',d:'',pr:()=>.8,ok:{m:'毎日隣で練習し、細かい技術を吸収した。',fx:{tec:1,pas:1}},ng:{m:'思ったほど教えてくれなかった。',fx:{}}}]},
+ {id:'n_snow',st:['hs','uni','pro'],mo:[4,5,6],t:'雪の日の練習',x:'朝起きると、グラウンドが真っ白だった。',ch:[
+  {l:'室内で筋トレをする',d:'',pr:()=>.9,ok:{m:'普段できない部位まで鍛えた。',fx:{phy:1}},ng:{m:'',fx:{}}},
+  {l:'雪の中でボールを蹴る',d:'',pr:()=>.6,ok:{m:'雪で弾まないボールに、足元の技術が磨かれた。',fx:{tec:1,cond:3}},ng:{m:'風邪をひいてしまった。',fx:{sta:-12,cond:-3}}}]},
+ {id:'n_mascot',st:['pro'],mo:ALLM,t:'マスコットとダンス動画',x:'クラブの広報から、マスコットと一緒にダンス動画を撮ってほしいと頼まれた。',ch:[
+  {l:'本気で踊る',d:'',pr:()=>.55,ok:{m:'キレのあるダンスが100万回再生。子どもたちに大人気になった。',fx:{pop:8}},ng:{m:'それなりに再生されたが、すぐ忘れられた。',fx:{pop:2}}},
+  {l:'恥ずかしいので遠慮する',d:'',pr:()=>1,ok:{m:'代わりに先輩が踊ってバズっていた。',fx:{cond:-1}},ng:{m:'',fx:{}}}]},
+ {id:'n_book',st:['pro'],mo:ALLM,when:c=>c.p.age>=26,t:'自伝の出版オファー',x:'出版社から、これまでのサッカー人生を本にしないかと声がかかった。',ch:[
+  {l:'書く',d:'',pr:()=>.7,ok:{m:'正直な言葉がたくさんの人に届いた。重版も決まった。',fx:{money:200,pop:5}},ng:{m:'思ったほど売れなかった。',fx:{money:30,pop:1}}},
+  {l:'まだ早いと断る',d:'',pr:()=>1,ok:{m:'「引退したら書こう」と思った。',fx:{cond:2}},ng:{m:'',fx:{}}}]},
+ {id:'n_cook',st:['hs','uni','pro'],mo:ALLM,t:'自炊に挑戦',x:'体づくりのために、自分で料理をしてみることにした。',ch:[
+  {l:'栄養を考えて本格的に作る',d:'',pr:()=>.6,ok:{m:'鶏むね肉とブロッコリーの日々。体が目に見えて変わった。',fx:{phy:1,sta:5}},ng:{m:'生焼けの肉でお腹を壊した。',fx:{sta:-8}}},
+  {l:'結局コンビニで済ます',d:'',pr:()=>1,ok:{m:'からあげ弁当がうまかった。',fx:{cond:2}},ng:{m:'',fx:{}}}]},
+ {id:'n_celeb',st:['pro'],mo:ALLM,when:c=>c.p.pop>=50,t:'有名人がファンを公言',x:'人気俳優がテレビで「一番好きな選手」としてこちらの名前を挙げた。',ch:[
+  {l:'雑誌で対談する',d:'',pr:()=>.75,ok:{m:'意外な共通点で盛り上がった。対談は大反響。',fx:{pop:7}},ng:{m:'話がかみ合わず、ぎこちない記事になった。',fx:{pop:2}}},
+  {l:'SNSでお礼だけ伝える',d:'',pr:()=>1,ok:{m:'ていねいなお礼が好感を呼んだ。',fx:{pop:3}},ng:{m:'',fx:{}}}]},
+ {id:'n_flight',st:['pro'],t:'揺れる遠征の飛行機',x:'アウェー遠征の飛行機が乱気流で大きく揺れている。',ch:[
+  {l:'目をつぶって寝る',d:'',pr:()=>.6,ok:{m:'気づいたら着陸していた。体力は満タンだ。',fx:{sta:6}},ng:{m:'一睡もできなかった。',fx:{sta:-6}}},
+  {l:'タブレットで相手を研究する',d:'',pr:()=>.85,ok:{m:'相手の癖を見つけた。試合でそのまま役に立った。',fx:{pas:1,def:1}},ng:{m:'酔ってしまった。',fx:{sta:-4}}}]},
+ {id:'n_star',st:['hs','uni','pro'],mo:ALLM,t:'流れ星',x:'練習帰りの夜空に、大きな流れ星が流れた。',ch:[
+  {l:'「点を取らせてください」',d:'',pr:()=>.35,ok:{m:'次の試合、なぜかシュートがよく入った。',fx:{sho:2}},ng:{m:'願いは届かなかった。でも気分はよかった。',fx:{cond:2}}},
+  {l:'「ケガをしませんように」',d:'',pr:()=>.6,ok:{m:'体が軽い気がする。',fx:{sta:10}},ng:{m:'気のせいだった。',fx:{}}}]},
+ {id:'n_letter_hs',st:['hs'],mo:ALLM,t:'下駄箱に手紙',x:'朝、下駄箱に一通の手紙が入っていた。「放課後、屋上で待っています」。',ch:[
+  {l:'屋上に行く',d:'',pr:()=>.6,ok:{m:'甘酸っぱい放課後になった。足取りが軽い。',fx:{cond:8}},ng:{m:'行ってみたら、部員たちのいたずらだった。',fx:{cond:-3}}},
+  {l:'部活を優先する',d:'',pr:()=>1,ok:{m:'気になりつつも、グラウンドへ向かった。',fx:{key:1}},ng:{m:'',fx:{}}}]},
+ {id:'n_party',st:['uni'],mo:ALLM,t:'サークルの飲み会に誘われた',x:'同じ学部の友だちから、サークルの集まりに誘われた。',ch:[
+  {l:'たまには行く',d:'',pr:()=>.6,ok:{m:'サッカー以外の友だちができた。いい気分転換になった。',fx:{cond:5,sta:-5}},ng:{m:'翌朝の練習に寝坊した。',fx:{coach:-3,sta:-6}}},
+  {l:'自主練をする',d:'',pr:()=>1,ok:{m:'誰もいないグラウンドで、黙々とシュートを打った。',fx:{key:1}},ng:{m:'',fx:{}}}]},
+ {id:'n_abroadmatch',st:['uni'],t:'海外の大学との交流試合',x:'欧州の大学チームが来日した。プロのスカウトも見に来るらしい。',ch:[
+  {l:'得意なプレーでアピールする',d:'',pr:c=>.4+(c.ovr-55)/60,ok:{m:'試合後、海外のスカウトから名刺を渡された。',fx:{scout:10,pop:3}},ng:{m:'体格差に苦しんだ。',fx:{cond:-3}}},
+  {l:'相手の選手と交流する',d:'',pr:()=>.85,ok:{m:'英語で話して友だちになった。世界が少し近くなった。',fx:{pop:2,cond:3}},ng:{m:'言葉が通じず、うまく話せなかった。',fx:{}}}]},
+ {id:'n_hat',st:['uni','pro'],when:c=>c.p.pos==='FW'||c.p.pos==='MF',t:'ハットトリックのチャンス',x:'この試合2点目を決めた。残り10分、もう1点取ればハットトリックだ。',ch:[
+  {l:'自分で狙い続ける',d:'',pr:c=>.3+(c.p.st.sho-60)/120,ok:{m:'3点目！ 試合球を持ち帰った。',fx:{pop:6,sho:1}},ng:{m:'強引なシュートで味方のチャンスをつぶした。',fx:{coach:-3}}},
+  {l:'味方に決めさせる',d:'',pr:()=>.7,ok:{m:'ラストパスで仲間のゴールを演出した。',fx:{pas:1,coach:3}},ng:{m:'パスが流れた。',fx:{}}}]},
+ {id:'n_comeback',st:['hs','uni','pro'],t:'0-2からのハーフタイム',x:'前半だけで2点のビハインド。ロッカールームは静まり返っている。',ch:[
+  {l:'自分から声を出す',d:'',pr:()=>.45,ok:{m:'後半3得点の大逆転。あの声がきっかけだったと誰もが言った。',fx:{coach:5,pop:5,cond:5}},ng:{m:'逆転はならなかった。でも気持ちは伝わった。',fx:{coach:2}}},
+  {l:'監督の指示を待つ',d:'',pr:()=>.8,ok:{m:'修正した戦術で1点を返した。',fx:{cond:1}},ng:{m:'そのまま敗れた。',fx:{cond:-3}}}]},
+);
+/* ---------- 買ったもの・持っているものがあるときだけ起きるイベント（起きやすい） ---------- */
+EV.push(
+ {id:'i_super',st:['pro'],mo:ALLM,w:2.5,when:c=>c.p.car==='super',t:'スーパーカーで深夜ドライブ',x:'ガレージのスーパーカーが、静かにエンジンをかけてほしそうにしている。',ch:[
+  {l:'海沿いを安全運転で流す',d:'',pr:()=>.9,ok:{m:'波の音とエンジン音。最高の気分転換になった。',fx:{cond:6}},ng:{m:'渋滞にはまって終わった。',fx:{}}},
+  {l:'高速を飛ばす',d:'',pr:()=>.5,ok:{m:'誰にも見られず、思い切り風を感じた。',fx:{cond:9}},ng:{m:'スピード違反で捕まり、ニュースになった。',fx:{pop:-8,coach:-6}}}]},
+ {id:'i_luxury',st:['pro'],mo:ALLM,w:2.5,when:c=>c.p.car==='luxury'||c.p.car==='super',t:'愛車がパパラッチに撮られた',x:'クラブハウスの駐車場で、高級車から降りるところを週刊誌に撮られた。',ch:[
+  {l:'笑顔で手を振る',d:'',pr:()=>.7,ok:{m:'「気さくなスター」と好意的な記事になった。',fx:{pop:5}},ng:{m:'「調子に乗っている」と書かれた。',fx:{pop:-3}}},
+  {l:'無視して足早に去る',d:'',pr:()=>.6,ok:{m:'記事にはならなかった。',fx:{}},ng:{m:'「感じが悪い」と書かれた。',fx:{pop:-4}}}]},
+ {id:'i_suv',st:['pro'],mo:ALLM,w:2.5,when:c=>c.p.car==='suv'&&c.p.fam.partner&&c.p.fam.partner.married,t:'SUVで家族キャンプ',x:'オフの週末。荷台いっぱいにキャンプ道具を積めば、家族みんなで出かけられる。',ch:[
+  {l:'山へキャンプに行く',d:'',pr:()=>.85,ok:{m:'満天の星の下で、家族で焼いたマシュマロがうまかった。',fx:{fam:12,sta:6}},ng:{m:'大雨でテントの中にこもった。それはそれで楽しかった。',fx:{fam:5}}},
+  {l:'家でゆっくり休む',d:'',pr:()=>1,ok:{m:'ソファで子どもと昼寝した。',fx:{sta:8,fam:3}},ng:{m:'',fx:{}}}]},
+ {id:'i_compact',st:['uni','pro'],mo:ALLM,w:2.5,when:c=>c.p.car==='compact',t:'愛車が故障した',x:'朝、エンジンがかからない。練習まであと1時間。',ch:[
+  {l:'修理に出してタクシーで行く',d:'費用 20万円',pr:()=>.9,ok:{m:'ぎりぎり間に合った。',fx:{money:-20}},ng:{m:'渋滞で遅刻した。',fx:{money:-20,coach:-3}}},
+  {l:'走って練習場へ向かう',d:'',pr:()=>.6,ok:{m:'いいウォーミングアップになった。',fx:{phy:1,spd:1}},ng:{m:'間に合わず、遅刻した。',fx:{coach:-4}}}]},
+ {id:'i_mansion',st:['pro'],mo:ALLM,w:2.5,when:c=>c.p.home==='mansion',t:'豪邸でホームパーティー',x:'プール付きの豪邸。チームメイトから「パーティーやろうよ」と言われている。',ch:[
+  {l:'チーム全員を招いて盛大に',d:'費用 50万円',pr:()=>.7,ok:{m:'チームの絆が深まった。プールに監督が落ちた写真は伝説になった。',fx:{coach:4,boost:1,cond:5,money:-50}},ng:{m:'近所から苦情が来て、ニュースになった。',fx:{pop:-4,money:-50}}},
+  {l:'家族や親しい人だけで',d:'',pr:()=>1,ok:{m:'静かで、あたたかい夜だった。',fx:{fam:8,cond:5}},ng:{m:'',fx:{}}}]},
+ {id:'i_tower',st:['pro'],mo:ALLM,w:2.5,when:c=>c.p.home==='tower',t:'タワーマンションの夜景',x:'40階の窓から見下ろす街の灯り。試合前夜、なかなか眠れない。',ch:[
+  {l:'夜景を見ながら瞑想する',d:'',pr:()=>.8,ok:{m:'心が静かになり、ぐっすり眠れた。',fx:{cond:7}},ng:{m:'考えごとが止まらなかった。',fx:{cond:-2}}},
+  {l:'映画を観て夜更かし',d:'',pr:()=>.4,ok:{m:'いい映画だった。不思議と体も軽い。',fx:{cond:4}},ng:{m:'寝不足で試合に臨んだ。',fx:{sta:-8}}}]},
+ {id:'i_house',st:['pro'],mo:ALLM,w:2.5,when:c=>c.p.home==='house',t:'一戸建ての庭で',x:'芝を張った庭。子どものころ、こんな庭でボールを蹴るのが夢だった。',ch:[
+  {l:'毎朝ボールを蹴る',d:'',pr:()=>.9,ok:{m:'朝の30分が、技術を少しずつ磨いた。',fx:{tec:1,key:1}},ng:{m:'ボールが隣の家の窓に当たった。謝りに行った。',fx:{money:-10}}},
+  {l:'家庭菜園を始める',d:'',pr:()=>.8,ok:{m:'育てたトマトが甘かった。心が落ち着いた。',fx:{cond:6}},ng:{m:'全部カラスに食べられた。',fx:{cond:-1}}}]},
+ {id:'i_capsule',st:['hs','uni','pro'],mo:ALLM,w:2.5,when:c=>c.p.items.capsule,t:'酸素カプセルで寝落ち',x:'酸素カプセルに入ったら、あまりの心地よさにうとうとしてきた。',ch:[
+  {l:'朝までこのまま寝る',d:'',pr:()=>.7,ok:{m:'目覚めたら体が羽のように軽い。',fx:{sta:15}},ng:{m:'寝坊して練習に遅刻した。',fx:{sta:8,coach:-3}}},
+  {l:'アラームをかけて1時間で出る',d:'',pr:()=>1,ok:{m:'しっかり疲れが抜けた。',fx:{sta:8}},ng:{m:'',fx:{}}}]},
+ {id:'i_gym',st:['hs','uni','pro'],mo:ALLM,w:2.5,when:c=>c.p.items.gym,t:'自宅ジムで追い込む',x:'深夜の自宅トレーニングルーム。今日はまだやれる気がする。',ch:[
+  {l:'限界まで追い込む',d:'',pr:()=>.55,ok:{m:'翌朝、体が一回り大きくなった気がした。',fx:{phy:2,spd:1}},ng:{m:'重量を上げすぎて腰を痛めた。',fx:{inj:3}}},
+  {l:'ほどほどにして寝る',d:'',pr:()=>1,ok:{m:'無理せず続けるのが一番だ。',fx:{phy:1}},ng:{m:'',fx:{}}}]},
+ {id:'i_trainer',st:['hs','uni','pro'],mo:ALLM,w:2.5,when:c=>c.p.subs.trainer,t:'トレーナーの新メニュー',x:'パーソナルトレーナーが「最新の理論で組んだ」という新メニューを持ってきた。',ch:[
+  {l:'新メニューに挑戦する',d:'',pr:()=>.6,ok:{m:'全身の動きが連動するようになった。',fx:{all:1}},ng:{m:'きつすぎて体が悲鳴を上げた。',fx:{sta:-10}}},
+  {l:'いつものメニューを続ける',d:'',pr:()=>1,ok:{m:'慣れたメニューで着実に積み上げた。',fx:{key:1}},ng:{m:'',fx:{}}}]},
+ {id:'i_nutri',st:['hs','uni','pro'],mo:ALLM,w:2.5,when:c=>c.p.subs.nutri,t:'栄養士の厳しい食事制限',x:'専属栄養士から、しばらく甘いものと揚げ物を禁止された。',ch:[
+  {l:'言われた通りに守る',d:'',pr:()=>.75,ok:{m:'体が引き締まり、疲れにくくなった。',fx:{phy:1,sta:6}},ng:{m:'ストレスがたまってイライラした。',fx:{cond:-4}}},
+  {l:'こっそりチートデイ',d:'',pr:()=>.7,ok:{m:'からあげを食べて元気が出た。バレなかった。',fx:{cond:6}},ng:{m:'見つかって、こっぴどく怒られた。',fx:{cond:-2}}}]},
+ {id:'i_mental',st:['hs','uni','pro'],mo:ALLM,w:2.5,when:c=>c.p.subs.mental,t:'メンタルコーチとの面談',x:'大一番の前、メンタルコーチと向き合う時間をつくった。',ch:[
+  {l:'勝つイメージを細かく描く',d:'',pr:()=>.85,ok:{m:'ピッチに立つ前から、勝ち方が見えていた。',fx:{cond:8}},ng:{m:'考えすぎて逆に固くなった。',fx:{cond:-2}}},
+  {l:'一人で静かに集中する',d:'',pr:()=>.65,ok:{m:'自分だけの集中の仕方を見つけた。',fx:{cond:6}},ng:{m:'不安が消えなかった。',fx:{cond:-3}}}]},
+ {id:'i_spike',st:['hs','uni','pro'],mo:ALLM,w:2.5,when:c=>c.p.items.spike,t:'特注スパイクのピンが折れた',x:'試合直前、職人が作ってくれた特注スパイクのピンが1本折れていた。',ch:[
+  {l:'予備のスパイクで戦う',d:'',pr:()=>.6,ok:{m:'足になじまないながらも、いつも通りプレーできた。',fx:{}},ng:{m:'踏ん張りがきかず、ミスが増えた。',fx:{cond:-3}}},
+  {l:'職人に急いで直してもらう',d:'費用 30万円',pr:()=>.9,ok:{m:'前よりもフィットするようになって戻ってきた。',fx:{tec:1,money:-30}},ng:{m:'修理は試合に間に合わなかった。',fx:{money:-30}}}]},
+ {id:'i_ring',st:['uni','pro'],mo:ALLM,w:3,when:c=>c.p.items.ring&&c.p.fam.partner&&!c.p.fam.partner.married,t:'婚約指輪を渡すタイミング',x:'引き出しの奥の婚約指輪。いつ渡すか、ずっと迷っている。',ch:[
+  {l:'今夜、サプライズで見せる',d:'',pr:()=>.6,ok:{m:'驚いて、泣いて、笑ってくれた。気持ちがひとつになった。',fx:{love:20,cond:6}},ng:{m:'タイミングが悪く、少し気まずくなった。',fx:{love:-4}}},
+  {l:'記念日まで大切にしまっておく',d:'',pr:()=>1,ok:{m:'その日のために、もう少しだけ待つことにした。',fx:{love:5}},ng:{m:'',fx:{}}}]},
+ {id:'i_dog',st:['pro'],mo:ALLM,w:3,when:c=>c.p.dog&&c.p.dog.alive,t:'愛犬と公園へ',x:c=>`オフの日、${c.dog.n||'愛犬'}がリードをくわえてこっちを見ている。`,ch:[
+  {l:'フリスビーで全力で遊ぶ',d:'',pr:()=>.8,ok:{m:'ダッシュとジャンプの繰り返し。いいトレーニングになった。',fx:{spd:1,sta:5}},ng:{m:'リードが外れて逃げ出し、1時間探し回った。',fx:{cond:-3,sta:-6}}},
+  {l:'芝生で一緒に昼寝する',d:'',pr:()=>1,ok:{m:'あたたかい日差しの中で、心がほどけた。',fx:{cond:7}},ng:{m:'',fx:{}}}]},
+ {id:'i_dogtv',st:['pro'],mo:ALLM,w:2,when:c=>c.p.dog&&c.p.dog.alive&&c.p.pop>=35,t:'愛犬にテレビの取材',x:c=>`SNSにあげた${c.dog.n||'愛犬'}の動画が話題に。テレビ局が取材に来たいという。`,ch:[
+  {l:'一緒に出演する',d:'',pr:()=>.75,ok:{m:'愛犬のほうが人気者になった。',fx:{pop:6,cond:4}},ng:{m:'カメラにおびえて、ずっと隠れていた。',fx:{pop:1}}},
+  {l:'そっとしておく',d:'',pr:()=>1,ok:{m:'家でのんびり過ごした。',fx:{cond:2}},ng:{m:'',fx:{}}}]},
+ {id:'i_school',st:['pro'],mo:ALLM,w:3,when:c=>c.p.items.school,t:'スクールの教え子が代表に',x:'自分が設立したサッカースクールの教え子が、年代別代表に選ばれた。',ch:[
+  {l:'お祝いに会いに行く',d:'',pr:()=>1,ok:{m:'「いつか一緒にプレーしたい」と言われた。胸が熱くなった。',fx:{pop:6,cond:6}},ng:{m:'',fx:{}}},
+  {l:'手紙でエールを送る',d:'',pr:()=>1,ok:{m:'手紙はロッカーに貼られているらしい。',fx:{pop:3,cond:3}},ng:{m:'',fx:{}}}]},
+ {id:'i_parents',st:['pro'],mo:ALLM,w:3,when:c=>c.p.items.parents,t:'両親が試合を見に来た',x:'プレゼントした新居から、両親がそろってスタジアムに来てくれた。',ch:[
+  {l:'いいところを見せようと張り切る',d:'',pr:()=>.55,ok:{m:'両親の前でゴール。スタンドで父が泣いていた。',fx:{pop:3,key:1,cond:6}},ng:{m:'空回りして途中交代。母は笑って「元気そうでよかった」と言った。',fx:{cond:-2}}},
+  {l:'いつも通りにプレーする',d:'',pr:()=>1,ok:{m:'試合後、3人でご飯を食べた。',fx:{cond:5}},ng:{m:'',fx:{}}}]},
+ {id:'i_altitude',st:['hs','uni','pro'],mo:ALLM,w:3,when:c=>c.p.seasonBuys.altitude,t:'高地合宿の最終日',x:'標高2000m。空気の薄さにも、ようやく体が慣れてきた。',ch:[
+  {l:'最後に心肺を限界まで追い込む',d:'',pr:()=>.6,ok:{m:'下山すると、どこまでも走れる気がした。',fx:{spd:1,phy:2,sta:-8}},ng:{m:'軽い高山病になった。',fx:{inj:2,sta:-10}}},
+  {l:'無理せず体を整える',d:'',pr:()=>1,ok:{m:'合宿の成果を落とさずに山を下りた。',fx:{sta:6}},ng:{m:'',fx:{}}}]},
+ {id:'i_donate',st:['pro'],mo:ALLM,w:2,when:c=>c.p.seasonBuys.donate||c.p.items.stadium,t:'寄付先の子どもたちから',x:'寄付を続けている団体の子どもたちから、手作りの寄せ書きが届いた。',ch:[
+  {l:'施設に会いに行く',d:'',pr:()=>1,ok:{m:'一緒にボールを蹴った。笑顔が忘れられない。',fx:{pop:5,cond:6}},ng:{m:'',fx:{}}},
+  {l:'寄せ書きをロッカーに飾る',d:'',pr:()=>1,ok:{m:'試合前に毎回目に入る。力が湧く。',fx:{cond:4}},ng:{m:'',fx:{}}}]},
+);
 const EVM=Object.fromEntries(EV.map(e=>[e.id,e]));
 
 /* ========== レジェンド（架空の伝説的名選手） ========== */
@@ -748,9 +905,109 @@ function legendEv(id,p){
 
 
 
+/* ========== ドット絵（16×16） ========== */
+const SPR_BASE=[
+ '................',
+ '................',
+ '....kkkkkkkk....',
+ '...kssssssssk...',
+ '...kssssssssk...',
+ '...kssssssssk...',
+ '...ksessssesk...',
+ '..kdssssssssdk..',
+ '...ksssmmsssk...',
+ '....kssssssk....',
+ '......kssk......',
+ '..kjjjwsswjjjk..',
+ '.kjjjjjwwjjjjjk.',
+ '.kjjjjjjjjjjjjk.',
+ 'kjjjjjjjjjjjjjjk',
+ 'kjjjjjjjjjjjjjjk'];
+const HAIR={
+ short:['','','....hhhhhhhh....','...hhhhhhhhhh...','...hh......hh...'],
+ spiky:['.....h..h..h....','....hhhhhhhhh...','...hhhhhhhhhh...','...hhhhhhhhhh...','...h........h...'],
+ long:['','','....hhhhhhhh....','...hhhhhhhhhh...','..hhh......hhh..','..hh........hh..','..hh........hh..','..hh........hh..','..h..........h..'],
+ buzz:['','','....hhhhhhhh....','...hh......hh...'],
+ mohawk:['.......hh.......','.......hh.......','......hhhh......','.......hh.......'],
+ afro:['....hhhhhhhh....','..hhhhhhhhhhhh..','..hhhhhhhhhhhh..','..hhhhhhhhhhhh..','..hh........hh..','..hh........hh..'],
+ side:['','','....hhhhhhhh....','...hhhhhhh.hh...','...hhhh.....h...'],
+ bangs:['','','....hhhhhhhh....','...hhhhhhhhhh...','...hhhhhhhhhh...','...hhhhh....h...','...hhhh.....h...'],
+ bald:[],
+};
+const SKIN=['#f4cfa6','#e8b58a','#cf9466','#a8693f','#7b4a2c'];
+const HAIRC=['#231812','#3d2616','#6b3f1c','#b8883e','#151515','#8e2f17','#cfcfcf','#e7d27a'];
+const JERSEY={FW:['#e2462b','#9c2412'],MF:['#2f6fd6','#1b4590'],DF:['#2f9e5b','#1c6a3b'],GK:['#e8b62c','#a87c12']};
+function sprOverlay(g,ov,ch){ov.forEach((row,y)=>{if(!row)return;for(let x=0;x<16;x++)if(row[x]&&row[x]!=='.')g[y][x]=ch||row[x]})}
+function sprGrid(rows){return rows.map(r=>r.padEnd(16,'.').slice(0,16).split(''))}
+// 1マスずつではなく、横に続く同じ色をまとめて描く
+function sprSvg(g,pal,opt={}){
+  let out='';
+  for(let y=0;y<16;y++){let x=0;while(x<16){const c=g[y][x];if(c==='.'||!pal[c]){x++;continue}let w=1;while(x+w<16&&g[y][x+w]===c)w++;out+=`<rect x="${x}" y="${y}" width="${w}" height="1" fill="${pal[c]}"/>`;x+=w}}
+  const bg=opt.bg?`<defs><radialGradient id="g${opt.uid}" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="${opt.bg[0]}"/><stop offset="1" stop-color="${opt.bg[1]}"/></radialGradient></defs><rect width="16" height="16" fill="url(#g${opt.uid})"/>`:'';
+  const spk=opt.spark?opt.spark.map(([x,y])=>`<rect x="${x}" y="${y}" width="1" height="1" fill="#fff7c2"/>`).join(''):'';
+  return `<svg class="spr${opt.cls?' '+opt.cls:''}" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${bg}${out}${spk}</svg>`;
+}
+let SPR_UID=0;
+function hashS(t){let h=0x811c9dc5;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,0x01000193)}return h>>>0}
+// 名前から毎回同じ顔を作る
+function genFace(seed,pos,kind){
+  const r=rng(hashS(seed)),pk=a=>a[Math.floor(r()*a.length)];
+  const g=sprGrid(SPR_BASE);
+  const styles=kind==='mg'?['short','side','buzz','bald','side','short']:['short','spiky','long','buzz','mohawk','afro','side','bangs','short','spiky'];
+  const hs=pk(styles);sprOverlay(g,HAIR[hs],'h');
+  const pal={k:'#1a1410',s:pk(SKIN),e:'#1a1410',m:'#9a3b2c',h:kind==='mg'&&r()<.35?'#9a9a9a':pk(HAIRC),w:'#f5f5f5'};
+  pal.d=pal.s;
+  if(kind==='mg'){pal.j='#26324a';pal.J='#1a2336';sprOverlay(g,['','','','','','','','','','','','.......tt.......','.......tt.......','........t.......'],'t');pal.t='#c0392b';
+    if(r()<.35){sprOverlay(g,['','','','','','','....g.gggg.g....'],'g');pal.g='#222'}}
+  else{const J=JERSEY[pos]||JERSEY.MF;pal.j=J[0];pal.J=J[1];
+    if(r()<.25){sprOverlay(g,['','','','','...bbbbbbbbbb...'],'b');pal.b=pk(['#ffffff','#e2462b','#2f6fd6','#111111'])}}
+  // 背番号の影
+  sprOverlay(g,['','','','','','','','','','','','','','.......JJ.......','.......JJ.......'],'J');
+  return {g,pal};
+}
+/* ガチャキャラ・レジェンドの固有デザイン */
+function face(base,hair,pal,extra){const g=sprGrid(SPR_BASE);if(hair)sprOverlay(g,HAIR[hair]||hair,'h');if(extra)extra.forEach(([ov,ch])=>sprOverlay(g,ov,ch));return {g,pal:Object.assign({k:'#120c08',s:'#f0c49a',d:'#f0c49a',e:'#120c08',m:'#9a3b2c',w:'#ffffff'},pal)}}
+const SPR_SPECIAL={
+ ichikawa:()=>face(0,'spiky',{h:'#141414',j:'#d8281c',J:'#8f160d',a:'#ffd23a'},[[['','','','','','','','','','','','','.aa.............','.aa.............'],'a'],[['','','','','','..............','...ksessssesk...'],null]]),
+ shanchi:()=>face(0,'long',{h:'#0e0e0e',j:'#4b1f6f',J:'#2a0f42',b:'#d4302a',w:'#e8c15a'},[[['','','','','...bbbbbbbbbb...'],'b']]),
+ mao:()=>face(0,'spiky',{h:'#ffd24a',j:'#e0a419',J:'#9c6f08',w:'#fff2b0',e:'#5a3200'},[]),
+ inkansu:()=>face(0,'bangs',{h:'#1d2b3a',j:'#111821',J:'#0a0f15',w:'#38e0c8',e:'#38e0c8'},[[['','','','','','','','','','','','','','.....ff..ff.....','......f..f......'],'f']]),
+ lg_leon:()=>face(0,'spiky',{h:'#dfe8f0',j:'#1b7fd1',J:'#0f4f86',w:'#9ff0ff',c:'#9ff0ff'},[[['c..............c','.c............c.'],'c']]),
+ lg_fabio:()=>face(0,'short',{h:'#3a2414',j:'#5b2a8a',J:'#3a1660',p:'#6f3bb0',y:'#ffd23a'},[[['.......pp.......','......pppp......','.....pppppp.....','...pppppppppp...','....yyyyyyyy....'],null]]),
+ lg_gabriel:()=>face(0,'afro',{h:'#1a120c',s:'#a8693f',d:'#a8693f',j:'#b3201a',J:'#6e120e',z:'#1a120c'},[[['','','','','','','','..kz........zk..','...kzzmmzzzk....','....kzzzzzk.....'],null]]),
+ lg_andrea:()=>face(0,'side',{h:'#2a2a2a',j:'#f2f2f2',J:'#bdbdbd',w:'#111111',t:'#c9a24a'},[[['','','','','','','','','','','','.......tt.......','.......tt.......'],'t']]),
+ lg_boris:()=>face(0,'buzz',{h:'#8a8a8a',j:'#5f6b75',J:'#3b444b',x:'#c45a4a'},[[['','','','','','.........x......','..........x.....'],'x']]),
+ lg_marcus:()=>face(0,null,{j:'#3b4a5a',J:'#24303c',q:'#9aa7b3',Q:'#6b7782'},[[['....qqqqqqqq....','...qqqqqqqqqq...','..qqqqqqqqqqqq..','..qQ........Qq..','..qQ........Qq..'],null]]),
+ lg_mameo:()=>{const g=sprGrid([
+   '................','......kkkk......','....kkccbbkk....','...kccccccbbk...','..kccccccccbbk..','..kcceccccecbk..','..kccccccccccbk.','..kccccmmccccbk.','..kcccccccccccbk','..kcccccccccccbk','...kcccccccccbk.','....kcccccccck..','.....kkcccckk...','.......kkkk.....','................','................']);
+   return {g,pal:{k:'#2a160a',c:'#7a4a24',b:'#5a3214',e:'#fff1d6',m:'#f0c49a'}}},
+ lg_inu:()=>{const g=sprGrid([
+   '................','..kk........kk..','.kbbk......kbbk.','.kbbbkkkkkkbbbk.','..kbwwwwwwwwbk..','..kwwwwwwwwwwk..','..kwekwwwwkewk..','..kwwwwwwwwwwk..','..kwwwwnnwwwwk..','...kwwwmmwwwk...','....kwwppwwk....','.....kkppkk.....','....kjjjjjjk....','...kjjjjjjjjk...','..kjjjjjjjjjjk..','..kjjjjjjjjjjk..']);
+   return {g,pal:{k:'#2b1a0e',b:'#a0622d',w:'#f3e1c4',e:'#1a1008',n:'#1a1008',m:'#1a1008',p:'#f07a8a',j:'#e2462b'}}},
+ lg_kame:()=>{const g=sprGrid([
+   '................','.....kkkkkk.....','....kggggggk....','...kgegggegk....','...kggggggggk...','...kgggmmgggk...','....kggggggk....','.kkkkkkkkkkkkkk.','kggkssssssssskgk','kggksSsSsSsSskgk','kggkssssssssskgk','.kgkSsSsSsSsSkk.','..kkssssssssskk.','...kkkkkkkkkkk..','...kgk.....kgk..','...kkk.....kkk..']);
+   return {g,pal:{k:'#1b2a12',g:'#5fae4a',e:'#111',m:'#2c4a1c',s:'#7a5a2c',S:'#5a3f1a'}}},
+ lg_kyuko:()=>face(0,'side',{h:'#4a3a2a',j:'#8fb4d6',J:'#6a8fb0',n:'#5aa0e6',z:'#ffffff',e:'#120c08'},[[['......nnnnn.....','.....nnnnnnnn...','....nnnnnnnnnn..'],null],[['','','','','','','...ks--ssss--sk.'.replace(/-/g,'e')],null],[['','..............z.','.............z..'],null]]),
+ lg_yahho:()=>face(0,null,{j:'#f08a24',J:'#b45d0c',c:'#e2462b',v:'#fff',m:'#7a1f1f'},[[['','....cccccccc....','...cccccccccccc.','..cccccvcccccc..'],null],[['','','','','','','','','...ksmmmmmmsk...'],null],[['','','','','','','','','','','.............ss.','............ssk.'],null]]),
+};
+const SPR_FX={ichikawa:{bg:['#5a1a12','#140806'],spark:[[1,2],[14,4],[2,9]]},shanchi:{bg:['#3a1660','#0e0618'],spark:[[1,3],[14,2]]},mao:{bg:['#6a4a08','#1a1204'],spark:[[1,1],[14,3],[13,8],[2,7]]},inkansu:{bg:['#0f3a3a','#060c10'],spark:[[2,2],[13,6]]}};
+function sprOf(c,kind){
+  const id=c&&c.id,sp=id&&SPR_SPECIAL[id];
+  if(sp){const {g,pal}=sp();const fx=SPR_FX[id]||(id.startsWith('lg_')?{bg:['#4a3a14','#100c04'],spark:[[1,1],[14,2],[2,13]]}:{});return sprSvg(g,pal,{uid:++SPR_UID,bg:fx.bg,spark:fx.spark,cls:'rare'})}
+  const k=kind||(c&&c.kind)||'pl',seed=(c&&(c.name||((c.sei||'')+(c.mei||''))))||'x';
+  const {g,pal}=genFace(seed+'|'+(k==='mg'?'mg':(c.pos||'MF')),c.pos,k);
+  const rare=c&&(c.legend||c.genius||c.famous||c.mlegend||(c.skills&&(Array.isArray(c.skills)?c.skills:[]).some(s=>s==='legend'||s==='monster')));
+  return sprSvg(g,pal,{uid:++SPR_UID,bg:rare?['#4a3a14','#100c04']:['#2a2a30','#141418'],cls:rare?'rare':''});
+}
+
 /* ========== 追加データ ========== */
 const MONTHS=[8,9,10,11,12,1,2,3,4,5,6,7];
 const OFF=m=>m>=10;
+/* 1ターン＝約3か月（8–10月／11–1月／2–5月／オフの6–7月）。1シーズン4ターン */
+const TURN_ST=[0,3,6,10];
+const turnEnd=m=>m>=10?11:m>=6?9:m>=3?5:2;
+const turnLen=m=>turnEnd(m)-m+1;
+const turnIdx=m=>m>=10?3:m>=6?2:m>=3?1:0;
 const CITY={
  '日本':['磐田','秋田','宇都宮','前橋','町田','相模原','藤枝','清水','徳島','松山','熊本','大分','宮崎','那覇','奈良','金沢','いわき','鳥取','高松','岐阜','北九州','山口','長野','郡山','函館','旭川','高知','和歌山'],
  'ベルギー':['アントワープ','ゲンク','メヘレン','ルーヴェン','シャルルロワ','オーステンデ','コルトレイク','ワーレヘム','オイペン','ウェステルロー','デンデル','ベフェレン','ナミュール','モンス'],
@@ -969,10 +1226,14 @@ function applyFx(p,fx){
 /* ========== 出来事の抽選 ========== */
 function pickEvents(p,n){
   const c=ctx(p),m=p.month;
-  const ok=EV.filter(e=>e.st.includes(p.stage)&&(!e.when||e.when(c))&&(e.mo?(e.mo.includes(m)||e.mo.includes(m+1)):!OFF(m)));
+  const me=turnEnd(m),inTurn=x=>x>=m&&x<=me;
+  const ok=EV.filter(e=>e.st.includes(p.stage)&&(!e.when||e.when(c))&&(e.mo?e.mo.some(inTurn):!OFF(m)));
   let pool=ok.filter(e=>!(p.seen[e.id]!=null&&p.season-p.seen[e.id]<2));
   if(pool.length<n)pool=ok;
-  return shuffle(pool.slice()).slice(0,n).map(e=>e.id);
+  // 重みつきで選ぶ（買ったもののイベントは起きやすい）
+  const out=[],P=pool.slice();
+  while(out.length<n&&P.length){let x=Math.random()*P.reduce((s,e)=>s+(e.w||1),0),i=0;for(;i<P.length-1;i++){x-=P[i].w||1;if(x<=0)break}out.push(P[i].id);P.splice(i,1)}
+  return out;
 }
 function legendSlot(p){
   p.legends=p.legends||{};
@@ -1011,7 +1272,7 @@ function dogTurn(p,res){
   if(d.food>0){d.food--;d.hunger=0;p.sta=clamp(p.sta+6,0,100);res.notes.push(`🐶 ${n}と毎日散歩。体力+6（エサ残り${d.food}ターン分）`)}
   else{d.hunger++;
     if(d.hunger>=3){d.alive=false;d.diedY=p.year;p.cond=clamp(p.cond-25,0,100);res.notes.push(`🐶 ${n}が天国へ旅立った…。エサが足りなかった。調子-25`);pushNews(`【悲報】${p.sei}${p.mei}の愛犬${n}、天国へ`)}
-    else res.notes.push(d.hunger===1?`🐶 ${n}がお腹をすかせている。エサを買ってあげよう`:`🐶 ${n}が弱ってきた…。次の2か月もエサがないと死んでしまう`)}
+    else res.notes.push(d.hunger===1?`🐶 ${n}がお腹をすかせている。エサを買ってあげよう`:`🐶 ${n}が弱ってきた…。次のターンもエサがないと死んでしまう`)}
 }
 function rollEvent(){
   const p=S.p,m=p.month;
@@ -1020,7 +1281,7 @@ function rollEvent(){
   if(p.age>=19&&p.age<=30&&Math.max(...KEYS.map(k=>p.st[k]))>=80&&Math.random()<.015)return 'sp:awaken';
   if(p.stage==='pro'&&p.money>=1000&&dogOk(p)&&Math.random()<.15)return 'sp:dog';
   if(p.stage==='pro'&&p.pop>=55&&!p.seasonFlags.sponsor&&Math.random()<.1)return 'sp:sponsor';
-  if(Math.random()<(OFF(m)?.35:.5))return pickEvents(p,1)[0]||null;
+  if(Math.random()<(OFF(m)?.45:.6))return pickEvents(p,1)[0]||null;
   return null;
 }
 function famEv(id,p){
@@ -1055,7 +1316,7 @@ function famEv(id,p){
   return EV[0];
 }
 function spEv(id,p){
-  if(id==='sp:fate')return {id,t:'運命の分岐点',x:`${p.age}歳。現役生活は残りおよそ3分の1、引退まではあと10分ほどだ。ここで殻を破れるかどうかで、選手としての最後の景色が変わる。`,ch:[
+  if(id==='sp:fate')return {id,t:'運命の分岐点',x:`${p.age}歳。現役生活は残りおよそ3分の1、引退まではあと7分ほどだ。ここで殻を破れるかどうかで、選手としての最後の景色が変わる。`,ch:[
     {l:'すべてを懸けて挑む',d:'成功：全能力+6／失敗：全能力-2',fixed:1,pr:()=>.4,ok:{m:'限界の向こう側に手が届いた。体が、頭が、別人のように動く。',fx:{fate:6}},ng:{m:'無理がたたって体のバランスを崩した。取り戻すには時間がかかりそうだ。',fx:{fate:-2}}}]};
   if(id==='sp:dog')return {id,t:'子犬との出会い',x:'練習帰りに立ち寄ったペットショップで、1匹の子犬がじっとこちらを見ている。稼げるようになった今なら、迎えてあげられる。',ch:[
     {l:'家族に迎える',d:'費用 30万円。エサを切らすと死んでしまう',pr:()=>1,ok:{m:'子犬が腕の中で小さくしっぽを振った。名前を決めてあげよう。',fx:{dog:1,money:-30}},ng:{m:'',fx:{}}},
@@ -1067,7 +1328,8 @@ function spEv(id,p){
     {l:'契約する',d:`契約金 ${yen(amt)}`,pr:()=>.85,ok:{m:'契約金を受け取った。新作スパイクも届いた。',fx:{money:amt,pop:3}},ng:{m:'条件が折り合わなかった。',fx:{}}},
     {l:'今のブランドに義理を通す',d:'',pr:()=>1,ok:{m:'長年の付き合いを大切にした。',fx:{pop:2}},ng:{m:'',fx:{}}}]};
 }
-const getEv=id=>id.startsWith('lg:')?legendEv(id,S.p):id.startsWith('fm:')?famEv(id,S.p):id.startsWith('sp:')?spEv(id,S.p):EVM[id];
+const getEv=id=>id.startsWith('lg:')?legendEv(id,S.p):id.startsWith('fm:')?famEv(id,S.p):id.startsWith('sp:')?spEv(id,S.p):evDyn(EVM[id]);
+const evDyn=e=>e&&typeof e.x==='function'?{...e,x:e.x(S.p)}:e;
 
 /* ========== シーズン ========== */
 function spread(total,n){const b=Math.floor(total/n),r=total-b*n,a=Array(n).fill(b);for(let i=0;i<r;i++)a[[1,8,2,7,3,6,4,5,0,9][i%10]%n]++;return a}
@@ -1293,7 +1555,25 @@ function confirmAction(){
   const p=S.p;let ev;
   if(p.age>=FATE_AGE&&!p.flags.fate&&!OFF(p.month)){p.flags.fate=1;ev='sp:fate'}else ev=rollEvent();
   S.lastEv=null;
-  if(ev){S.evq=[ev];S.evi=0;S.evr=null;S.screen='event'}else runMonth();
+  // 1ターンに起きる出来事は0〜3個（ランダム）
+  const q=ev?[ev]:[];
+  if(ev!=='sp:fate'){const extra=Math.random()<.35?(Math.random()<.3?2:1):0;for(let k=0;k<extra;k++){const id=pickEvents(p,6).find(x=>!q.includes(x));if(id)q.push(id)}}
+  if(q.length){S.evq=q;S.evi=0;S.evr=null;S.screen='event'}else runMonth();
+}
+const JIT_KEYS=['spd','tec','sho','pas','phy','def','key','all','pop','coach','cond','sta','scout','nat','fam','love','money'];
+function jitterFx(fx,big,fixed){
+  if(!fx||fixed)return fx;const o={};
+  for(const [k,v] of Object.entries(fx)){
+    if(typeof v!=='number'||!JIT_KEYS.includes(k)){o[k]=v;continue}
+    let x=v;
+    if(['pop','coach','cond','sta','scout','fam','love'].includes(k))x=v*(.6+Math.random()*.9);
+    else if(k==='money'&&v<0)x=v;// 支払いはそのまま
+    else if(k==='money')x=v*(.7+Math.random()*.8);
+    if(big==='great'&&x>0)x=x*2;if(big==='bad'&&x<0)x=x*1.6;
+    x=Math.round(x);if(x===0)x=Math.sign(v);o[k]=x;
+  }
+  if(big==='great'&&!Object.values(o).some(v=>typeof v==='number'&&v>0))o.cond=(o.cond||0)+6;
+  return o;
 }
 function chooseEvent(ci){
   const p=S.p,id=S.evq[S.evi],e=getEv(id),ch=e.ch[ci],c=ctx(p);
@@ -1303,8 +1583,10 @@ function chooseEvent(ci){
   if(id==='sp:sponsor')p.seasonFlags.sponsor=1;
   const pr=prOf(ch,c),win=Math.random()<pr,r=win?ch.ok:ch.ng;
   p.seen[e.id]=p.season;
-  const fx=applyFx(p,r.fx);
-  S.evr={ci,win,m:r.m,fx,pr,safe:pr>=1,e:{t:e.t,legend:e.legend,fam:e.fam,l:ch.l}};
+  // ランダム性：効果の大きさにゆらぎ。まれに大成功・大失敗
+  const roll=Math.random(),big=win&&pr<1&&roll<.15?'great':!win&&roll<.12?'bad':null;
+  const fx=applyFx(p,jitterFx(r.fx,big,id==='sp:fate'));
+  S.evr={ci,win,m:(big==='great'?'【大成功】':big==='bad'?'【大失敗】':'')+r.m,fx,pr,safe:pr>=1,big,e:{t:e.t,legend:e.legend,fam:e.fam,l:ch.l}};
 }
 function nextEvent(){S.lastEv=S.evr?S.evr.e:null;S.evr=null;S.evi++;if(S.evi>=S.evq.length)runMonth()}
 function grow(p,mult,f,a){
@@ -1327,7 +1609,7 @@ function grow(p,mult,f,a){
 function monthStep(a,res,first){
   const p=S.p,m=p.month,cur=S.cur,club=clubOf(p);
   const P=p.fam.partner;
-  // 行動の効果（旅行は2か月で1回だけ）
+  // 行動の効果（旅行は1ターンで1回だけ）
   if(a.id==='trip'){if(first){const t=TRIPS[S.act.trip||0];p.money-=t.cost;p.sta=clamp(p.sta+t.sta,0,100);p.cond=clamp(p.cond+t.form,0,100);
     if(P){if(P.married)p.fam.happy=clamp(p.fam.happy+t.fam,0,100);else P.love=clamp(P.love+t.fam,0,100)}
     p.pop=clamp(p.pop+(t.pop||0),0,100);res.act=`旅行（${t.n}）`}}
@@ -1369,7 +1651,7 @@ function monthStep(a,res,first){
   const sk=checkSkills(p);res.skills.push(...sk);
   sk.forEach(k=>pushNews(`【話題】${p.sei}${p.mei}、「${SKILLS[k].n}」の領域へ`));
 }
-/* 1ターン＝2か月。試合と成長は1か月ずつ計算する */
+/* 1ターン＝約3か月。試合と成長は1か月ずつ計算する */
 function runMonth(){
   const p=S.p,cur=S.cur;
   const a=ACTS.find(x=>x.id===S.act.id)||ACTS[0];
@@ -1377,7 +1659,7 @@ function runMonth(){
   const b={st:{...p.st},money:p.money,sta:p.sta,cond:p.cond,happy:p.fam.happy,love:P?P.love:0,pop:p.pop,coach:p.coach,o:ovrOf(p)};
   const res={m:p.month,m1:p.month,y:calYear(p),act:actName(a,p),matches:[],notes:[],skills:[],ev:S.lastEv||null,inc:0,cost:0};S.lastEv=null;
   monthStep(a,res,true);
-  if(p.month%2===0&&p.month<11){p.month++;monthStep(a,res,false)}
+  const end=turnEnd(p.month);while(p.month<end){p.month++;monthStep(a,res,false)}
   dogTurn(p,res);
   res.m1=p.month;
   const club=clubOf(p);
@@ -1393,7 +1675,7 @@ function afterMonth(){
   const p=S.p;
   if(p.month===9){seasonEnd();return}
   if(p.month===11){newSeason(false);return}
-  p.month++;startMonth();
+  p.month++;if(!TURN_ST.includes(p.month))p.month=TURN_ST.find(x=>x>p.month)||10;startMonth();
 }
 
 /* ========== シーズン終了 ========== */
@@ -2486,8 +2768,8 @@ function mgBars(m,showCap){
 }
 function mgCard(m,extra=''){
   const o=Math.round(MKEYS.reduce((s,k)=>s+m.st[k],0)/5);
-  return `<section class="pcard ${m.famous?'legendary':''}" aria-label="監督情報"><div class="pc-top"><div class="pc-ovr"><span class="n">${o}</span><span class="pos">監督</span><span class="tier">${m.legend?'伝説の名将':m.famous?'名監督':MSTYLE[m.style].n}</span></div>
-  <div class="pc-id"><div class="name">${esc(m.sei)}<b>${esc(m.mei)}</b></div><div class="sub">${extra}</div><div class="tags"><span>${esc(MSTYLE[m.style].n)}</span><span class="pot">伸びしろ ${mgPot(m)}</span>${m.legend?'<span class="sk">伝説の名将</span>':m.famous?'<span class="sk">名将の器</span>':''}${(m.traits||[]).map(k=>`<span class="sk" title="${esc(MTRAITS[k].d)}">${esc(MTRAITS[k].n)}</span>`).join('')}</div></div></div>${mgBars(m,false)}</section>`;
+  return `<section class="pcard ${m.famous?'legendary':''}" aria-label="監督情報"><div class="pc-top wf"><div class="pc-ovr"><span class="n">${o}</span><span class="pos">監督</span><span class="tier">${m.legend?'伝説の名将':m.famous?'名監督':MSTYLE[m.style].n}</span></div>
+  <div class="pc-id"><div class="name">${esc(m.sei)}<b>${esc(m.mei)}</b></div><div class="sub">${extra}</div><div class="tags"><span>${esc(MSTYLE[m.style].n)}</span><span class="pot">伸びしろ ${mgPot(m)}</span>${m.legend?'<span class="sk">伝説の名将</span>':m.famous?'<span class="sk">名将の器</span>':''}${(m.traits||[]).map(k=>`<span class="sk" title="${esc(MTRAITS[k].d)}">${esc(MTRAITS[k].n)}</span>`).join('')}</div></div><div class="pc-face">${sprOf({name:m.sei+' '+m.mei,kind:'mg',famous:m.famous,mlegend:m.legend})}</div></div>${mgBars(m,false)}</section>`;
 }
 H.mgTitle=()=>{
   return `<article class="front hero"><div><div class="dateline"><span>監督業</span></div><p class="deck">クラブを率い、8シーズンで名将を目指す。1回10〜15分。</p>
@@ -2637,8 +2919,8 @@ function pcard(p,mode='full'){
     ?`<div class="meters"><div><span>体力</span><b class="${p.sta<30?'bad':''}">${Math.round(p.sta)}</b></div><div><span>調子</span><b>${Math.round(p.cond)}</b></div><div><span>${fl}</span><b>${fv}</b></div><div><span>所持金</span><b class="${p.money<0?'bad':''}">${yen(p.money)}</b></div></div>`
     :`<div class="meters"><div><span>人気</span><b>${Math.round(p.pop)}</b></div><div><span>監督評価</span><b>${Math.round(p.coach)}</b></div><div><span>体力</span><b class="${p.sta<30?'bad':''}">${Math.round(p.sta)}</b></div><div><span>調子</span><b>${Math.round(p.cond)}</b></div></div><div class="wallet"><span>所持金 <b class="${p.money<0?'bad':''}">${yen(p.money)}</b></span><span>年俸 <b>${p.salary?yen(p.salary):'—'}</b></span></div>`;
   return `<section class="pcard ${has(p,'legend')||o>=93?'legendary':''}" aria-label="選手情報">
-   <div class="pc-top"><div class="pc-ovr"><span class="n">${o}</span><span class="pos">${p.pos}</span><span class="tier">${tierOf(o)}</span></div>
-   <div class="pc-id"><div class="name">${esc(p.sei)}<b>${esc(p.mei)}</b></div><div class="sub">${where}${!pre&&p.inj>0?` ・<em class="bad">負傷中 残り${Math.ceil(p.inj)}週</em>`:''}</div><div class="tags">${tags}</div></div></div>
+   <div class="pc-top wf"><div class="pc-ovr"><span class="n">${o}</span><span class="pos">${p.pos}</span><span class="tier">${tierOf(o)}</span></div>
+   <div class="pc-id"><div class="name">${esc(p.sei)}<b>${esc(p.mei)}</b></div><div class="sub">${where}${!pre&&p.inj>0?` ・<em class="bad">負傷中 残り${Math.ceil(p.inj)}週</em>`:''}</div><div class="tags">${tags}</div></div><div class="pc-face">${sprOf({name:p.sei+' '+p.mei,pos:p.pos,kind:'pl',legend:has(p,'legend'),genius:has(p,'monster')})}</div></div>
    ${mode==='compact'?mini(p):radar(p)}${meters}
   </section>`;
 }
@@ -2658,7 +2940,7 @@ function hofRow(h,i){
 H.title=()=>{
   const sv=S._resume,hof=hofList(),list=(hof.length?hof:HOF_EX).slice(0,3),met=legendsMet().length;
   return `<article class="front hero"><div><div class="dateline"><span>選択と確率のサッカー人生</span></div>
-   <p class="deck">ひとりのサッカー選手の一生を、2か月ずつ生きる。1人約30分。</p>
+   <p class="deck">ひとりのサッカー選手の一生を、3か月ずつ生きる。1人約20分。</p>
    <p class="lede">毎月、練習するか休むか、家族と過ごすかを決める。試合は1試合ずつ結果が出て、順位表も動く。年俸で家や車を買い、自分に投資し、恋人と出会い家族を持つ。能力は最高99。ほとんどの選手は85前後で頭打ちになるが、10万人に1人の「伝説」は3つの能力が95を超える。引退した選手はマイ選手としてスカッドに入れられる。</p></div>
    ${vhead('高3から','引退まで')}</article>
   <div class="stack" style="margin-top:22px">
@@ -2667,7 +2949,7 @@ H.title=()=>{
   <div class="kick">遊び方</div>
   <ol class="howto">
    <li>スカウトが選手を連れてくる。気に入るまで何度でも探せる。ポジションで得意・不得意がはっきり分かれる。2%で「天才」、0.001%で「伝説」が見つかる</li>
-   <li>シーズンは8月に開幕し、翌年7月まで続く。2か月ごとにひとつ行動を選ぶ。17歳から33歳までの17シーズンで引退する</li>
+   <li>シーズンは8月に開幕し、翌年7月まで続く。3か月ごと（1シーズン4回）にひとつ行動を選ぶ。17歳から33歳までの17シーズンで引退する</li>
    <li>試合は1試合ずつ進み、リーグ戦・カップ戦・欧州CL・日本代表・W杯がカレンダー通りに来る。出来事の選択肢には成功率が出る</li>
    <li>年俸から税金と生活費が引かれる。暮らしタブで家や車を買い、トレーナーを雇い、限界を超える特訓に投資できる</li>
    <li>恋人ができ、結婚して子どもが生まれることもある。28歳のシーズン（引退の約10分前）には「運命の分岐点」が来る。40%で全能力+6、失敗すると全能力-2</li>
@@ -2753,16 +3035,14 @@ function tripPicker(p){
   return `<div class="label">行き先</div><div class="seg c2">${TRIPS.map((t,i)=>`<button class="opt left" aria-pressed="${S.act.trip===i}" data-act="pickTrip" data-v="${i}" ${t.cost>p.money?'disabled':''}>${t.n}<span class="d">${yen(t.cost)}・体力+${t.sta}・家族+${t.fam}</span></button>`).join('')}</div>`;
 }
 function turnPlan(p,m,cur){
-  const A=monthPlan(p,m,cur),B=m<11?monthPlan(p,m+1,cur):[];
   const out=[];const none=x=>x==='試合の予定なし';
-  A.filter(x=>!none(x)).forEach(x=>out.push(`<span class="mmk">${MONTHS[m]}月</span>${x}`));
-  B.filter(x=>!none(x)&&!/リーグ戦はオフ|プレシーズン/.test(x)).forEach(x=>out.push(`<span class="mmk">${MONTHS[m+1]}月</span>${x}`));
+  for(let k=m;k<=turnEnd(m);k++)monthPlan(p,k,cur).filter(x=>!none(x)&&(k===m||!/リーグ戦はオフ|プレシーズン/.test(x))).forEach(x=>out.push(`<span class="mmk">${MONTHS[k]}月</span>${x}`));
   return out.length?out:['試合の予定なし'];
 }
 function careerBar(p){
-  const total=CAREER_END_AGE-17+1,done=p.season,turn=Math.floor(p.month/2);
-  const pct=Math.min(100,Math.round((done*6+turn)/(total*6)*100));
-  const mins=Math.round((p.playMs||0)/60000),left=Math.max(0,Math.round((total*6-(done*6+turn))*16/60));
+  const total=CAREER_END_AGE-17+1,done=p.season,turn=turnIdx(p.month);
+  const pct=Math.min(100,Math.round((done*4+turn)/(total*4)*100));
+  const mins=Math.round((p.playMs||0)/60000),left=Math.max(0,Math.round((total*4-(done*4+turn))*17/60));
   const fate=p.age<FATE_AGE?`運命の分岐点まであと${FATE_AGE-p.age}シーズン`:p.flags.fate?'運命の分岐点は通過':'まもなく運命の分岐点';
   return `<div class="cbar" aria-label="キャリアの進み具合 ${pct}%"><div class="cbar-t"><span>キャリア ${pct}%・第${done+1}/${total}シーズン</span><span>プレー ${mins}分・残り約${left}分</span></div><div class="cbar-b"><i style="width:${pct}%"></i><em style="left:${Math.round((FATE_AGE-17)/total*100)}%"></em></div><div class="sub">${fate}</div></div>`;
 }
@@ -2774,22 +3054,22 @@ function dogBar(p){
 }
 H.month=()=>{
   const p=S.p,m=p.month,cur=S.cur,club=clubOf(p),off=OFF(m);
-  const dots=[0,2,4,6,8,10].map(i=>`<i class="${i<m?'done':i===m?'now':''}" title="${MONTHS[i]}–${MONTHS[i+1]}月"></i>`).join('');
+  const dots=TURN_ST.map(i=>`<i class="${i<m?'done':i===m?'now':''}" title="${MONTHS[i]}–${MONTHS[turnEnd(i)]}月"></i>`).join('');const tl=turnLen(m);
   const inLg=!off&&cur.teams&&cur.lgk===club.lg;
   const me=inLg?cur.teams.find(t=>t.me):null;
   const so=inLg&&cur.all.a?`<div class="statgrid"><div><b>${cur.all.a}</b><span>出場</span></div><div><b>${p.pos==='GK'?cur.lg.cs:cur.all.g}</b><span>${p.pos==='GK'?'無失点':'得点'}</span></div><div><b>${cur.all.as}</b><span>アシスト</span></div><div><b>${cur.lg.rn?(cur.lg.rs/cur.lg.rn).toFixed(2):'—'}</b><span>平均評価</span></div></div>`:'';
   const ready=S.act&&(S.act.id!=='trip'||S.act.trip!=null);
   return `${pcard(p,'compact')}
-  <section class="cal"><div class="cal-m"><span class="num">${MONTHS[m]}</span><span class="u">–${MONTHS[m+1]}月</span></div><div class="cal-i"><b>${calYear(p)}年</b><span class="sub">${off?'オフシーズン':`${p.year}-${String(p.year+1).slice(2)}シーズン`}・${esc(club.n)}</span><div class="dots" aria-label="シーズンの進み具合 ${m/2+1}/6">${dots}</div></div></section>
+  <section class="cal"><div class="cal-m"><span class="num">${MONTHS[m]}</span><span class="u">–${MONTHS[turnEnd(m)]}月</span></div><div class="cal-i"><b>${calYear(p)}年</b><span class="sub">${off?'オフシーズン':`${p.year}-${String(p.year+1).slice(2)}シーズン`}・${esc(club.n)}</span><div class="dots" aria-label="シーズンの進み具合 ${m/2+1}/6">${dots}</div></div></section>
   ${careerBar(p)}
   ${dogBar(p)}
-  <div class="kick">この2か月の予定</div><ul class="plan">${turnPlan(p,m,cur).map(s=>`<li>${s}</li>`).join('')}</ul>
+  <div class="kick">この${tl}か月の予定</div><ul class="plan">${turnPlan(p,m,cur).map(s=>`<li>${s}</li>`).join('')}</ul>
   ${inLg&&me.pl?`<div class="kick">順位表<span class="r">${myRank(cur)}位・勝点${me.pts}</span></div>${tableHtml(cur,S.tableOpen)}`:''}
   ${so?`<div class="kick">今季の成績</div>${so}`:''}
-  <div class="kick">この2か月の行動<span class="r">ひとつ選ぶ</span></div>
+  <div class="kick">この${tl}か月の行動<span class="r">ひとつ選ぶ</span></div>
   <div class="acts">${actsFor(p).map(a=>actCard(a,p)).join('')}</div>
   ${S.act&&S.act.id==='trip'?tripPicker(p):''}
-  <div class="stack" style="margin-top:16px"><button class="btn red" data-act="confirmAct" ${ready?'':'disabled'}>${ready?'この行動で2か月を過ごす':'行動を選んでください'}</button>
+  <div class="stack" style="margin-top:16px"><button class="btn red" data-act="confirmAct" ${ready?'':'disabled'}>${ready?`この行動で${tl}か月を過ごす`:'行動を選んでください'}</button>
   <button class="btn ghost" data-act="tab" data-v="life">暮らし・買い物</button></div>`;
 };
 
@@ -2805,12 +3085,12 @@ H.mres=()=>{
   const m1=R.m1!=null?R.m1:m,next=m1===9?'シーズン総括へ':m1===11?'新シーズンへ':`${MONTHS[m1+1]}–${MONTHS[m1+2]}月へ`;
   return `${pcard(p,'compact')}
   <div class="kick">${R.y}年${MONTHS[m]}–${MONTHS[m1]}月の結果<span class="r">${esc(R.act)}</span></div>
-  ${R.ev?`<p class="note">この2か月の出来事：${esc(R.ev.t)}（${esc(R.ev.l)}）</p>`:''}
+  ${R.ev?`<p class="note">このターンの出来事：${esc(R.ev.t)}（${esc(R.ev.l)}）</p>`:''}
   ${R.matches.length?`<ul class="mlist">${R.matches.map(x=>matchRow(x,m)).join('')}</ul>`:'<p class="note">試合はなかった。</p>'}
   ${R.rank?`<p class="note" style="margin-top:12px">リーグ ${R.rank}位・勝点${R.pts}（${R.rec}）</p>`:''}
   ${R.notes.length?`<ul class="plan">${R.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`:''}
   ${R.skills.length?`<div class="chips">${R.skills.map(k=>`<span class="chip gold">特殊能力「${esc(SKILLS[k].n)}」を習得</span>`).join('')}</div>`:''}
-  <div class="kick">この2か月の変化<span class="r">総合 <span class="delta">${R.o0} → ${R.o1}</span></span></div>
+  <div class="kick">このターンの変化<span class="r">総合 <span class="delta">${R.o0} → ${R.o1}</span></span></div>
   ${ds?`<div class="chips" style="margin-top:0">${ds}</div>`:''}
   <div class="chips">${mini.map(([l,v])=>`<span class="chip ${v>0?'up':v<0?'down':''}">${l} ${sgn(v)}</span>`).join('')}<span class="chip ${R.dm>=0?'up':'down'}">所持金 ${R.dm>=0?'+':''}${yen(R.dm)}</span></div>
   <p class="note" style="margin-top:10px">手取り収入 ${yen(R.inc)}・固定費 ${yen(R.cost)}</p>
@@ -2825,10 +3105,10 @@ H.event=()=>{
   }else{
     const ch=e.ch[R.ci],chips=chipsOf(R.fx);
     body=`<div class="evcard" style="margin-top:12px"><div class="verdict ${R.safe?'safe':R.win?'ok':'ng'}"><span class="vbig">${R.safe?'決定':R.win?'成功':'失敗'}</span><span class="sub">「${esc(ch.l)}」<br>成功率 ${Math.round(R.pr*100)}%</span></div><p>${esc(R.m)}</p>${chips?`<div class="chips">${chips}</div>`:''}</div>
-    <div class="stack" style="margin-top:14px"><button class="btn red" data-act="nextEvent">2か月の結果へ</button></div>`;
+    <div class="stack" style="margin-top:14px"><button class="btn red" data-act="nextEvent">${S.evi+1<S.evq.length?'次の出来事へ':'このターンの結果へ'}</button></div>`;
   }
   const band=e.legend?`<div class="lgband"><span>LEGEND</span><span>「${esc(e.legend.nick)}」${e.legend.pos}・${esc(e.legend.cty)}</span></div>`:e.fam?`<div class="lgband fam"><span>FAMILY</span><span>家族・プライベート</span></div>`:e.id&&String(e.id).startsWith('sp:')?`<div class="lgband"><span>SPECIAL</span><span>特別な出来事</span></div>`:'';
-  return `${pcard(p,'compact')}<div class="kick">${calYear(p)}年${MONTHS[p.month]}–${MONTHS[p.month+1]}月の出来事</div>
+  return `${pcard(p,'compact')}<div class="kick">${calYear(p)}年${MONTHS[p.month]}–${MONTHS[turnEnd(p.month)]}月の出来事</div>
   <div class="evcard ${e.legend||String(e.id).startsWith('sp:')?'legend':e.fam?'famcard':''}">${band}<h2>${esc(e.t)}</h2><p>${esc(e.x)}</p></div>${body}`;
 };
 
@@ -3069,7 +3349,7 @@ function cardMini(c){
 function cardTile(c,opts={}){
   const mg=isMgr(c),o=mg?mgrOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
   const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
-  return `<div class="ctile ${gold?'gold':''}"><div class="ct-h"><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span></div></div>${tag?`<div class="tags">${tag}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
+  return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${sprOf(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span></div></div>${tag?`<div class="tags">${tag}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
 }
 
 /* ---------- ガチャ ---------- */
@@ -3086,7 +3366,7 @@ const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンド
 H.gacha=()=>{
   const bk=G.ga.bk||'ich',BN=BANNERS[bk],pu=BN.card(),sk=BN.skill(),R=G.ga.res,owned=M.roster.some(c=>c.id===pu.id);
   const resHtml=R?`<div class="kick">結果<span class="r">${R.length}回</span></div><div class="gres">${R.map((x,i)=>x.type==='pu'
-    ?`<div class="gr ich" style="animation-delay:${i*90}ms"><small>${x.dup?'2枚目→全素材×2':'NEW'}</small><b>${esc(puCard(x.id).name).replace(' ','<br>').replace('MAO','<br>MAO')}</b><span>SSR</span></div>`
+    ?`<div class="gr ich" style="animation-delay:${i*90}ms"><div class="gface-s">${sprOf(puCard(x.id))}</div><small>${x.dup?'2枚目→全素材×2':'NEW'}</small><b>${esc(puCard(x.id).name).replace(' ','<br>').replace('MAO','<br>MAO')}</b><span>SSR</span></div>`
     :`<div class="gr q${x.q}" style="animation-delay:${i*90}ms"><small>${MAT[x.k].s}</small><b>${MAT[x.k].n}</b><span>×${x.q}</span></div>`).join('')}</div>
     ${R.filter(x=>x.type==='pu'&&!x.dup).map(x=>{const c=puCard(x.id),k=puSkill(x.id);return `<div class="toast"><b>${esc(c.name)}が仲間になった。</b>特別スキル「${k.n}」：${k.d}。</div>`}).join('')}`:'';
   const legArt=`<article class="front gban"><div><div class="dateline"><span>PU${GLEGS.filter(l=>l.pu).length}人＋${GLEGS.filter(l=>!l.pu).length}人</span><span>合計3%</span></div>
@@ -3094,10 +3374,10 @@ H.gacha=()=>{
    <p class="lede">引いたレジェンドは<b class="gold">育成専用</b>（スカッドには入れられない）。育成のときに3人まで連れて行けて、それぞれの「教え」（下の一覧）がつく。ピックアップの${GLEGS.filter(l=>l.pu).length}人は出やすい（合わせて2%）。</p>
 </div>
    ${vhead(BN.head[0],BN.head[1],'gold')}</article>
-  <div class="plist" style="margin-top:10px">${GLEGS.map(l=>{const o=M.roster.find(c=>c.id===l.id);return `<div class="prow" style="cursor:default"><span class="po">${l.pu?'PU':l.pos}</span><b>${esc(l.name)}</b><span class="sub">${esc(legText(l))}${o?'・所持':''}</span><span class="num">${cardOvr(l)}</span></div>`}).join('')}</div>`;
+  <div class="plist" style="margin-top:10px">${GLEGS.map(l=>{const o=M.roster.find(c=>c.id===l.id);return `<div class="prow wf" style="cursor:default"><span class="pf">${sprOf(l)}</span><span class="po">${l.pu?'PU':l.pos}</span><b>${esc(l.name)}</b><span class="sub">${esc(legText(l))}${o?'・所持':''}</span><span class="num">${cardOvr(l)}</span></div>`}).join('')}</div>`;
   return `<div class="seg c3 subnav">${Object.entries(BANNERS).map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${B.multi?`${legOwned().length}/${GLEGS.length}人`:M.roster.some(c=>c.id===B.card().id)?'所持':'1%'}</span></button>`).join('')}</div>
   ${BN.multi?legArt:`<article class="front gban"><div><div class="dateline"><span>ピックアップ・${pu.style?esc(pu.style):pu.pos}</span><span>排出率 1%</span></div>
-   <p class="deck">${esc(pu.name)}</p>
+   <p class="deck">${esc(pu.name)}</p><div class="gface">${sprOf(pu)}</div>
    <div class="ichst">${KEYS.map(k=>`<span>${LBL[k]}<b>${pu.st[k]}</b></span>`).join('')}</div>
    <p class="lede"><b class="gold">特別スキル「${sk.n}」</b><br>「${esc(sk.q)}」<br>${sk.d}。</p>${owned?'<div class="chips"><span class="chip gold">所持している</span></div>':''}</div>
    ${vhead(BN.head[0],BN.head[1],'gold')}</article>`}
