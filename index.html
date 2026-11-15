@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261115-182329';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261115-182456';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1632,7 +1632,8 @@ function metaLoadLocal(){try{const d=JSON.parse(localStorage.getItem(META_KEY)||
 let _metaLast='';
 /* ---------- 配布（1アカウント1回） ---------- */
 const GIFTS=[{id:'g100',coins:GACHA_COST*100},{id:'g100b',coins:GACHA_COST*100},{id:'g100c',coins:GACHA_COST*100}];
-function applyGifts(){if(!M.gifts)M.gifts={};let got=0;for(const g of GIFTS){if(!M.gifts[g.id]){M.gifts[g.id]=Date.now();M.coins+=g.coins;got+=g.coins}}
+const GIFT_OPEN=false;// 配布期間（2026-11-16 03:25 で終了）
+function applyGifts(){if(!GIFT_OPEN)return;if(!M.gifts)M.gifts={};let got=0;for(const g of GIFTS){if(!M.gifts[g.id]){M.gifts[g.id]=Date.now();M.coins+=g.coins;got+=g.coins}}
  if(got){metaSave();if(typeof G!=='undefined'){G.toastMsg=`🎁 プレゼント！${got/GACHA_COST}連分（${got}コイン）を受け取った`;try{render()}catch(e){}setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},4000)}}}
 function metaSave(){const s=JSON.stringify(Object.assign({},M,{t:0}));if(s===_metaLast)return;_metaLast=s;M.t=Date.now();try{localStorage.setItem(META_KEY,JSON.stringify(M))}catch(e){}cloudSaveSoon();autoMark('meta',null)}
 const uidGen=p=>p+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36);
@@ -3162,8 +3163,8 @@ function backupHtml(){
   const cloud=IS_WEB?'':AUTO.ready&&AUTO.cloudOk?'アカウントにも自動で保存されている（別の端末でも続きから遊べる）。':NET.db?'アカウントへの保存は、このページへの書き込み権限がないため使えない。消えないように、ときどきバックアップコードを書き出しておくと安心。':'この表示ではアカウントへの保存が使えない。ときどきバックアップコードを書き出しておくと安心。';
   const gotN=GIFTS.filter(g=>M.gifts&&M.gifts[g.id]).length;
   return `<div class="kick">プレゼント<span class="r">${gotN}/${GIFTS.length}回 受け取り済み</span></div>
-  <ul class="plan">${GIFTS.map((g,i)=>`<li>${i+1}回目 100連分（${g.coins.toLocaleString('ja-JP')}コイン）：${M.gifts&&M.gifts[g.id]?'受け取り済み':'<b>未受け取り</b>'}</li>`).join('')}</ul>
-  <p class="note">${gotN<GIFTS.length?'未受け取りがあるときは、アプリを一度閉じて開き直すと受け取れる。':'全部受け取り済み。'}${typeof window!=='undefined'&&window.APP_VER?`（バージョン ${esc(window.APP_VER)}）`:''}</p>
+  <ul class="plan">${GIFTS.map((g,i)=>`<li>${i+1}回目 100連分（${g.coins.toLocaleString('ja-JP')}コイン）：${M.gifts&&M.gifts[g.id]?'受け取り済み':GIFT_OPEN?'<b>未受け取り</b>':'受け取らなかった'}</li>`).join('')}</ul>
+  <p class="note">${!GIFT_OPEN?'配布期間は終了しました。':gotN<GIFTS.length?'未受け取りがあるときは、アプリを一度閉じて開き直すと受け取れる。':'全部受け取り済み。'}${typeof window!=='undefined'&&window.APP_VER?`（バージョン ${esc(window.APP_VER)}）`:''}</p>
   <div class="kick">セーブデータ<span class="r">自動保存</span></div>${acctHtml()}
   <p class="note">育成・監督業・マイ選手・コイン・素材は、操作するたびにこの端末のブラウザへ自動で保存される。画面を閉じたときにも保存する。${cloud}</p>
   <div class="seg c2"><button class="opt" data-act="bkExport">バックアップコードを作る</button><button class="opt" data-act="bkImportOpen">コードから読み込む</button></div>
