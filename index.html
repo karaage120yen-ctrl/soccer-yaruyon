@@ -465,6 +465,10 @@ textarea.code{width:100%;min-height:90px;font:12px/1.4 var(--num);background:var
 .dogbar.warn .sub{color:var(--down)}
 .dogbar.dead{opacity:.7}
 .dogbar .btn small{display:block;font-size:10px;opacity:.8}
+.inapp{border:1px solid rgba(240,113,94,.6);background:rgba(240,113,94,.08);border-radius:14px;padding:12px 14px;margin:10px 0 4px;font-size:13px;line-height:1.6}
+.inapp b{color:var(--down);font-size:15px}
+.inapp p{margin:6px 0}
+.inapp .btn{display:inline-block;margin:6px 0;text-decoration:none}
 
 </style>
 </head>
@@ -2478,6 +2482,16 @@ function mgView(){
 /* ========== 描画 ========== */
 const isBig=R=>R.awards.some(a=>/金球賞$|リーグMVP|得点王/.test(a))||R.notes.some(isTitle);
 const inCareer=()=>S.p&&!['title','create','retired'].includes(S.screen);
+/* LINEなどのアプリ内ブラウザで開いていると、データがそのアプリの中だけに保存されてChromeと別になる */
+const IN_APP=typeof navigator!=='undefined'?(/\bLine\//i.test(navigator.userAgent)?'LINE':/Instagram/i.test(navigator.userAgent)?'Instagram':/FBAN|FBAV/i.test(navigator.userAgent)?'Facebook':''):'';
+function inAppNotice(){
+  if(!IN_APP||G.hideInApp||!(typeof IS_WEB!=='undefined'&&IS_WEB))return '';
+  let url=location.href;if(IN_APP==='LINE')url=location.origin+location.pathname+'?openExternalBrowser=1';
+  return `<div class="inapp"><b>${IN_APP}の中で開いています</b><p>ここで遊んだデータは${IN_APP}の中だけに保存され、ChromeやSafariのデータとはつながりません。いつも同じブラウザで遊ぼう。</p>
+  ${IN_APP==='LINE'?`<a class="btn red sm" href="${esc(url)}">ブラウザで開き直す</a>`:`<p>右上（または右下）のメニューから「ブラウザで開く」を選んでほしい。</p>`}
+  <p class="sub">こっちで育てたデータを持っていくときは、「記録」→「バックアップコードを作る」でコードをコピーして、ブラウザ側の「記録」で貼り付ける。</p>
+  <button class="linkbtn" data-act="hideInApp">このまま遊ぶ</button></div>`;
+}
 function masthead(){
   const p=S.p,d=new Date(),inGame=p&&inCareer();
   const issue=inGame?`第${p.season+1}号`:'創刊号';
@@ -2844,7 +2858,7 @@ H.hof=()=>{
 function render(){
   if(typeof document==='undefined')return;
   const app=document.getElementById('app');
-  app.innerHTML=masthead()+mainView();
+  app.innerHTML=inAppNotice()+masthead()+mainView();
   document.getElementById('tabs').innerHTML=`<div class="in">${MODES.map(([k,n])=>`<button data-act="go" data-v="${k}" ${G.mode===k?'aria-current="page"':''}>${n}${k==='gacha'&&freeReady()?'<i class="dot" aria-label="無料10連あり"></i>':''}</button>`).join('')}</div>`;
   const m=document.getElementById('modal');
   const cur=S.p||(S._resume&&S._resume.p);
@@ -2912,6 +2926,7 @@ const ACT={
  doRetire:()=>{S.modal=null;retire();toTop()},
  shopCat:v=>{S.shopCat=v;S.shopMsg=null},
  buy:v=>{buy(v);toTop()},
+ hideInApp:()=>{G.hideInApp=true},
  dogBuy:v=>{buy(v)},
  dogRand:()=>{const d=S.p&&S.p.dog;if(d)d._sug=pick(DOGN)},
  dogOk:()=>{const d=S.p&&S.p.dog;if(!d)return;const t=document.getElementById('dogn');const nm=((t&&t.value)||'').trim().slice(0,8)||d._sug||pick(DOGN);d.n=nm;delete d._sug;pushNews(`【話題】${S.p.sei}${S.p.mei}、子犬「${nm}」を家族に迎える`)},
