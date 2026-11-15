@@ -1586,7 +1586,8 @@ function metaDefault(){return {v:1,t:0,coins:1000,mats:Object.fromEntries(MATK.m
 let M=metaDefault();
 function metaFix(m){const d=metaDefault();m=Object.assign(d,m||{});m.mats=Object.assign(d.mats,m.mats||{});m.squad=Object.assign(metaDefault().squad,m.squad||{});
  if(!Array.isArray(m.squad.slots))m.squad.slots=Array(11).fill(null);while(m.squad.slots.length<11)m.squad.slots.push(null);m.squad.slots=m.squad.slots.slice(0,11);
- if(!Array.isArray(m.squad.bench))m.squad.bench=Array(5).fill(null);while(m.squad.bench.length<5)m.squad.bench.push(null);m.squad.bench=m.squad.bench.slice(0,5);if(m.squad.maoSub===undefined)m.squad.maoSub=true;return m}
+ if(!Array.isArray(m.squad.bench))m.squad.bench=Array(5).fill(null);while(m.squad.bench.length<5)m.squad.bench.push(null);m.squad.bench=m.squad.bench.slice(0,5);if(m.squad.maoSub===undefined)m.squad.maoSub=true;
+ const lgId=id=>typeof id==='string'&&id.startsWith('lg_');m.squad.slots=m.squad.slots.map(id=>lgId(id)?null:id);m.squad.bench=m.squad.bench.map(id=>lgId(id)?null:id);return m}
 function metaLoadLocal(){try{const d=JSON.parse(localStorage.getItem(META_KEY)||'null');if(d)M=metaFix(d)}catch(e){}_metaLast=JSON.stringify(Object.assign({},M,{t:0}))}
 let _metaLast='';
 /* ---------- 配布（1アカウント1回） ---------- */
@@ -1735,7 +1736,7 @@ function filler(role){const st={};for(const k of KEYS)st[k]=Math.round(POS_CAP[r
 function fitMul(pos,role){if(pos===role)return 1;if(pos==='GK'||role==='GK')return .55;const d={FW:0,MF:1,DF:2};return Math.abs(d[pos]-d[role])===1?.92:.84}
 function teamCalc(sq){
   sq=sq||M.squad;const F=FORMS[sq.form]||FORMS['433'];
-  const cnt={};const cards=F.s.map(([role],i)=>{const c=cardById(sq.slots[i]);if(c&&!isMgr(c))return {role,c};cnt[role]=(cnt[role]||0)+1;const f=filler(role);f.name=`控え${role}${'①②③④⑤'[cnt[role]-1]||''}`;return {role,c:f}});
+  const cnt={};const cards=F.s.map(([role],i)=>{const c=cardById(sq.slots[i]);if(c&&!isMgr(c)&&!isLegSup(c))return {role,c};cnt[role]=(cnt[role]||0)+1;const f=filler(role);f.name=`控え${role}${'①②③④⑤'[cnt[role]-1]||''}`;return {role,c:f}});
   const hasCap=cards.some(x=>x.c.special==='captain'),hasEmp=cards.some(x=>x.c.special==='empire');
   const pl=cards.map(({role,c})=>{
     const bonus=hasCap&&c.special!=='captain'?4:0,st={};
@@ -1751,7 +1752,7 @@ function teamCalc(sq){
   const atk=av('FW')*.62+av('MF')*.38+boost,mid=av('MF')*.75+av('FW')*.1+av('DF')*.15+boost,def=av('DF')*.68+av('GK')*.32+boost;
   const tot=Math.round((atk+mid+def)/3);
   // ベンチ（交代要員）。キャプテンしーの＋4はベンチにも効く
-  const bench=(sq.bench||[]).map(id=>cardById(id)).filter(c=>c&&!isMgr(c)&&!(sq.slots||[]).includes(c.id));
+  const bench=(sq.bench||[]).map(id=>cardById(id)).filter(c=>c&&!isMgr(c)&&!isLegSup(c)&&!(sq.slots||[]).includes(c.id));
   const maoP=pl.find(x=>x.mao),bonusB=c=>hasCap&&c.special!=='captain'?4:0;
   let sub=null;
   if(maoP){const role=maoP.role;bench.forEach(c=>{const st={};for(const k of KEYS)st[k]=Math.min(99,effSt(c,k)+bonusB(c));const r=Math.round(cardOvr({st,plus:{},pos:role},role)*fitMul(c.pos,role)*10)/10;if(!sub||r>sub.r)sub={n:c.name,r,sho:st.sho,pas:st.pas}})}
@@ -2852,7 +2853,7 @@ function cardMini(c){
 }
 function cardTile(c,opts={}){
   const mg=isMgr(c),o=mg?mgrOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
-  const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
+  const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
   return `<div class="ctile ${gold?'gold':''}"><div class="ct-h"><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span></div></div>${tag?`<div class="tags">${tag}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
 }
 
@@ -2867,7 +2868,7 @@ H.gacha=()=>{
     ${R.filter(x=>x.type==='pu'&&!x.dup).map(x=>{const c=puCard(x.id),k=puSkill(x.id);return `<div class="toast"><b>${esc(c.name)}が仲間になった。</b>特別スキル「${k.n}」：${k.d}。</div>`}).join('')}`:'';
   const legArt=`<article class="front gban"><div><div class="dateline"><span>レジェンド6人</span><span>排出率 合計3%</span></div>
    <p class="deck">レジェンド集結</p>
-   <p class="lede">引いたレジェンドは、スカッドで使えるうえ、<b class="gold">育成のときに3人まで連れて行ける</b>。連れて行くと、そのレジェンドの得意な能力が最初から高く、伸びしろも大きくなる。</p>
+   <p class="lede">引いたレジェンドは<b class="gold">育成専用</b>（スカッドには入れられない）。育成のときに3人まで連れて行ける。連れて行くと、そのレジェンドの得意な能力が最初から高く、伸びしろも大きくなる。</p>
 </div>
    ${vhead(BN.head[0],BN.head[1],'gold')}</article>
   <div class="plist" style="margin-top:10px">${GLEGS.map(l=>{const o=M.roster.find(c=>c.id===l.id);return `<div class="prow" style="cursor:default"><span class="po">${l.pos}</span><b>${esc(l.name)}</b><span class="sub">得意：${LBL[l.sup]}${o?'・所持':''}</span><span class="num">${cardOvr(l)}</span></div>`}).join('')}</div>`;
@@ -2904,11 +2905,11 @@ function pickerHtml(){
   }
   if(typeof i==='string'&&i[0]==='b'){
     const bi=+i.slice(1),cur=M.squad.bench[bi];
-    const list=M.roster.filter(c=>!isMgr(c)).map(c=>({c,v:cardOvr(c)})).sort((a,b)=>b.v-a.v);
+    const list=M.roster.filter(c=>!isMgr(c)&&!isLegSup(c)).map(c=>({c,v:cardOvr(c)})).sort((a,b)=>b.v-a.v);
     return `<div class="kick">ベンチ${bi+1}に入れる<span class="r">交代要員</span></div>${list.length?`<div class="plist">${cur?'<button class="prow" data-act="sqSet" data-v="">外す</button>':''}${list.map(({c,v})=>{const inXI=M.squad.slots.includes(c.id),ib=M.squad.bench.indexOf(c.id);return `<button class="prow" aria-pressed="${cur===c.id}" data-act="sqSet" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${inXI?'スタメンからベンチへ移す':ib>=0&&ib!==bi?'別のベンチ枠にいる（入れ替え）':'ベンチ入り'}</span><span class="num">${v}</span></button>`}).join('')}</div>`:'<p class="note">まだマイ選手がいない。</p>'}`;
   }
   const role=slotLabel(i),cur=M.squad.slots[i];
-  const list=M.roster.filter(c=>!isMgr(c)).map(c=>({c,v:Math.round(cardOvr(c,role)*fitMul(c.pos,role))})).sort((a,b)=>b.v-a.v);
+  const list=M.roster.filter(c=>!isMgr(c)&&!isLegSup(c)).map(c=>({c,v:Math.round(cardOvr(c,role)*fitMul(c.pos,role))})).sort((a,b)=>b.v-a.v);
   return `<div class="kick">${role}の枠に入れる<span class="r">ポジション違いは能力が下がる</span></div>${list.length?`<div class="plist">${cur?'<button class="prow" data-act="sqSet" data-v="">外して空きにする</button>':''}${list.map(({c,v})=>{const at=M.squad.slots.indexOf(c.id);return `<button class="prow" aria-pressed="${cur===c.id}" data-act="sqSet" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${c.pos!==role?`${role}だと${Math.round(fitMul(c.pos,role)*100)}%`:'適正ポジション'}${at>=0&&at!==i?'・別の枠にいる（入れ替え）':''}</span><span class="num">${v}</span></button>`}).join('')}</div>`:'<p class="note">まだマイ選手がいない。育成モードで選手を引退まで育てるか、ガチャでキャプテンイチカワを引こう。空きの枠には控え選手（総合60前後）が入る。</p>'}`;
 }
 H.squad=()=>{
