@@ -1,0 +1,26 @@
+rules_version = '2';
+// サッカーやるよん：Firestore のルール（Firebase コンソールの Firestore →「ルール」に貼って公開する）
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 各プレイヤーのセーブデータ：本人だけが読み書きできる
+    match /data/users/{uid}/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ルーム対戦：ログインしている人なら読める
+    match /rooms/{code} {
+      allow read: if request.auth != null;
+      // ルームを作るのは本人として
+      allow create: if request.auth != null
+                    && request.resource.data.host.uid == request.auth.uid
+                    && request.resource.data.status == 'wait';
+      // 待っているルームに参加する／3時間たった古いルームを作り直す
+      allow update: if request.auth != null
+                    && (resource.data.status == 'wait'
+                        || request.time.toMillis() > resource.data.t + 10800000);
+      // 作った本人だけが閉じられる
+      allow delete: if request.auth != null && resource.data.host.uid == request.auth.uid;
+    }
+  }
+}
