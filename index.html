@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261115-182456';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261115-183256';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1701,7 +1701,7 @@ function inhToggle(d,id){d.inh=d.inh||[];const i=d.inh.indexOf(id);if(i>=0)d.inh
 const inhSeed=prev=>prev&&prev.iseed||Math.random().toString(36).slice(2);
 function addMgrCard(m,sum){
   const st={};for(const k of MKEYS)st[k]=Math.round(m.st[k]);
-  const c={id:uidGen('m'),kind:'mg',name:`${m.sei} ${m.mei}`,st,plus:{},enh:0,famous:!!m.famous,style:MSTYLE[m.style].n,titles:{...m.titles},traits:(m.traits||[]).map(k=>MTRAITS[k].n),grade:sum.grade,from:'監督業',t:Date.now()};
+  const c={id:uidGen('m'),kind:'mg',name:`${m.sei} ${m.mei}`,st,plus:{},enh:0,famous:!!m.famous,mlegend:!!m.legend,style:MSTYLE[m.style].n,titles:{...m.titles},traits:(m.traits||[]).map(k=>MTRAITS[k].n),grade:sum.grade,from:'監督業',t:Date.now()};
   M.mgrs.unshift(c);
   const coins=CAREER_COINS;
   M.coins+=coins;
@@ -2225,11 +2225,12 @@ function mgLoad(){try{const d=JSON.parse(localStorage.getItem(MGR_KEY)||'null');
 let _mgLast='';
 function mgSave(){const s=JSON.stringify(MC?Object.assign({},MC,{_t:0}):null);if(s===_mgLast)return;_mgLast=s;if(MC)MC._t=Date.now();try{localStorage.setItem(MGR_KEY,JSON.stringify(MC))}catch(e){}if(typeof autoMark==='function')autoMark('mgr',MC)}
 function makeMgr(d){
-  const famous=!!d.forceFamous||Math.random()<.03,sty=MSTYLE[d.style],st={},cap={};
+  // 伸びしろSSは選手のスカウト評価SSと同じ10万人に1人（伝説の名将）。名監督は3%で、伸びしろはSまで
+  const legend=!!d.forceLegend||Math.random()<.00001,famous=legend||!!d.forceFamous||Math.random()<.03,sty=MSTYLE[d.style],st={},cap={};
   for(const k of MKEYS){const f=sty.f.includes(k);
-    cap[k]=famous?ri(92,99):clamp(Math.round(79+gauss()*4+(f?4:-1)),66,88);
-    st[k]=famous?ri(56,66)+(f?3:0):ri(37,48)+(f?5:0);}
-  return {sei:d.sei,mei:d.mei,style:d.style,famous,st,cap};
+    cap[k]=legend?ri(95,99):famous?ri(85,91):clamp(Math.round(79+gauss()*4+(f?4:-1)),66,88);
+    st[k]=legend?ri(62,70)+(f?3:0):famous?ri(56,66)+(f?3:0):ri(37,48)+(f?5:0);}
+  return {sei:d.sei,mei:d.mei,style:d.style,famous,legend,st,cap};
 }
 function newMgrDraft(prev){const d={sei:pick(SEI),mei:pick(MEI),style:ri(0,2),n:(prev&&prev.n||0)+1,inh:prev&&prev.inh?prev.inh.slice():[],iseed:inhSeed(prev)};d.prev=makeMgr(d);return d}
 const mgPot=m=>{const a=MKEYS.reduce((s,k)=>s+m.cap[k],0)/5;return a>=92?'SS':a>=86?'S':a>=82?'A':a>=78?'B':a>=74?'C':'D'};
@@ -2400,8 +2401,8 @@ function mgBars(m,showCap){
 }
 function mgCard(m,extra=''){
   const o=Math.round(MKEYS.reduce((s,k)=>s+m.st[k],0)/5);
-  return `<section class="pcard ${m.famous?'legendary':''}" aria-label="監督情報"><div class="pc-top"><div class="pc-ovr"><span class="n">${o}</span><span class="pos">監督</span><span class="tier">${m.famous?'名監督':MSTYLE[m.style].n}</span></div>
-  <div class="pc-id"><div class="name">${esc(m.sei)}<b>${esc(m.mei)}</b></div><div class="sub">${extra}</div><div class="tags"><span>${esc(MSTYLE[m.style].n)}</span><span class="pot">伸びしろ ${mgPot(m)}</span>${m.famous?'<span class="sk">名将の器</span>':''}${(m.traits||[]).map(k=>`<span class="sk" title="${esc(MTRAITS[k].d)}">${esc(MTRAITS[k].n)}</span>`).join('')}</div></div></div>${mgBars(m,false)}</section>`;
+  return `<section class="pcard ${m.famous?'legendary':''}" aria-label="監督情報"><div class="pc-top"><div class="pc-ovr"><span class="n">${o}</span><span class="pos">監督</span><span class="tier">${m.legend?'伝説の名将':m.famous?'名監督':MSTYLE[m.style].n}</span></div>
+  <div class="pc-id"><div class="name">${esc(m.sei)}<b>${esc(m.mei)}</b></div><div class="sub">${extra}</div><div class="tags"><span>${esc(MSTYLE[m.style].n)}</span><span class="pot">伸びしろ ${mgPot(m)}</span>${m.legend?'<span class="sk">伝説の名将</span>':m.famous?'<span class="sk">名将の器</span>':''}${(m.traits||[]).map(k=>`<span class="sk" title="${esc(MTRAITS[k].d)}">${esc(MTRAITS[k].n)}</span>`).join('')}</div></div></div>${mgBars(m,false)}</section>`;
 }
 H.mgTitle=()=>{
   return `<article class="front hero"><div><div class="dateline"><span>監督業</span></div><p class="deck">クラブを率い、8シーズンで名将を目指す。1回10〜15分。</p>
@@ -2413,7 +2414,7 @@ H.mgTitle=()=>{
 H.mgCreate=()=>{
   const d=G.mdraft,m=d.prev;
   return `<div class="kick">監督候補<span class="r">No.${String(d.n).padStart(3,'0')}</span></div>
-  <p class="note">${m.famous?'<b style="color:var(--gold)">名監督の器が現れた。</b>最初から能力が高く、伸びしろも桁違いだ。':'クラブの会長が監督候補を連れてきた。気に入らなければ別の候補を探せる。'}</p>
+  <p class="note">${m.legend?'<b style="color:var(--gold)">10万人に1人、伝説の名将が現れた。</b>伸びしろSS。どこまでも伸びていく。':m.famous?'<b style="color:var(--gold)">名監督の器が現れた。</b>最初から能力が高く、伸びしろも大きい。':'クラブの会長が監督候補を連れてきた。気に入らなければ別の候補を探せる。'}</p>
   ${mgCard(m,'41歳・就任先未定')}
   <div class="label">名前</div><div class="field"><input id="msei" aria-label="姓" value="${esc(d.sei)}" maxlength="6"><input id="mmei" aria-label="名" value="${esc(d.mei)}" maxlength="6"><button class="opt" data-act="mgRandName">おまかせ</button></div>
   <div class="label">チームづくりの方針</div><div class="seg c3">${MSTYLE.map((s,i)=>`<button class="opt" aria-pressed="${d.style===i}" data-act="mgStyle" data-v="${i}">${s.n}<span class="d">${s.d}</span></button>`).join('')}</div>
