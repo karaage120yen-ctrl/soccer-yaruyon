@@ -927,7 +927,7 @@ function applyFx(p,fx){
     else if(k==='fam'){if(P&&P.married){p.fam.happy=clamp(p.fam.happy+v,0,100);out.push(['家族の満足度',v])}}
     else if(k==='love'){if(P&&!P.married){P.love=clamp(P.love+v,0,100);out.push(['愛情',v])}}
     else if(k==='partner'){p.fam.partner={n:v,love:40,married:false,months:0};out.push(['恋人',v,1])}
-    else if(k==='breakup'){p.fam.partner=null;out.push(['恋人','別れた',-1])}
+    else if(k==='breakup'){if(p.fam.partner)p.fam.exName=p.fam.partner.n;p.fam.partner=null;out.push(['恋人','別れた',-1])}
     else if(k==='marry'){P.married=true;P.y=calYear(p);p.fam.happy=72;out.push(['結婚','おめでとう',1])}
     else if(k==='kid'){p.fam.kids.push({n:v,y:calYear(p)});out.push(['家族',`${v}が誕生`,1])}
     else if(k==='kidsoccer'){const kd=p.fam.kids[v];if(kd)kd.soccer=1}
@@ -983,7 +983,7 @@ function rollEvent(){
   return null;
 }
 function famEv(id,p){
-  const [,t,a]=id.split(':'),F=p.fam,P=F.partner;
+  const [,t,a]=id.split(':'),F=p.fam,P=F.partner||{n:F.exName||'恋人',love:0,months:12};
   if(t==='meet'){const nm=PARTNER[+a];return {id,fam:1,t:'思いがけない出会い',x:`友人の誕生日会で、${nm}という人と話が弾んだ。サッカーのことはほとんど知らないらしいが、それが妙に心地いい。`,ch:[
     {l:'連絡先を交換する',d:'交際が始まるかもしれない',pr:c=>.55+c.p.pop/400,ok:{m:`後日、${nm}と食事に行った。交際が始まった。`,fx:{partner:nm,cond:6}},ng:{m:'連絡先は交換したが、そのまま返事は来なかった。',fx:{}}},
     {l:'今はサッカーに集中する',d:'',pr:()=>1,ok:{m:'その夜も、帰ってストレッチをして寝た。',fx:{key:1}},ng:{m:'',fx:{}}}]}}
