@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-013150';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-013727';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1137,7 +1137,7 @@ function faPerson(P,k,o){
     faCircle(P,ha[0],ha[1],1.9,m(sk));armDetail(P,sh,el,ha,sk,isFar,open);
     if(!o.sleeveless){faCircle(P,sh[0],sh[1],3.6,m(J));faCap(P,sh,el,3.5,3.1,m(J),{t1:.46});faCap(P,sh,el,3.55,3.15,m(T),{t0:.4,t1:.46})}};
   if(o.behind)o.behind(P,k);
-  arm(sF,k.eF,k.hF,1,o.openF);leg(k.pF,k.kF,k.aF,k.tF,1);
+  arm(sF,k.eF,k.hF,1,o.openF);if(o.armF){faCap(P,lerp(sF,k.eF,.3),lerp(sF,k.eF,.45),3.7,3.5,shd(o.armF,.85))}leg(k.pF,k.kF,k.aF,k.tF,1);
   // 胴体：胸→くびれ→腰
   const wN=lerp(sN,k.pN,.62),wF=lerp(sF,k.pF,.62),cx=(k.n[0]+k.p[0])/2;
   wN[0]+=(cx-wN[0])*.18;wF[0]+=(cx-wF[0])*.18;
@@ -1229,6 +1229,8 @@ function faBg(g,o,seed){
 const J=(h,n,sN,sF,eN,hN,eF,hF,p,pN,pF,kN,aN,tN,kF,aF,tF)=>({h,n,sN,sF,eN,hN,eF,hF,p,pN,pF,kN,aN,tN,kF,aF,tF});
 const POSE={
   volley:J([44,22],[44,29],[48,32],[39,31],[56,38],[57,47],[27,24],[14,16],[42,52],[45,53],[39,51],[57,61],[67,69],[74,63],[34,70],[28,87],[35,90]),
+  // 体を後ろに倒して、蹴り足をまっすぐ伸ばすサイドボレー
+  sidevol:J([28,29],[33,37],[37,40],[29,36],[47,35],[55,28],[20,29],[11,22],[44,58],[46,59],[42,57],[57,52],[66,46],[72,43],[40,74],[32,88],[39,91]),
   bicycle:J([24,64],[29,59],[32,56],[28,55],[24,66],[18,74],[19,50],[11,56],[44,43],[46,45],[42,41],[50,27],[52,13],[58,9],[57,50],[67,43],[72,46]),
   slide:J([22,55],[27,60],[30,63],[26,61],[30,72],[25,80],[18,51],[12,44],[42,75],[44,77],[40,74],[56,80],[68,84],[75,82],[44,86],[35,89],[39,92]),
   dribble:J([52,24],[49,30],[52,34],[45,32],[43,42],[36,47],[56,37],[62,43],[41,54],[43,55],[39,53],[53,64],[49,79],[56,81],[34,70],[22,78],[17,84]),
@@ -1243,7 +1245,7 @@ const POSE={
   header:J([52,26],[47,31],[50,35],[43,33],[42,44],[36,50],[58,40],[66,38],[38,54],[40,55],[36,53],[49,64],[46,79],[52,82],[30,68],[20,74],[15,79]),
 };
 const FA={
- ichikawa:{pose:'volley',swoosh:[[46,74],[58,76],[67,72],[73,64]],impact:1,mvp:[1,-.3],wind:{kN:[48,68],aN:[40,80],tN:[34,82]},sweat:1,o:{skin:'#e9b48a',hair:'#141414',hs:'spiky',jersey:'#d8281c',trim:'#ffffff',shorts:'#ffffff',socks:'#d8281c',boots:'#f2c400',num:10,arm:'#ffd23a',angry:1,open:1,openF:1},ball:[75,57,'r'],bg:{strokes:[['#d8281c',0,50,40,20,80,10,5],['#ffd23a',0,72,30,60,80,40,3.5],['#141414',10,98,40,70,80,62,2]],groundY:90}},
+ ichikawa:{pose:'sidevol',swoosh:[[48,80],[58,76],[66,66],[71,52],[72,44]],impact:1,mvp:[1,-.45],wind:{kN:[50,70],aN:[48,84],tN:[54,88]},sweat:1,o:{skin:'#e9b48a',hair:'#141414',hs:'spiky',jersey:'#d8281c',trim:'#ffffff',shorts:'#ffffff',socks:'#d8281c',boots:'#f2c400',num:10,armF:'#ffd23a',angry:1,open:1,openF:1,openN:1},ball:[76,38,'v'],bg:{strokes:[['#d8281c',0,50,40,20,80,10,5],['#ffd23a',0,72,30,60,80,40,3.5],['#141414',10,98,40,70,80,62,2]],groundY:90}},
  shanchi:{pose:'slide',mvp:[1,0],shift:[-7,-1],impact:1,o:{skin:'#f0c49a',hair:'#0e0e0e',hs:'long',jersey:'#4b1f6f',trim:'#e8c15a',shorts:'#2a0f42',socks:'#4b1f6f',boots:'#e8c15a',num:4,band:'#d4302a',face:1},ball:[76,77,'r'],bg:{strokes:[['#4b1f6f',0,30,40,60,80,40,6],['#e8c15a',0,48,40,30,80,58,3],['#d4302a',0,64,50,40,80,20,2.5]],groundY:91},spray:[[8,40,88]]},
  mao:{pose:'bicycle',mvp:[.3,-1],wind:{kN:[52,44],aN:[60,54],tN:[64,58]},swoosh:[[62,30],[60,18],[57,10]],impact:1,o:{skin:'#f0c49a',hair:'#ffd24a',hs:'spiky',jersey:'#e0a419',trim:'#ffffff',shorts:'#ffffff',socks:'#e0a419',boots:'#ffd700',num:9,face:-1},ball:[61,6,'u'],bg:{strokes:[['#1a1a1a',0,90,30,20,80,6,6],['#c8102e',0,70,40,46,80,30,2.5],['#ffd24a',10,100,60,40,80,26,2]],groundY:92,paper:'#efede6'}},
  inkansu:{pose:'dribble',mvp:[1,0],shift:[-6,0],sweat:1,o:{skin:'#e6c3a0',hair:'#1d2b3a',hs:'bangs',jersey:'#111821',trim:'#38e0c8',shorts:'#111821',socks:'#38e0c8',boots:'#38e0c8',num:7},ball:[63,86,'r'],bg:{strokes:[['#38e0c8',0,30,40,50,80,30,4],['#111821',0,56,40,40,80,60,5],['#38e0c8',0,70,50,62,80,78,2]],groundY:90}},
@@ -1312,9 +1314,9 @@ function fullArtURL(id){
   if(d.speed)for(let i=0;i<11;i++){const y=Math.round((18+i*6.5)*FA_S),x0=Math.round((2+(i%3)*3)*FA_S);for(let x=x0;x<x0+(12+(i%2)*9)*FA_S;x++)if(!P.getB(x,y))P.setB(x,y,i%2?'#9fdcf5':'#e2f7ff')}
   const fx=(x,y,c)=>{if(!P.get(x,y))P.set(x,y,c)};
   if(d.swoosh)for(let k=0;k<3;k++){const pts=d.swoosh;for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];for(let t=0;t<=1;t+=.03)fx(a[0]+(b[0]-a[0])*t-k*1.3,a[1]+(b[1]-a[1])*t+k*1.7,k===0?'#ffffff':k===1?'#e8e8e8':'#d0d0d0')}}
-  if(d.ball){const [bx,by,tp]=d.ball,tr=tp==='u'?[0,1]:tp==='arc'?[.7,.7]:tp==='big'?[-1,0]:[-1,.25],len=tp==='big'?24:16,nx=-tr[1],ny=tr[0];
+  if(d.ball){const [bx,by,tp]=d.ball,tr=tp==='u'?[0,1]:tp==='arc'?[.7,.7]:tp==='big'?[-1,0]:tp==='v'?[-.85,.55]:[-1,.25],len=tp==='big'?24:tp==='v'?20:16,nx=-tr[1],ny=tr[0];
     [-2.4,-1.2,0,1.2,2.4].forEach(o2=>{for(let i=0;i<len*(1-Math.abs(o2)*.15);i+=.35){fx(bx+tr[0]*(i+5)+nx*o2*(1-i/len),by+tr[1]*(i+5)+ny*o2*(1-i/len),i<len*.3?'#ffffff':i<len*.65?'#ececec':'#d4d4d4')}});
-    if(d.impact||tp==='big')for(let a=0;a<12;a++){const t=a/12*Math.PI*2,r0=tp==='big'?7:6.2,r1=tp==='big'?11.5:9.5;for(let q=r0;q<=r1;q+=.3)fx(bx+Math.cos(t)*q,by+Math.sin(t)*q,a%2?'#ffd23a':'#ff9a1a')}}
+    if(d.impact||tp==='big')for(let a=0;a<12;a++){const t=a/12*Math.PI*2,r0=tp==='big'?7:6.2,r1=tp==='big'?11.5:tp==='v'?11:9.5;for(let q=r0;q<=r1;q+=.3)fx(bx+Math.cos(t)*q,by+Math.sin(t)*q,a%2?'#ffd23a':'#ff9a1a')}}
   if(d.bg){const gy=d.bg.groundY*FA_S+3;g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(FA_W/2,gy,FA_W*.28,5,0,0,Math.PI*2);g.fill()}
   const im=g.getImageData(0,0,FA_W,FA_H);
   for(let i=0;i<P.B.length;i++){const c=P.B[i];if(!c)continue;const [r,gg,b]=hx(c);im.data[i*4]=r;im.data[i*4+1]=gg;im.data[i*4+2]=b;im.data[i*4+3]=255}
