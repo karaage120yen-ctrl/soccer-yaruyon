@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-164503';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-165713';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -718,6 +718,10 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .stk-b .opt.sm{flex:1 1 30%;padding:6px 4px;font-size:12px;min-height:0}
 .stb .st3i{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;object-fit:contain;pointer-events:none}
 .slot .dogb{position:absolute;right:-10px;bottom:-8px;font-style:normal;font-size:18px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+.stb .st3s{position:absolute;inset:8% 10%;display:flex;align-items:center;justify-content:center}
+.stb .st3s>*{width:100%;height:auto;max-height:100%}
+.wxi{font-size:11px;color:var(--soft);white-space:nowrap}
+.wxline{margin:0 0 6px;text-align:center}
 
 </style>
 </head>
@@ -1995,7 +1999,13 @@ function drawStand3(o){
   const add=[];for(let y=0;y<SH3;y++)for(let x=0;x<SW;x++){if(P.get(x,y))continue;if([[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>P.get(x+a,y+b)))add.push([x,y])}add.forEach(([x,y])=>P.set(x,y,'#14101a'));
   return P;
 }
-const ST3_CACHE={};
+const ST3_CACHE={},ST3_Q=[];let ST3_SYNC=false,ST3_T=0;
+function st3Build(S){const L=S.o,J0=L.jersey||'#e2462b';const o=Object.assign({shorts:J0==='#f2f2f2'||J0==='#ffffff'?'#1a3f8f':shd(J0,.86),socks:J0,boots:S.boots||'#1c1c22',pose:S.pose||'cross'},L);try{ST3_CACHE[S.key]=stand3Svg(drawStand3(o))}catch(e){ST3_CACHE[S.key]=''}}
+// 立ち絵は重いので、まず小さいドットを出して、空いた時間に少しずつ描いて差し替える
+function st3Pump(){if(ST3_T)return;ST3_T=setTimeout(()=>{ST3_T=0;const t0=performance.now();
+  while(ST3_Q.length&&performance.now()-t0<14){const q=ST3_Q.shift();if(ST3_CACHE[q.k]===undefined)st3Build(q.S);
+    const html=ST3_CACHE[q.k];if(html)document.querySelectorAll(`[data-st3="${q.k.replace(/"/g,'')}"]`).forEach(el=>{el.outerHTML=html})}
+  if(ST3_Q.length)st3Pump()},16)}
 function stand3Svg(P){
   if(typeof document!=='undefined'){try{const cv=document.createElement('canvas');cv.width=SW*2;cv.height=(SH3+2)*2;const g=cv.getContext('2d');g.scale(2,2);g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(32,SH3-3,20,2.6,0,0,Math.PI*2);g.fill();
     for(let y=0;y<SH3;y++)for(let x=0;x<SW;x++){const c=P.B[y*SW+x];if(c){g.fillStyle=c;g.fillRect(x,y,1,1)}}
@@ -2005,7 +2015,11 @@ function stand3Svg(P){
 function standArt3(c,kind){
   if(kind==='mg'||(c&&c.kind==='mg'))return sprOf(c,'mg');
   const S=standLook(c,kind);
-  if(!ST3_CACHE[S.key]){const L=S.o,J0=L.jersey||'#e2462b';const o=Object.assign({shorts:J0==='#f2f2f2'||J0==='#ffffff'?'#1a3f8f':shd(J0,.86),socks:J0,boots:S.boots||'#1c1c22',pose:S.pose||'cross'},L);if(o.hs==='curly')o.hs='curly';ST3_CACHE[S.key]=stand3Svg(drawStand3(o))}
+  if(!S.o||!S.o.skin||!S.o.jersey)return `<div class="stb ${S.rare?'rare':''}"><div class="st3s">${sprOf(c)}</div></div>`;
+  if(!ST3_CACHE[S.key]&&typeof document!=='undefined'&&!ST3_SYNC){
+    if(!ST3_Q.some(q=>q.k===S.key))ST3_Q.push({k:S.key,S});st3Pump();
+    return `<div class="stb ${S.rare?'rare':''}"><div class="st3s" data-st3="${S.key.replace(/"/g,'')}">${sprOf(c)}</div>${S.rare?'<i class="spk"></i>':''}</div>`}
+  if(!ST3_CACHE[S.key])try{{const L=S.o,J0=L.jersey||'#e2462b';const o=Object.assign({shorts:J0==='#f2f2f2'||J0==='#ffffff'?'#1a3f8f':shd(J0,.86),socks:J0,boots:S.boots||'#1c1c22',pose:S.pose||'cross'},L);if(o.hs==='curly')o.hs='curly';ST3_CACHE[S.key]=stand3Svg(drawStand3(o))}}catch(e){return `<div class="stb"><div class="st3s">${sprOf(c)}</div></div>`}
   return `<div class="stb ${S.rare?'rare':''}">${ST3_CACHE[S.key]}${S.rare?'<i class="spk"></i>':''}</div>`;
 }
 
@@ -2116,6 +2130,7 @@ function shotDraw(g,ts){
 }
 function scnDraw(g,ts){
   if(SCN.mode==='shot')shotDraw(g,ts);else ambStep(g,ts);
+  if(SCN.wx&&typeof wxOverlay==='function')wxOverlay(g,SCN.wx,ts/1000,SCW,SCH);
 }
 function scnHtml(){scnStart();return `<canvas id="scn" class="scn" width="${SCW}" height="${SCH}" aria-label="試合の様子"></canvas>`}
 
@@ -3039,6 +3054,7 @@ const qg=(a,b,h=0)=>poisson(1.3*Math.exp((a-b)/13+h));
 
 /* ========== 試合 ========== */
 function sim(p,{os,base,home,neutral,comp}){
+  const W=typeof wxCareer==='function'?wxCareer(p,comp,home,neutral):null,WD=W?WX[W.id]:null,WP=W?wxPlayer(p,W):{g:1,rt:0};
   const yh=!!(p.legFx&&p.legFx.yahho);if(yh)os-=2;// やっほー：相手のコンディションを1段階下げる
   const nat=comp==='nat';
   let min=0,start=false,inj=0;
@@ -3048,6 +3064,7 @@ function sim(p,{os,base,home,neutral,comp}){
   const ts=base+(o-base)*.3*(min/90)+(has(p,'captain')&&min>45?1.5:0);
   const ha=neutral?0:home?.12:-.12;
   let gf=qg(ts,os,ha),ga=poisson(1.3*Math.exp((os-ts)/13-ha)*(has(p,'wall')&&min>45?.88:1));
+  if(WD&&WD.g&&WD.g!==1){gf=wxGoals(gf,WD.g);ga=wxGoals(ga,WD.g)}
   if(yh&&gf===ga&&Math.random()<.3)gf++;// 勝負強さ：引き分けを終盤に勝ちへ
   if(has(p,'kaminoko')&&min>0&&gf<=ga&&Math.random()<.22)gf++;// 神の子：勝負に勝ちやすい
   let pg=0,pa=0,rt=null;
@@ -3055,17 +3072,17 @@ function sim(p,{os,base,home,neutral,comp}){
     const P=POS[p.pos],sty=P.styles[p.style],lv=clamp(1+(o-os)/32,.35,2);
     const gKey=p.pos==='FW'?p.st.sho:p.pos==='MF'?p.st.sho*.6+p.st.tec*.4:p.st.phy;
     const aKey=p.st.pas*.6+p.st.tec*.4;
-    const gR=Math.min(1.15,P.g*sty.g*Math.pow(gKey/70,2.2)*lv*(1+p.boost*.03)*(has(p,'goal')?1.15:1)*(has(p,'fk')?1.1:1)*(has(p,'speed')?1.05:1)*(typeof hGoal==='function'?hGoal(p):1));
+    const gR=Math.min(1.15,P.g*sty.g*Math.pow(gKey/70,2.2)*lv*(1+p.boost*.03)*(has(p,'goal')?1.15:1)*(has(p,'fk')?1.1:1)*(has(p,'speed')?1.05:1)*(typeof hGoal==='function'?hGoal(p):1)*WP.g);
     const aR=Math.min(.8,P.a*sty.a*Math.pow(aKey/70,2)*lv*(has(p,'vision')?1.2:1)*(1+((p.mates==null?50:p.mates)-50)/250));
     pg=poisson(gR*min/90);pa=poisson(aR*min/90);
     gf=Math.max(gf,pg);pa=Math.min(pa,gf-pg);
-    let r=6.2+(o-os)*.035+pg*.9+pa*.55+(gf>ga?.3:gf<ga?-.3:0)+(p.pos==='GK'?(ga===0?.6:-.18*ga):0)+(has(p,'speed')?.1:0)+(has(p,'big')&&comp!=='lg'?.2:0)+rnd(-.45,.45)-(p.fat||0)/150;
+    let r=6.2+(o-os)*.035+pg*.9+pa*.55+(gf>ga?.3:gf<ga?-.3:0)+(p.pos==='GK'?(ga===0?.6:-.18*ga):0)+(has(p,'speed')?.1:0)+(has(p,'big')&&comp!=='lg'?.2:0)+rnd(-.45,.45)-(p.fat||0)/150+WP.rt;
     if(min<30)r=6+(r-6)*.5;
     rt=clamp(r,4.5,10);
     p.sta=clamp(p.sta-min/90*3.2,0,100);
     if(Math.random()<.007*injMult(p)*min/90){inj=Math.random()<.15?ri(10,20):ri(1,6);p.inj+=inj;if(inj>=4)typeof cutQ==='function'&&cutQ('injury','試合中に負傷…',`全治${inj}週間`,2000)}
   }
-  return {gf,ga,pg,pa,min,start,rt,ts,inj,out:p.inj>0&&!min?'inj':p.absent>0&&!min?'abs':null};
+  return {wx:W?W.id:null,gf,ga,pg,pa,min,start,rt,ts,inj,out:p.inj>0&&!min?'inj':p.absent>0&&!min?'abs':null};
 }
 function addStats(p,cur,comp,r){
   if(r.min>0){
@@ -3075,7 +3092,7 @@ function addStats(p,cur,comp,r){
   }
   if(r.inj)cur.injW+=r.inj;
 }
-const mkRec=(f,comp,opp,home,r,note='')=>({day:Math.floor(f.day),comp,opp,home,gf:r.gf,ga:r.ga,res:r.gf>r.ga?'w':r.gf<r.ga?'l':'d',min:r.min,start:r.start,pg:r.pg,pa:r.pa,rt:r.rt,inj:r.inj,out:r.out,note});
+const mkRec=(f,comp,opp,home,r,note='')=>({day:Math.floor(f.day),comp,opp,home,gf:r.gf,ga:r.ga,res:r.gf>r.ga?'w':r.gf<r.ga?'l':'d',min:r.min,start:r.start,pg:r.pg,pa:r.pa,rt:r.rt,inj:r.inj,out:r.out,note,wx:r.wx||null});
 const myStr=(cur,club)=>{const t=cur.teams&&cur.teams.find(x=>x.me);return t?t.str:club.rep};
 const natBase=c=>c.tk==='oly'?68+(natStr(S.p)-76)*.6:cr(natStr(S.p));
 function natCall(p,extra=0){
@@ -3889,6 +3906,7 @@ function mStart(A0,B0,seed,human){
   const X={seed,r,T,ev,sc:[0,0],sh:[0,0],gl:[{},{}],as:[{},{}],posA:0,seg:0,si:0,human:human==null?-1:human,pend:null,done:false,res:null,subs:0};
   X.tac=[A.tac||'bal',B.tac||'bal'];
   X.cond=battleCond(T,seed,ev);
+  if(typeof wxBattle==='function')wxBattle(X);
   // スーパースターター：前半だけ本人の能力が変わる（後半に戻す）
   X.starters=[];[A0,B0].forEach((X0,i)=>X0.pl.forEach((p0,j)=>{if(!p0.st1)return;const p=T[i].pl[j],dr=p0.st1.r-p0.r,dp=p0.st1.pas-p0.pas;
     p.r+=dr;p.pas+=dp;shiftTeam(T[i],p.role,dr);const Y=T[i];Y.atk+=.6;Y.mid-=.2;Y.def-=.4;X.starters.push({i,p,dr,dp});
@@ -3951,12 +3969,13 @@ function mRun(X){
     if(X.seg>=18){mEnd(X);break}
     if(X.lazy&&X.si===0&&X.seg*5>=X.until)break;// 画面の時間に合わせて少しずつ進める（途中で戦術を変えられる）
     if(X.si===0&&tbCheck(X))break;
-    if(X.si===0){if(X.inu)inuTick(X);tbApply(X);X.T.forEach((Y,t)=>Y.pl.forEach(p=>{if(p.injUntil!=null&&X.seg>=p.injUntil){shiftTeam(Y,p.role,-p.injD);delete p.injUntil;X.ev.push({m:X.seg*5,s:t,ty:'sub',tx:`${p.n}がケガから戻ってきた`})}}));
+    if(X.si===0){if(X.wx)wxSeg(X);if(X.inu)inuTick(X);tbApply(X);X.T.forEach((Y,t)=>Y.pl.forEach(p=>{if(p.injUntil!=null&&X.seg>=p.injUntil){shiftTeam(Y,p.role,-p.injD);delete p.injUntil;X.ev.push({m:X.seg*5,s:t,ty:'sub',tx:`${p.n}がケガから戻ってきた`})}}));
       X.pa=1/(1+Math.exp(-((X.T[0].mid+tacOf(X,0).m+kamaB(X,0))-(X.T[1].mid+tacOf(X,1).m+kamaB(X,1)))/9));X.posA+=X.pa;
       if(X.kama)[0,1].forEach(i=>{if(kamaB(X,i)&&!X.kamaOn[i]){X.kamaOn[i]=true;const k=X.T[i].pl.find(p=>p.kama);X.ev.push({m:X.seg*5,s:i,ty:'skill',tx:`${k?k.n:'鎌ポコ'}「まだいけるやん、連携や！」 負けているあいだ味方の全能力＋1`})}})}
     if(X.si<2){const i=X.si;X.si++;mTeam(X,i);continue}
     const seg=X.seg;X.seg++;X.si=0;
     if(seg===8){
+      if(X.wx)wxHalf(X);
       X.ev.push({m:45,s:-1,ty:'ht',tx:`前半終了 ${X.sc[0]}-${X.sc[1]}`});
       X.starters.forEach(x=>{x.p.r-=x.dr;x.p.pas-=x.dp;shiftTeam(X.T[x.i],x.p.role,-x.dr);X.T[x.i].atk-=.6;X.T[x.i].mid+=.2;X.T[x.i].def+=.4;X.ev.push({m:46,s:x.i,ty:'skill',tx:`${x.p.n}の「${STARTER_SKILL.n}」が切れた。能力が元に戻る`})});X.starters=[];
       X.T.forEach((Y,i)=>{if(Y.hasEmp){const c=Y.pl.find(p=>p.emp);X.ev.push({m:46,s:i,ty:'skill',tx:`${c?c.n:'シャン・チー'}の「${EMP_SKILL.n}」発動！ 後半は味方全員の守備＋6`})}});
@@ -3988,7 +4007,7 @@ function mTeam(X,i){
       return;
     }
   }
-  const pc=clamp(.17+poss*.24+(mAtk(X,i)-odef)*.0042+late+steady,.05,.6);
+  const pc=clamp(.17+poss*.24+(mAtk(X,i)-odef)*.0042+late+steady+(X.wxPc||0),.05,.6);
   if(r()>=pc)return;
   X.sh[i]++;
   const m=seg*5+1+Math.floor(r()*5);
@@ -4034,7 +4053,7 @@ function mResub(X,sq,swaps){
   const adj=(X.cond[h]&&X.cond[h].adj)||0;S.atk+=adj;S.mid+=adj;S.def+=adj;
   S.out=(old.out||[]).concat(old.pl.filter(p=>!S.pl.some(q=>q.n===p.n)));
   if(S.hasMao&&!X.maoUsed[h]&&X.maoMin[h]<46)X.maoMin[h]=46+Math.floor(X.r()*35);
-  X.T[h]=S;if(X.inu){X.inu[h]=!!(S.dogB&&S.pl.some(p=>p.dog)&&S.pl.some(p=>p.inu));if(X.inuOut[h]){X.inuOut[h]=false;inuOut(X,h,46,null)}}(swaps||[]).forEach(s=>X.ev.push({m:46,s:h,ty:'sub',tx:`選手交代：${s[0]} → ${s[1]}`}));
+  X.T[h]=S;if(X.wxD){const D=X.wxD[h];S.atk+=D.atk;S.mid+=D.mid;S.def+=D.def}if(X.inu){X.inu[h]=!!(S.dogB&&S.pl.some(p=>p.dog)&&S.pl.some(p=>p.inu));if(X.inuOut[h]){X.inuOut[h]=false;inuOut(X,h,46,null)}}(swaps||[]).forEach(s=>X.ev.push({m:46,s:h,ty:'sub',tx:`選手交代：${s[0]} → ${s[1]}`}));
 }
 function mEnd(X){
   const sc=X.sc;
@@ -4047,7 +4066,7 @@ function mFinish(X){
   const pkw=X.pk?(X.pk.g[0]>X.pk.g[1]?0:1):-1;
   [0,1].forEach(i=>{const win=sc[i]>sc[1-i]||pkw===i?1.5:sc[i]===sc[1-i]?.5:0;T[i].pl.concat(T[i].out||[]).forEach(p=>{const v=(X.gl[i][p.n]||0)*3+(X.as[i][p.n]||0)*2+win+p.r/100;if(v>best){best=v;mvp={n:p.n,s:i}}})});
   const ev=X.ev.slice().sort((a,b)=>a.m-b.m||(a.ty==='ft'||a.ty==='pk'?1:0)-(b.ty==='ft'||b.ty==='pk'?1:0));
-  X.res={sc:sc.slice(),ev,sh:X.sh.slice(),poss:[Math.round(X.posA/18*100),100-Math.round(X.posA/18*100)],mvp,seed:X.seed,cond:X.cond,pk:X.pk?X.pk.g.slice():null,gl:X.gl,as:X.as,oib:X.oibUsed?X.oibUsed.slice():[false,false],gikk:X.gikkuri||null};
+  X.res={sc:sc.slice(),ev,sh:X.sh.slice(),poss:[Math.round(X.posA/18*100),100-Math.round(X.posA/18*100)],mvp,seed:X.seed,cond:X.cond,pk:X.pk?X.pk.g.slice():null,gl:X.gl,as:X.as,oib:X.oibUsed?X.oibUsed.slice():[false,false],gikk:X.gikkuri||null,wx:X.wx?X.wx.id:null,wxk:X.wx?X.wx.k:null};
   X.done=true;X.pend=null;
 }
 // PK戦：5人ずつ、決まらなければサドンデス。キッカーはシュートの高い順
@@ -4480,7 +4499,10 @@ function mgMatch(my,opp,P){
   const m=MC.m,ana=(m.st.ana-50)*.05,late=1+(m.st.gam-50)*.004;
   const sd=clamp(3-(m.st.lea-50)*.03,1,4);
   const a=my+rnd(-sd,sd),b=opp-ana+rnd(-2.5,2.5);
-  return [poisson(1.3*Math.exp((a-b)/13)*P.f*late*(mgHas('atk')?1.08:1)),poisson(1.3*Math.exp((b-a)/13)*P.a*(mgHas('dfn')?.9:1))];
+  const wx=typeof wxMgr==='function'?wxMgr():null,W=wx?WX[wx]:{},adapt=W.g&&W.g!==1?(m.st.ana-60)*.03:0;
+  let gx=poisson(1.3*Math.exp((a+adapt-b)/13)*P.f*late*(mgHas('atk')?1.08:1)),gy=poisson(1.3*Math.exp((b-a-adapt)/13)*P.a*(mgHas('dfn')?.9:1));
+  if(W.g&&W.g!==1){gx=wxGoals(gx,W.g);gy=wxGoals(gy,W.g)}
+  const R=[gx,gy];R.wx=wx;return R;
 }
 function mgRunPhase(){
   typeof mgActApply==='function'&&mgActApply();
@@ -4491,7 +4513,7 @@ function mgRunPhase(){
     const T=shuffle(c.teams.slice());
     for(let i=0;i+1<T.length;i+=2){
       const A=T[i],B=T[i+1];
-      if(A.me||B.me){const me=A.me?A:B,op=A.me?B:A,[x,y]=mgMatch(my,op.str,P);upd(me,op,x,y);out.games.push({opp:op.n,gf:x,ga:y,res:x>y?'w':x<y?'l':'d'});out[x>y?'w':x<y?'l':'d']++}
+      if(A.me||B.me){const me=A.me?A:B,op=A.me?B:A,R2=mgMatch(my,op.str,P),[x,y]=R2;upd(me,op,x,y);out.games.push({opp:op.n,gf:x,ga:y,res:x>y?'w':x<y?'l':'d',wx:R2.wx});out[x>y?'w':x<y?'l':'d']++}
       else{const x=qg(A.str,B.str),y=qg(B.str,A.str);upd(A,B,x,y)}
     }
   }
@@ -4636,7 +4658,7 @@ H.phase=()=>{
 };
 H.pres=()=>{
   const c=MC.cur,R=c.res[c.res.length-1];
-  const row=(g,i)=>`<li class="mt"><span class="md num">${g.nm?esc(g.nm):`第${i+1+(R.ph>0?c.sched.slice(0,R.ph).reduce((s,x)=>s+x,0):0)}節`}</span><span class="mo">vs ${esc(g.opp)}${g.pk?`<small>${g.pk}</small>`:''}</span><span class="ms ${g.res}"><i>${{w:'○',d:'△',l:'●'}[g.res]}</i>${g.gf}-${g.ga}</span><span class="mr"></span></li>`;
+  const row=(g,i)=>`<li class="mt"><span class="md num">${g.nm?esc(g.nm):`第${i+1+(R.ph>0?c.sched.slice(0,R.ph).reduce((s,x)=>s+x,0):0)}節`}</span><span class="mo">vs ${esc(g.opp)}${g.wx&&WX[g.wx]&&WX[g.wx].v?` <span class="wxi">${WX[g.wx].i}${esc(WX[g.wx].n)}</span>`:''}${g.pk?`<small>${g.pk}</small>`:''}</span><span class="ms ${g.res}"><i>${{w:'○',d:'△',l:'●'}[g.res]}</i>${g.gf}-${g.ga}</span><span class="mr"></span></li>`;
   return `${mgHead()}<div class="kick">${PHN[R.ph]}の結果<span class="r">${MPLAN[R.plan].n}・${R.w}勝${R.d}分${R.l}敗</span></div>${c.actRes?`<p class="note">自分磨き「${esc(c.actRes.n)}」：${c.actRes.fx.filter(x=>x[1]>0).map(x=>esc(x[0])+'+'+x[1]).join(' ')||'能力の変化なし'}</p>`:''}
   <ul class="mlist">${R.games.map(row).join('')}</ul>
   ${R.cup.length?`<div class="kick">${esc(c.cup.name)}</div><ul class="mlist">${R.cup.map(row).join('')}</ul>`:''}
@@ -4879,7 +4901,7 @@ H.month=()=>{
 function matchRow(x,m){
   const res={w:'○',d:'△',l:'●'}[x.res];
   const pl=x.min>0?`${x.start?'先発':'途中'}${x.min}分${x.pg?` <b class="g">${x.pg}G</b>`:''}${x.pa?` <b class="a">${x.pa}A</b>`:''}`:x.out==='inj'?'<em class="bad">負傷欠場</em>':x.out==='abs'?'不在':'出番なし';
-  return `<li class="mt"><span class="md num">${MONTHS[x.mo!=null?x.mo:m]}/${x.day}</span><span class="mo"><small>${esc(x.comp)}${x.home===null?'':x.home?'・ホーム':'・アウェー'}</small>vs ${esc(x.opp)}${x.note?`<small class="nt">${esc(x.note)}</small>`:''}<small>${pl}${x.inj?` <em class="bad">負傷 全治${x.inj}週</em>`:''}</small></span><span class="ms ${x.res}"><i>${res}</i>${x.gf}-${x.ga}</span><span class="mr num ${x.rt>=7.5?'hi':''}">${x.rt?x.rt.toFixed(1):'—'}</span></li>`;
+  return `<li class="mt"><span class="md num">${MONTHS[x.mo!=null?x.mo:m]}/${x.day}</span><span class="mo"><small>${esc(x.comp)}${x.home===null?'':x.home?'・ホーム':'・アウェー'}</small>vs ${esc(x.opp)}${x.wx&&typeof WX!=='undefined'&&WX[x.wx]?` <span class="wxi" title="${esc(WX[x.wx].n)}">${WX[x.wx].i}${WX[x.wx].v||x.wx==='alt'||x.wx==='dry'?esc(WX[x.wx].n):''}</span>`:''}${x.note?`<small class="nt">${esc(x.note)}</small>`:''}<small>${pl}${x.inj?` <em class="bad">負傷 全治${x.inj}週</em>`:''}</small></span><span class="ms ${x.res}"><i>${res}</i>${x.gf}-${x.ga}</span><span class="mr num ${x.rt>=7.5?'hi':''}">${x.rt?x.rt.toFixed(1):'—'}</span></li>`;
 }
 H.mres=()=>{
   const p=S.p,R=S.mres,m=R.m;
@@ -4908,7 +4930,7 @@ H.mres=()=>{
 };
 
 function myKit(p){const k=(KIT[p.pos]||KIT.MF)[0];return {j:k[0],s:k[1]==='#111111'?'#111111':'#ffffff',k:'#f2c400'}}
-function careerScnTeams(p){const me=myKit(p);scnTeams(me,me.j==='#2f6fd6'||me.j==='#1a3f8f'?{j:'#f2f2f2',s:'#1a3f8f',k:'#7ad13a'}:{j:'#2f6fd6',s:'#14213d',k:'#7ad13a'})}
+function careerScnTeams(p){if(typeof SCN!=='undefined')SCN.wx=null;const me=myKit(p);scnTeams(me,me.j==='#2f6fd6'||me.j==='#1a3f8f'?{j:'#f2f2f2',s:'#1a3f8f',k:'#7ad13a'}:{j:'#2f6fd6',s:'#14213d',k:'#7ad13a'})}
 function evScene(e,R){
   if(!e.scene)return '';const p=S.p,key=S.evq[S.evi]+'|'+S.evi+'|'+(R?'r':'f');
   if(S._scnKey!==key){S._scnKey=key;careerScnTeams(p);
@@ -5385,6 +5407,7 @@ function matchHtml(){
   if(L&&L.done&&min>=90)cpuFinish();
   const res=matchRes(X);
   const done=min>=90&&!!X.res,ask=L&&L.pend&&min>=L.pend.m&&!isPaused(B);
+  SCN.wx=(L&&L.wx&&L.wx.id)||(X.res&&X.res.wx)||null;
   if(!B.scnSet){B.scnSet=1;scnTeams({j:'#e2462b',s:'#ffffff',k:'#f2c400'},{j:'#2f6fd6',s:'#14213d',k:'#7ad13a'});scnAmbient()}
   const nm=[X.A.name,X.B.name];
   const evs=res.ev.slice().reverse().map(e=>`<li class="bev ${e.ty} ${e.s===side?'mine':e.s<0?'neu':'opp'} ${e.m<=min?'on':''}" data-m="${e.m}"><span class="num">${e.m}'</span><span>${e.s>=0?`<small>${esc(nm[e.s])}</small>`:''}${e.ty==='goal'?'<b>GOAL</b> ':''}${esc(e.tx)}</span></li>`).join('');
@@ -5392,6 +5415,7 @@ function matchHtml(){
   const pkTx=res.pk?`（PK ${res.pk[side]}-${res.pk[1-side]}）`:'';
   if(done&&X.kind==='bet')betSettle(X);
   return `<div class="kick">${X.title?esc(X.title):X.kind==='bet'?'賭博伝説試合':X.kind==='room'?`ルーム対戦 ${esc(X.code)}`:X.kind==='code'?'コード対戦':'CPU練習試合'}<span class="r">${esc(X.A.form)} vs ${esc(X.B.form)}</span></div>
+  ${(()=>{const w=(L&&L.wx)||(res&&res.wx?{id:res.wx,k:res.wxk}:null);if(!w||typeof WX==='undefined'||!WX[w.id])return '';const N=NATIONS[w.k];return `<p class="sub wxline">${N?N.fl+' '+esc(N.n)+'・':''}${WX[w.id].i} ${esc(WX[w.id].n)}</p>`})()}
   <div class="board"><div class="bt ${side===0?'me':''}"><b>${esc(nm[0])}</b><span class="sub">総合${X.A.tot}${res.cond?`・${res.cond[0].lbl}`:''}</span></div><div class="bs"><span class="num" id="bscore">${scoreAt(res,min).join(' - ')}</span><span class="num clock" id="bclock">${min}'</span></div><div class="bt ${side===1?'me':''}"><b>${esc(nm[1])}</b><span class="sub">総合${X.B.tot}${res.cond?`・${res.cond[1].lbl}`:''}</span></div></div>
   ${scnHtml()}
   ${L&&!L.done?`<div class="tacbar"><div class="label">戦術（いつでも変えられる）・相手は「${TACS[L.tac[1-side]].n}」</div><div class="seg c3">${Object.entries(TACS).map(([k,t])=>`<button class="opt" aria-pressed="${L.tac[side]===k}" data-act="ixTac" data-v="${k}" ${ask?'disabled':''}>${t.n}<span class="d">${t.d}</span></button>`).join('')}</div></div>`:''}
@@ -5856,6 +5880,7 @@ function pkStart(){
   const opp=pkOppTeam(L);
   PKG.s={opp,my,gk,g:[0,0],n:[0,0],log:[[],[]],first:Math.random()<.5?0:1,mode:'intro',t0:performance.now(),msg:{tx:'コイントス…',t0:performance.now(),col:'#ffffff'},ball:{x:BALL0.x,y:BALL0.y,r:11},kp:{set:false,dx:0,dh:0,rot:0},ripple:null,oibUsed:false,shake:0};
   const S=PKG.s;S.turn=S.first;S.myName=teamCalc().name||'あなた';S.looks={};S.msg={tx:S.first===0?'先攻はあなた！':'先攻は相手',t0:performance.now(),col:'#ffd23a'};
+  if(typeof wxRoll==='function'){const vk=pick(NAT_REAL),cm=ri(1,12);S.wx=wxRoll(vk,cm);const W=WX[S.wx];S.wind=W.v==='wind'?(Math.random()<.5?-1:1)*ri(14,30):0;S.msg.sub=`${NATIONS[vk].fl} ${NATIONS[vk].n}（${cm}月）・${W.i}${W.n}${S.wind?`・風が${S.wind>0?'右':'左'}へ流れる`:''}`}
   P.phase='play';P.coins=0;P.win=null;P.gikkuri=null;M.roster.forEach(c=>{if(c.gikkuri>0)c.gikkuri=0});
   if(!PKG.cv)pkMakeCanvas();
   setTimeout(()=>pkNext(),1100);
@@ -5911,7 +5936,7 @@ function pkShoot(ang,speed,curve){
   const S=PKG.s,k=S.kicker,cd=condOf(k.cond).d,now=performance.now();
   const acc=(102-k.st.sho)*.5*(cd<0?1-cd*.12:1-cd*.05),accH=(102-k.st.sho)*.0055*(cd<0?1-cd*.12:1-cd*.05);
   const bend=curve*(.6+k.st.tec/200);
-  let gx=BALL0.x+Math.tan(clamp(ang,-1.2,1.2))*205+bend*70+gauss()*acc;
+  let gx=BALL0.x+Math.tan(clamp(ang,-1.2,1.2))*205+bend*70+gauss()*acc+(S.wind||0);
   let gh=clamp((speed-650)/1900,.02,1.6)+gauss()*accH;gh=Math.max(.02,gh);
   const D=clamp(.95-(speed-650)/3800,.42,.95)*(1-(k.st.sho-70)*.003);
   S.shot={sx:BALL0.x,sy:BALL0.y,gx,gh,curve:bend*230,D,lift:12+gh*20,t0:now+120,mine:1};S.mode='fly';S.kickT=now;
@@ -5932,7 +5957,7 @@ function pkDive(dx,dh,now,G0){
 function pkCpuKick(now){
   const S=PKG.s,k=S.kicker,cd=condOf(k.cond).d;
   const side=Math.random()<.5?-1:1;
-  let gx=KP0.x+side*(30+Math.random()*62),gh=.08+Math.random()*.78;if(Math.random()<.15){gx=KP0.x+(Math.random()-.5)*40;gh=.2+Math.random()*.5}
+  let gx=KP0.x+side*(30+Math.random()*62)+(S.wind||0)*.6,gh=.08+Math.random()*.78;if(Math.random()<.15){gx=KP0.x+(Math.random()-.5)*40;gh=.2+Math.random()*.5}
   if(Math.random()<clamp(.1-(k.st.sho-70)*.004-cd*.012,.02,.25)){if(Math.random()<.5)gh=1.08+Math.random()*.3;else gx=KP0.x+side*(100+Math.random()*30)}
   const D=clamp(.62-(k.st.sho-70)*.006,.4,.66);
   S.shot={sx:BALL0.x,sy:BALL0.y,gx,gh,curve:(Math.random()-.5)*60,D,lift:10+gh*18,t0:now,mine:0};S.mode='fly';S.kickT=now;
@@ -6028,6 +6053,7 @@ function pkDraw(ts){
     g.fillStyle=on?'rgba(242,196,0,.95)':dim?'rgba(0,0,0,.35)':'rgba(0,0,0,.6)';g.strokeStyle=on?'#fff':'rgba(255,255,255,.7)';g.lineWidth=2;
     const x0=x-PK_BW/2;g.beginPath();g.roundRect?g.roundRect(x0,PK_BY,PK_BW,PK_BH,10):g.rect(x0,PK_BY,PK_BW,PK_BH);g.fill();g.stroke();
     g.fillStyle=on?'#111':dim?'rgba(255,255,255,.4)':'#fff';g.font='bold 16px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(lb,x,PK_BY+PK_BH/2)})}
+  if(S.wx&&typeof wxOverlay==='function')wxOverlay(g,S.wx,now/1000,PW,PH);
   pkHud(g,S,now);
   g.setTransform(1,0,0,1,0,0);
 }
@@ -6903,6 +6929,7 @@ function rules2(sec,ul){
    '<b>国の伝説</b>：どの国でも、その国の伝説のストライカーが必ず一度現れる。1対1で勝てば継承成功、称号「〇〇のストライカー」がつく。',
    '<b>結婚</b>：恋人にはさまざまな職業があり、結婚すると相手の月収（50万円〜3億円）が家計に加わる。「暮らし」からプロポーズを予約すると次のターンに申し込める。最後まで添い遂げると引退時に全能力+1。',
    '<b>監督</b>：国籍を選べて、お国柄で能力が少し変わる。各期間に「自分磨き」を選ぶと監督自身も育つ。',
+   '<b>天候</b>：すべての試合に天気がある。会場の国の気候と月で決まる（日本の梅雨・台風・冬のからっ風、東南アジアのスコール、インドのモンスーン、西アフリカのハルマッタン、イギリスの偏西風と霧、北欧や東欧の雪と寒波、中東の猛暑と砂嵐、アンデスの高地、カリブのハリケーンなど。南半球は季節が逆）。雨や雪はフィジカルの強いチーム、風や砂ぼこりはパスでつなぐチームが有利。偏西風は風上が有利で後半に入れ替わり、暑さと高地は後半に足が止まる。',
    '<b>買い物と株</b>：「暮らし・買い物」に趣味・ぜいたく品など約70品。買ったものに応じた出来事が起きやすくなる。株は12銘柄。毎月値動きがあり、大ニュースで急騰・急落、毎年7月に配当。',
    '<b>ライバル年代記</b>：同い年のライバルが毎年ニュースになり、直接対決や代表争い、引退試合での再会がある。']));
 }
@@ -7739,6 +7766,171 @@ function inuOut(X,t,m,why){
 function inuTick(X){if(!X.inu)return;for(let t=0;t<2;t++){if(!X.inu[t]||X.inuOut[t])continue;if(X.r()<.02)inuOut(X,t,X.seg*5,pick2(X.r,['が息切れ','が腰を痛めて','が足をつって','がワンちゃんに引っぱられて転んで']))}}
 const pick2=(r,a)=>a[Math.floor(r()*a.length)];
 SP_SKILL.inu=INU_SKILL;
+
+/* ========== 天候：国ごとの気候と月で決まり、試合に影響する ========== */
+// a/m/d：両チームの攻撃・中盤・守備の増減  fav：有利になる能力（phy=フィジカル、pas=パス）と強さ  pc：シュート機会の増減
+// h2：後半の両チームの増減（暑さ・高地の消耗）  win：途中で降って止む（区間）  side：風上・風下（前半と後半で入れ替わる）  g：育成の試合の得点の増減
+const WX={
+ sun:{n:'晴れ',i:'☀️',v:0,d:'いいコンディション'},
+ cloud:{n:'くもり',i:'☁️',v:0,d:'影響なし'},
+ rain:{n:'雨',i:'🌧️',v:'rain',m:-1,fav:['phy',1],pc:.01,g:1.05,d:'ピッチが重く、当たりの強いチームが有利。ミスからの失点が増える'},
+ heavy:{n:'大雨',i:'⛈️',v:'rain2',a:-1,m:-2,fav:['phy',1.5],pc:.015,g:1.1,d:'水たまりでボールが止まる。パスがつながらず、体の強さがものをいう'},
+ tsuyu:{n:'梅雨の長雨',i:'☔',v:'rain',m:-1,fav:['phy',.8],pc:.01,g:1.04,d:'しとしと降り続く雨。芝が滑る'},
+ monsoon:{n:'モンスーンの豪雨',i:'🌧️',v:'rain2',a:-1,m:-3,fav:['phy',1.5],pc:.02,g:1.12,d:'季節風が運ぶ滝のような雨。ピッチは泥田のよう'},
+ squall:{n:'スコール',i:'🌦️',v:'rain2',win:3,wm:-3,fav:['phy',.6],g:1.05,d:'突然の激しいにわか雨。15分ほどで止むが、その間はパスがつながらない'},
+ storm:{n:'雷雨',i:'🌩️',v:'rain2',m:-1,fav:['phy',.6],g:1,thunder:1,d:'雷で試合が一時中断することも'},
+ snow:{n:'雪',i:'❄️',v:'snow',a:-2,m:-2,fav:['phy',1.2],pc:-.025,g:.8,d:'白いピッチでボールが転がらない。得点は少なくなりがち'},
+ bliz:{n:'吹雪',i:'🌨️',v:'snow2',a:-3,m:-3,df:-1,fav:['phy',1.5],pc:-.03,g:.7,d:'前が見えないほどの吹雪。まともなサッカーにならない'},
+ cold:{n:'寒波',i:'🥶',v:'cold',a:-1,fav:['phy',1],pc:-.01,g:.9,d:'体がかじかんで動きが硬い'},
+ frost:{n:'凍ったピッチ',i:'🧊',v:'cold',m:-1,fav:['phy',.8],g:.92,d:'霜で芝が凍り、足を取られる'},
+ karakaze:{n:'からっ風',i:'🌬️',v:'wind',a:-1.5,fav:['pas',1],pc:-.01,g:.92,d:'冬の乾いた北風。浮き球やロングシュートが流される。グラウンダーのパスが有効'},
+ westerly:{n:'偏西風',i:'💨',v:'wind',side:2.5,g:1,d:'西からの強い風。風上のチームが有利で、前半と後半で入れ替わる'},
+ pampero:{n:'パンペロ',i:'💨',v:'wind',side:2,a:-.5,fav:['phy',.5],g:.95,d:'草原から吹きつける冷たい南風。風上が有利'},
+ wind:{n:'強風',i:'💨',v:'wind',side:1.5,a:-1,fav:['pas',.8],g:.95,d:'突風でボールが流される'},
+ typhoon:{n:'台風',i:'🌀',v:'storm',a:-2,m:-3,df:-2,fav:['phy',2],pc:.03,g:1.2,d:'暴風雨の中の試合。何が起きるかわからない'},
+ hurricane:{n:'ハリケーン',i:'🌀',v:'storm',a:-2,m:-3,df:-2,fav:['phy',2],pc:.03,g:1.2,d:'カリブ海から迫る暴風雨。何が起きるかわからない'},
+ cyclone:{n:'サイクロン',i:'🌀',v:'storm',a:-2,m:-3,df:-2,fav:['phy',2],pc:.03,g:1.2,d:'海から迫る暴風雨。何が起きるかわからない'},
+ heat:{n:'猛暑',i:'🥵',v:'heat',h2:-2,fav:['phy',1.2],g:.95,d:'気温35度超え。後半は両チームとも足が止まる'},
+ humid:{n:'蒸し暑さ',i:'🥵',v:'heat',h2:-1.2,fav:['phy',.8],g:.97,d:'湿度90%。じわじわ体力を奪われる'},
+ sand:{n:'砂嵐',i:'🌪️',v:'dust',a:-1,m:-2,fav:['pas',1],pc:-.01,g:.9,d:'砂で視界がかすむ。短いパスでつなぐチームが有利'},
+ harmattan:{n:'ハルマッタン',i:'🌫️',v:'dust',a:-1,m:-1.5,fav:['pas',.8],g:.92,d:'サハラ砂漠から吹く乾いた砂まじりの風。空がかすみ、のどがかれる'},
+ sirocco:{n:'シロッコ',i:'🔥',v:'dust',h2:-1.5,m:-1,fav:['phy',.8],g:.94,d:'アフリカから地中海を渡る熱風。蒸し暑く砂っぽい'},
+ yellow:{n:'黄砂',i:'😷',v:'dust',m:-1,g:.96,d:'大陸から飛んできた砂で空が黄色くかすむ'},
+ fog:{n:'霧',i:'🌫️',v:'fog',a:-2,pc:-.02,fav:['pas',1],g:.88,d:'ゴールが見えないほどの濃霧。ロングボールが使えない'},
+ alt:{n:'高地',i:'⛰️',v:0,h2:-2.5,fav:['phy',1.5],pc:.01,g:1.06,d:'空気が薄く、後半は息が上がる。ボールはよく飛ぶ'},
+ dry:{n:'乾季の固いピッチ',i:'🏜️',v:0,a:1,g:1.08,d:'乾いた芝でボールが速く転がる。攻撃的な展開に'},
+ midnight:{n:'白夜',i:'🌅',v:0,d:'夜10時でも明るい。不思議な雰囲気の試合'},
+};
+// 気候帯：base＝通年、win/spr/sum/aut＝季節（南半球は自動で入れ替え）、m＝特定の月
+const ZONES={
+ jp:{base:{sun:5,cloud:3,rain:2},win:{karakaze:4,snow:1,cold:1},sum:{heat:4,storm:2},aut:{typhoon:.8,rain:1},m:{6:{tsuyu:6,heavy:1},9:{typhoon:1}}},
+ ea:{base:{sun:5,cloud:3,rain:2},win:{cold:3,snow:2,karakaze:1},spr:{yellow:3},sum:{heat:3,heavy:2,storm:1},m:{7:{tsuyu:4},8:{typhoon:1.5}}},
+ mong:{base:{sun:6,cloud:2,wind:2},win:{cold:6,snow:3,bliz:1.5},spr:{yellow:2,sand:2}},
+ trop:{base:{sun:3,cloud:2,squall:4,humid:3,storm:2},m:{5:{heavy:2},6:{heavy:3,squall:2},7:{heavy:3,squall:2},8:{heavy:3,squall:2},9:{heavy:3,squall:2},10:{heavy:2}}},
+ tropT:{base:{sun:3,cloud:2,squall:4,humid:3,storm:2},m:{6:{heavy:2},7:{typhoon:2,heavy:2},8:{typhoon:3,heavy:2},9:{typhoon:3,heavy:2},10:{typhoon:2}}},
+ sa:{base:{sun:4,humid:2,dry:2},spr:{heat:5},m:{6:{monsoon:5,heavy:3},7:{monsoon:6,heavy:3},8:{monsoon:6,heavy:3},9:{monsoon:4}},win:{fog:3,sun:2}},
+ desert:{base:{sun:6,dry:2,sand:2},sum:{heat:8,sand:3},win:{sun:4,rain:1,wind:1}},
+ nafr:{base:{sun:6,dry:2,sand:2,sirocco:1},sum:{heat:7,sand:2},win:{sun:3,rain:2,wind:1}},
+ med:{base:{sun:6,cloud:2},sum:{heat:5},win:{rain:3,wind:1.5},aut:{storm:1.5,rain:1}},
+ medS:{base:{sun:6,cloud:2,sirocco:1},sum:{heat:5},win:{rain:3,wind:1},aut:{storm:1.5}},
+ west:{base:{cloud:5,rain:5,westerly:4,sun:2,fog:1.5},win:{wind:2,snow:.7,frost:1},sum:{sun:3}},
+ nordic:{base:{cloud:4,rain:3,sun:3,westerly:1},win:{snow:5,cold:3,bliz:1.5,frost:2},sum:{midnight:3,sun:2}},
+ cont:{base:{sun:4,cloud:4,rain:2},win:{snow:4,cold:4,frost:2},sum:{heat:2,storm:2}},
+ alpine:{base:{sun:4,cloud:3,rain:2,alt:1.5},win:{snow:5,cold:3,bliz:1},sum:{storm:2}},
+ casia:{base:{sun:5,dry:2,wind:1},win:{cold:4,snow:3},sum:{heat:5,sand:1.5}},
+ andes:{base:{alt:6,sun:3,rain:2,cold:1.5},sum:{storm:1}},
+ high2:{base:{alt:3,sun:4,cloud:2,rain:2},sum:{storm:2,squall:1}},
+ carib:{base:{sun:4,squall:4,humid:3},m:{6:{heavy:1},7:{heavy:2},8:{hurricane:2,heavy:2},9:{hurricane:3,heavy:2},10:{hurricane:2,heavy:1},11:{hurricane:1}}},
+ waf:{base:{sun:3,humid:2},m:{11:{harmattan:4,dry:2},12:{harmattan:6,dry:2},1:{harmattan:6,dry:2},2:{harmattan:4,dry:2},3:{dry:2,heat:2},4:{heat:3},6:{squall:4,storm:2},7:{squall:4,storm:3,heavy:1},8:{squall:4,storm:3,heavy:2},9:{squall:3,storm:2}}},
+ caf:{base:{squall:4,storm:4,humid:3,sun:2}},
+ eaf:{base:{sun:5,rain:2,alt:1.5},m:{3:{heavy:2},4:{heavy:3},5:{heavy:2},10:{rain:2},11:{rain:3},12:{rain:2}}},
+ horn:{base:{sun:6,dry:3,sand:2},sum:{heat:6}},
+ saf:{base:{sun:5,cloud:2},sum:{storm:4,heavy:2,heat:2},win:{dry:3,cold:1.5}},
+ safC:{base:{sun:4,squall:3,humid:2},sum:{cyclone:2,heavy:2,storm:2},win:{dry:2}},
+ samT:{base:{sun:4,humid:3,squall:3},sum:{heavy:3,storm:2,heat:2},win:{sun:3,cold:.5}},
+ samS:{base:{sun:4,cloud:3,rain:2},win:{cold:3,fog:2,rain:2,pampero:2},sum:{heat:3,storm:3}},
+ chile:{base:{sun:4,cloud:3,rain:2,westerly:1.5},win:{rain:3,cold:2,fog:1}},
+ na:{base:{sun:4,cloud:3,rain:2},win:{snow:3,cold:2},sum:{heat:3,storm:3},m:{8:{hurricane:.7},9:{hurricane:1}}},
+ can:{base:{sun:4,cloud:3,rain:2},win:{snow:6,bliz:2,cold:4},spr:{snow:1.5},sum:{storm:2}},
+ aus:{base:{sun:6,dry:2},sum:{heat:5,storm:2},win:{rain:2,cold:1}},
+ nz:{base:{cloud:4,rain:3,westerly:4,sun:3},win:{cold:2,frost:1}},
+ pac:{base:{sun:4,squall:4,humid:2},sum:{cyclone:2,heavy:2}},
+};
+const SOUTH=new Set(['ar','uy','py','cl','br','bo','pe','au','nz','za','zw','zm','mw','mz','bw','na','sz','ls','ao','mg','km','mu','fj','ws','to','vu','tv','ki']);
+const ZMAP={jp:'jp',kr:'ea',cn:'ea',kp:'ea',tw:'tropT',mn:'mong',ph:'tropT',vn:'tropT',
+ th:'trop',kh:'trop',la:'trop',mm:'trop',my:'trop',sg:'trop',id:'trop',bn:'trop',tl:'trop',mv:'trop',
+ in:'sa',bd:'sa',pk:'sa',lk:'sa',np:'andes',bt:'andes',af:'casia',
+ sa:'desert',qa:'desert',ae:'desert',kw:'desert',bh:'desert',om:'desert',iq:'desert',jo:'desert',sy:'desert',ye:'desert',ps:'med',lb:'med',il:'med',ir:'casia',
+ uz:'casia',tm:'casia',kz:'casia',kg:'casia',tj:'casia',
+ eg:'nafr',ly:'nafr',tn:'nafr',dz:'nafr',ma:'nafr',mr:'desert',
+ es:'med',pt:'med',it:'medS',mt:'medS',gr:'medS',cy:'med',tr:'med',hr:'med',al:'med',me:'med',mc:'med',sm:'med',va:'med',ba:'cont',mk:'cont',si:'alpine',xk:'cont',
+ en:'west',gbs:'west',gbw:'west',gbn:'west',ie:'west',nl:'west',be:'west',fr:'west',lu:'west',dk:'west',de:'cont',
+ no:'nordic',se:'nordic',fi:'nordic',is:'nordic',ee:'nordic',lv:'nordic',lt:'nordic',
+ at:'alpine',ch:'alpine',li:'alpine',ad:'alpine',cz:'cont',sk:'cont',pl:'cont',hu:'cont',ro:'cont',md:'cont',ua:'cont',by:'cont',ru:'cont',rs:'cont',bg:'cont',az:'cont',am:'alpine',ge:'cont',
+ us:'na',ca:'can',mx:'high2',co:'high2',ec:'high2',bo:'andes',pe:'andes',ve:'samT',br:'samT',ar:'samS',uy:'samS',py:'samS',cl:'chile',
+ cu:'carib',do:'carib',ht:'carib',jm:'carib',bs:'carib',bb:'carib',ag:'carib',dm:'carib',gd:'carib',kn:'carib',lc:'carib',vc:'carib',tt:'carib',gy:'carib',sr:'carib',bz:'carib',pa:'carib',cr:'carib',ni:'carib',hn:'carib',sv:'carib',gt:'high2',
+ ng:'waf',gh:'waf',sn:'waf',ml:'waf',bf:'waf',ne:'waf',td:'waf',ci:'waf',gm:'waf',gn:'waf',gw:'waf',sl:'waf',lr:'waf',tg:'waf',bj:'waf',cv:'desert',
+ cm:'caf',ga:'caf',cg:'caf',cd:'caf',cf:'caf',gq:'caf',ug:'caf',rw:'caf',bi:'caf',st:'caf',
+ ke:'eaf',tz:'eaf',et:'andes',er:'horn',so:'horn',dj:'horn',sd:'horn',ss:'caf',
+ za:'saf',zw:'saf',zm:'saf',mw:'saf',bw:'saf',na:'saf',sz:'saf',ls:'andes',ao:'saf',mg:'safC',mz:'safC',km:'safC',mu:'safC',sc:'safC',
+ au:'aus',nz:'nz',fj:'pac',pg:'pac',sb:'pac',vu:'pac',ws:'pac',to:'pac',ki:'pac',tv:'pac',nr:'pac',pw:'pac',fm:'pac',mh:'pac',
+ war:'desert',poor:'andes'};
+const zoneOf=k=>ZMAP[k]||'west';
+const SEAS=m=>m===12||m<=2?'win':m<=5?'spr':m<=8?'sum':'aut';
+// 国と月（1〜12）から天気を引く。r は乱数（0〜1）を返す関数
+function wxRoll(k,cm,r){
+  const Z=ZONES[zoneOf(k)]||ZONES.west,sm=SOUTH.has(k)?((cm+5)%12)+1:cm,w={};
+  const add=o=>{if(o)for(const [id,v] of Object.entries(o))w[id]=(w[id]||0)+v};
+  add(Z.base);add(Z[SEAS(sm)]);add(Z.m&&Z.m[cm]);
+  const ids=Object.keys(w);let tot=ids.reduce((s,id)=>s+w[id],0),x=(r||Math.random)()*tot;
+  for(const id of ids){x-=w[id];if(x<=0)return id}return ids[ids.length-1]||'sun';
+}
+const wxMonthName=m=>`${m}月`;
+const ctyToKey=cty=>(typeof ctyKey==='function'&&ctyKey(cty))||(cty==='日本'?'jp':null);
+
+/* ----- 対戦（シード付きの試合エンジン）：会場と天気もシードで決まる ----- */
+function wxBattle(X){
+  const r=rng((X.seed^0x5bd1e995)>>>0);
+  const vk=wpickR(r,NAT_REAL,k=>Math.max(.3,(NATIONS[k].str||50)-40)),cm=1+Math.floor(r()*12),id=wxRoll(vk,cm,r),W=WX[id];
+  X.wx={id,k:vk,cm,first:r()<.5?0:1,sq:W.win?1+Math.floor(r()*14):-1,th:W.thunder&&r()<.5?2+Math.floor(r()*14):-1};
+  X.wxD=[{atk:0,mid:0,def:0},{atk:0,mid:0,def:0}];X.wxPc=W.pc||0;
+  const add=(i,a,m,d)=>{const Y=X.T[i],D=X.wxD[i];Y.atk+=a;Y.mid+=m;Y.def+=d;D.atk+=a;D.mid+=m;D.def+=d};X.wxAdd=add;
+  for(let i=0;i<2;i++)add(i,W.a||0,W.m||0,W.df||0);
+  if(W.fav){const [k,s]=W.fav,av=Y=>{const l=Y.pl.filter(p=>!p.dog);return l.reduce((t,p)=>t+(k==='phy'?(p.phy!=null?p.phy:60):(p.pas||60)),0)/(l.length||1)};
+    const df=clamp((av(X.T[0])-av(X.T[1]))/8,-2,2)*s/2;if(Math.abs(df)>.05){add(0,df,df*.5,df);add(1,-df,-df*.5,-df)}}
+  if(W.side){add(X.wx.first,W.side,0,0);add(1-X.wx.first,-W.side*.6,0,0)}
+  const N=NATIONS[vk];
+  X.ev.push({m:0,s:-1,ty:'cond',tx:`会場：${N.fl} ${N.n}（${cm}月）　天気：${W.i} ${W.n}。${W.d}${W.side?`。前半は${X.T[X.wx.first].name||'片方'}が風上`:''}`});
+}
+const wpickR=(r,arr,w)=>{let t=0;for(const a of arr)t+=w(a);let x=r()*t;for(const a of arr){x-=w(a);if(x<=0)return a}return arr[arr.length-1]};
+function wxSeg(X){
+  if(!X.wx)return;const W=WX[X.wx.id],s=X.seg;
+  if(X.wx.sq>=0){if(s===X.wx.sq){for(let i=0;i<2;i++)X.wxAdd(i,0,W.wm,0);X.ev.push({m:s*5,s:-1,ty:'cond',tx:`${W.i} スコールが降り出した！ ピッチが一気に水びたしに`})}
+    if(s===X.wx.sq+(W.win||3)){for(let i=0;i<2;i++)X.wxAdd(i,0,-W.wm,0);X.ev.push({m:s*5,s:-1,ty:'cond',tx:'☀️ スコールが止んだ。また日が差してきた'})}}
+  if(X.wx.th>=0&&s===X.wx.th)X.ev.push({m:s*5,s:-1,ty:'cond',tx:'🌩️ 雷が近づき、試合が一時中断。両チームいったん引き上げる'});
+}
+function wxHalf(X){
+  if(!X.wx)return;const W=WX[X.wx.id];
+  if(W.h2){for(let i=0;i<2;i++)X.wxAdd(i,W.h2,0,W.h2);X.ev.push({m:46,s:-1,ty:'cond',tx:`${W.i} ${W.n}で後半は両チームとも足が重い`})}
+  if(W.side){const f=X.wx.first;X.wxAdd(f,-W.side*1.6,0,0);X.wxAdd(1-f,W.side*1.6,0,0);X.ev.push({m:46,s:-1,ty:'cond',tx:`${W.i} 後半はエンドが替わり、${X.T[1-f].name||'相手'}が風上に`})}
+}
+
+/* ----- 育成の試合 ----- */
+function wxCareerVenue(p,comp,home,neutral){
+  const club=clubOf(p),own=natOf(p);
+  if(comp==='nat'){if(neutral){const y=calYear(p),h=HASH('host'+y);return NAT_REAL[h%NAT_REAL.length]}return home?own:pick(NAT_REAL)}
+  const lgk=club.lg,L=LG[lgk],k=L&&L.cty&&L.cty!=='*'?ctyToKey(L.cty):own;
+  return k||own;
+}
+function wxCareer(p,comp,home,neutral){
+  const k=wxCareerVenue(p,comp,home,neutral),cm=+MONTHS[p.month]||1,id=wxRoll(k,cm);return {id,k,cm};
+}
+// 天気によって選手ごとの得点しやすさ・評価が少し変わる
+function wxPlayer(p,W){
+  const s=p.st,ph=(s.phy-s.tec)/100,h=p.height||180;let g=1,rt=0;
+  if(['rain','heavy','tsuyu','monsoon','squall','typhoon','hurricane','cyclone','snow','bliz'].includes(W.id)){g*=1+clamp(ph,-.15,.15)+(h-180)/400;rt+=ph*.6}
+  if(['karakaze','westerly','wind','pampero','fog','sand','harmattan'].includes(W.id)){g*=1-clamp((s.sho-s.tec)/300,-.1,.1);rt+=(s.pas-60)/250}
+  if(['heat','humid','alt','sirocco'].includes(W.id)){rt-=(p.fat||0)/200;g*=1-(p.fat||0)/400}
+  return {g,rt};
+}
+function wxGoals(n,g){if(g<1){let k=0;for(let i=0;i<n;i++)if(Math.random()<g)k++;return k}return n+poisson(Math.max(0,(g-1))*1.3)}
+
+/* ----- 監督の試合 ----- */
+function wxMgr(){const L=LG[mgLeague()],k=(L&&ctyToKey(L.cty))||'jp',cm=[10,1,4][MC.cur?MC.cur.phase:0]||10;return wxRoll(k,cm)}
+
+/* ----- 画面の雨・雪・砂ぼこりなど ----- */
+function wxOverlay(g,id,t,Wd,Hd){
+  const W=WX[id];if(!W||!W.v)return;const w=Wd,h=Hd,v=W.v;
+  if(v==='rain'||v==='rain2'||v==='storm'){const n=v==='rain'?60:110;g.fillStyle=v==='rain'?'rgba(30,40,60,.18)':'rgba(20,30,50,.32)';g.fillRect(0,0,w,h);g.fillStyle='rgba(200,220,255,.6)';
+    const sl=v==='storm'?2.2:.4;for(let i=0;i<n;i++){const x=(i*37+t*40*sl+t*30)%w,y=(i*53+t*170)%h;g.fillRect(Math.round(x),Math.round(y),1,v==='rain'?3:5)}
+    if(v==='storm'&&Math.sin(t*1.7)>.985){g.fillStyle='rgba(255,255,255,.35)';g.fillRect(0,0,w,h)}}
+  else if(v==='snow'||v==='snow2'){if(v==='snow2'){g.fillStyle='rgba(230,240,255,.25)';g.fillRect(0,0,w,h)}g.fillStyle='#ffffff';const n=v==='snow'?50:110;for(let i=0;i<n;i++)g.fillRect(Math.round((i*41+Math.sin(t+i)*6+t*(v==='snow2'?60:6))%w),Math.round((i*29+t*16)%h),2,2)}
+  else if(v==='fog'){g.fillStyle='rgba(220,225,230,.42)';g.fillRect(0,0,w,h)}
+  else if(v==='dust'){g.fillStyle='rgba(200,160,90,.28)';g.fillRect(0,0,w,h);g.fillStyle='rgba(230,200,140,.5)';for(let i=0;i<40;i++)g.fillRect(Math.round((i*43+t*90)%w),Math.round((i*31+Math.sin(t+i)*8)%h),3,1)}
+  else if(v==='wind'){g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=1;for(let i=0;i<10;i++){const y=(i*37)%h,x=(i*71+t*160)%(w+60)-60;g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+20,y-4,x+42,y);g.stroke()}}
+  else if(v==='heat'){g.fillStyle='rgba(255,140,40,.12)';g.fillRect(0,0,w,h)}
+  else if(v==='cold'){g.fillStyle='rgba(160,200,255,.14)';g.fillRect(0,0,w,h)}
+}
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
