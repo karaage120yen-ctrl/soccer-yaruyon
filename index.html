@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-074128';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-074635';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -571,6 +571,14 @@ textarea.code{width:100%;min-height:90px;font:12px/1.4 var(--num);background:var
 .cnd.c0{background:#e2462b;color:#fff}.cnd.c1{background:#ff9a4a;color:#111}.cnd.c2{background:rgba(127,127,127,.25)}.cnd.c3{background:#5a7aaa;color:#fff}.cnd.c4{background:#2a3a6a;color:#fff}
 .pkhost{width:100%;max-width:480px;margin:6px auto 4px}
 .pkcv{display:block;width:100%;height:auto;touch-action:none;-webkit-user-select:none;user-select:none;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.35);background:#0b1430}
+/* ルール説明 */
+details.rule{border:1px solid rgba(127,127,127,.25);border-radius:12px;margin:6px 0;background:rgba(127,127,127,.05)}
+details.rule summary{cursor:pointer;padding:12px 14px;font-weight:700;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.rule summary::-webkit-details-marker{display:none}
+details.rule summary::after{content:'＋';opacity:.6}
+details.rule[open] summary::after{content:'−'}
+details.rule .rb{padding:0 14px 12px}
+details.rule .plan li{margin:6px 0;line-height:1.6}
 
 </style>
 </head>
@@ -4866,7 +4874,7 @@ function backupHtml(){
 /* ---------- 記録の画面 ---------- */
 H.rec=()=>{
   const l=hofList();
-  return `<div class="kick">殿堂<span class="r">評価点順・上位30人</span></div>
+  return `${rulesHtml()}<div class="kick">殿堂<span class="r">評価点順・上位30人</span></div>
   ${l.length?l.map(hofRow).join(''):`<p class="note">まだ引退した選手はいない。下は表示例。</p>${HOF_EX.map(hofRow).join('')}`}
   <p class="note" style="margin-top:12px">評価点800以上（A以上）で殿堂入り。</p>
   <div class="kick">マイ選手・監督<span class="r">${M.roster.length}人・${M.mgrs.length}人</span></div>
@@ -5468,6 +5476,85 @@ Object.assign(ACT,{
  pkAgain:()=>{G.pk.phase='setup';G.pk.cond={};PKG.s=null;pkSetup();toTop()},
  pkQuit:()=>{const S=PKG.s;if(S&&G.pk.phase==='play'){S.g=[0,1];S.n=[5,5];pkEnd()}},
 });
+
+/* ========== 記録タブ：ルール説明 ========== */
+function rulesHtml(){
+  const yen0=n=>n.toLocaleString('ja-JP');
+  const sec=(t,body)=>`<details class="rule"><summary>${t}</summary><div class="rb">${body}</div></details>`;
+  const ul=a=>`<ul class="plan">${a.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  const sp=[[ICHIKAWA,CAP_SKILL],[SHANCHI,EMP_SKILL],[MAO,MAO_SKILL],[INKANSU,STARTER_SKILL],[KAMAPOKO,RENKEI_SKILL],[BATSUMARU,OIBORE_SKILL],[GORIMORI,UHHO_SKILL],[SASACHI,TABAKO_SKILL]];
+  return `<div class="kick">ルール説明<span class="r">タップで開く</span></div>
+  ${sec('育成（サッカー選手）',ul([
+    `${17}歳の高校生から始まり、${CAREER_END_AGE}歳のシーズンで現役最後。30歳からは自分で引退を選べる（オファーがなくなったときも引退できる）`,
+    '1シーズンは4ターン。ターンごとに行動を1つ選ぶ：'+ACTS.map(a=>`<b>${a.n}</b>（${a.d}）`).join('、')+'。シーズン中とオフで選べる行動が変わる',
+    '1ターンに出来事が0〜3個起きる。選んだ答えで成功・失敗が決まり、まれに大成功・大失敗もある。買ったものに関係する出来事もある',
+    '体力が低いとケガをしやすい。ケガ中は試合に出られない',
+    'シーズンの終わりにオファー（進学・入団・移籍）が来る。28歳ごろに「運命の分岐点」（成功すると全能力+6、失敗すると−2）',
+    `引退すると選手カードになってスカッドで使える。さらに${yen0(CAREER_COINS)}コイン`,
+    `育成を始めるとき、育てた選手を${INH_MAX}人まで選ぶと、1人1つずつ特性をランダムに受け継ぐ（最大${INH_MAX}つ）`,
+    `レジェンドガチャのキャラを${LEG_MAX}人まで連れて行ける（下の「レジェンドの教え」）`,
+    '愛犬：プロで所持金1,000万円以上になると出会うことがある。名前をつけられ、毎ターン体力+6。エサが切れて3ターンたつと死んでしまう',
+    `伝説イベント「リオネル・メツシ」：育成中に${Math.round(MESSI_P*100)}%の確率で1回だけ現れる。勝負に勝つ（${Math.round(MESSI_OK*100)}%）と特殊能力「神の子」（テクニック・スピード・シュート+5、勝負強くなる）`
+  ]))}
+  ${sec('監督業',ul([
+    `${MG_SEASONS}シーズン務める。1シーズンは${MG_PHASES}回の采配`,
+    `育成で育てた選手を${MG_MINE}人までクラブに加えられる。クラブの地力より上手い選手ほど強くなる`,
+    `最後まで務めると監督カードになり、スカッドの監督にできる。さらに${yen0(CAREER_COINS)}コイン`,
+    '監督の伸びしろSSは10万人に1人。監督候補も育てた人（最大3人）から特性を受け継げる'
+  ]))}
+  ${sec('ガチャ',ul([
+    `1回${GACHA_COST}コイン、10回${yen0(GACHA_COST*10)}コイン。無料10連は1日1回（どのガチャでも使える）`,
+    '通常のガチャ：ピックアップ選手1%・育成素材×5が10%・×2が25%・×1が64%',
+    '鎌ポコ＆丸尾ガチャ：2人それぞれ1%（合計2%）',
+    `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
+    '同じキャラの2枚目は、全種類の育成素材×2に変わる'
+  ]))}
+  ${sec('スカッド・強化',ul([
+    'スタメン11人・ベンチ5人・監督1人。フォーメーションは4-3-3・4-4-2・3-5-2・4-2-3-1',
+    '本来と違うポジションに置くと力が下がる（GKとそれ以外の入れ替えは大きく下がる）',
+    `強化：育成素材1つで能力+1。1人${ENH_MAX}回まで、99が上限`,
+    '空いたところには控え選手が入る'
+  ]))}
+  ${sec('試合のしくみ',ul([
+    '試合前に選手一人ひとりのコンディションが決まる：'+COND.map(c=>`${c.n}（${c.d>0?'+':''}${c.d}）`).join('・')+'。監督にもコンディションがある',
+    '「まさかの日」：5%の確率でチーム全員の歯車が狂い、強いチームでも負けることがある',
+    '戦術は試合中いつでも変えられる：'+Object.values(TACS).map(t=>`${t.n}（${t.d}）`).join('・'),
+    '決定機では、攻めるときはシュートの狙い、守るときは相手の狙いを読んで選ぶ。読みが当たると止めやすい',
+    'ハーフタイムに3人まで交代できる（ベンチに選手を入れておく）',
+    'CPU戦・スペシャルマッチは引き分けだとPK戦（自分で蹴る方向・跳ぶ方向を選ぶ）。PK勝ちは勝ち扱い',
+    '試合後はMVPのヒーローインタビュー'
+  ]))}
+  ${sec('対戦と報酬',ul([
+    'ルーム対戦：5文字のコードで友達とその場で対戦。勝ち200・引き分け100・負け60コイン',
+    'コード対戦：対戦コードをLINEなどで送り、相手が貼ると試合。結果コードを送り返してもらうと同じ試合が見られる。報酬はルーム対戦と同じ（自分のコードは報酬なし）',
+    'CPU練習試合：'+CPU_LV.map(L=>`${L.n}（総合${L.lv}前後）勝ち${L.rw[0]}・分け${L.rw[1]}・負け${L.rw[2]}`).join('、')
+  ]))}
+  ${sec('スペシャルマッチ',`
+    <p class="note"><b>フリックPK対戦</b></p>${ul([
+      'ボールから上へ指をはじいて蹴る。向き＝コース、速さ＝高さ（速すぎるとバーの上）、指を曲げるとボールも曲がる',
+      '守るときは、相手が蹴る瞬間に跳びたい方向へはじく。早く跳びすぎると逆を突かれやすい',
+      '蹴る順番はスカッドから自由に並べ替えられる。選手ごと・GKにもコンディションがある',
+      '5人ずつ蹴って、決まらなければサドンデス。'+PK_LV.map(L=>`${L.n}：勝ち${L.rw[0]}・負け${L.rw[1]}`).join('、')+'コイン'])}
+    <p class="note"><b>ワールドカップ</b></p>${ul([
+      '自分のスカッドで8チームのトーナメント（準々決勝→準決勝→決勝・3位決定戦）',
+      `相手は対戦したことのある人やほかのプレイヤーのスカッドと、CPUの代表チーム`,
+      `賞金：優勝${yen0(WC_RW[1])}・準優勝${yen0(WC_RW[2])}・3位${yen0(WC_RW[3])}コイン。<b>1日${WC_MAX}回まで</b>`,
+      '試合の途中で抜けると、残りは自動で進んで結果が決まる'])}
+    <p class="note"><b>伝説降臨</b></p>${ul([
+      '全員が3つ以上の能力で95を超える最強チームと対戦（チームは日替わり）',
+      `1日${LGD_TRY}回まで挑戦でき、勝ったらその日は終了。初めて勝つと${yen0(LGD_FIRST)}コイン、2回目以降は${LGD_AGAIN}コイン。負けは報酬なし`])}
+    <p class="note"><b>賭博伝説試合</b></p>${ul([
+      'ガチャのキャラやレジェンドが入った伝説チーム同士の試合にコインを賭ける。特別スキルも発動する',
+      '賭けられるもの：どっちが勝つか・合計ゴール数（3点以上か2点以下か）・両チームが点を取るか・ゴールを決める選手・MVP',
+      `倍率はその2チームで${BET_N}試合シミュレーションした結果から決まる。賭ける額は自分で決められて、いくつでも組み合わせられる（1回${BET_MIN}コインから）`,
+      '当たると「賭けた額×倍率」が戻ってくる'])}`)}
+  ${sec('ガチャキャラの特別スキル',`<div class="plist">${sp.map(([c,k])=>`<div class="prow" style="cursor:default"><span class="pf">${sprOf(c)}</span><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub"><b class="gold">${esc(k.n)}</b>：${esc(k.d)}</span></div>`).join('')}</div>`)}
+  ${sec('レジェンドの教え（育成専用）',`<div class="plist">${GLEGS.map(l=>`<div class="prow" style="cursor:default"><span class="pf">${sprOf(l)}</span><span class="po">${l.pu?'PU':l.pos}</span><b>${esc(l.name)}</b><span class="sub">${esc(legText(l))}</span></div>`).join('')}</div><p class="sub">名前のないレジェンドの数字は強化0回のとき。強化するほどボーナスが大きくなる。</p>`)}
+  ${sec('コインの集め方・データの保存',ul([
+    '無料10連（毎日）・育成の引退（1,000）・監督業の完走（1,000）・各対戦の報酬・スペシャルマッチの賞金',
+    'データはこの端末に自動で保存される。別の端末やブラウザ（LINEとChromeなど）に移すときは、下の「バックアップ」でコードを作って、移したい先で貼り付ける'
+  ]))}`;
+}
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
