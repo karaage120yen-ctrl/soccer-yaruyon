@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-143246';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-145356';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -706,6 +706,16 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .natgrid .opt{padding:7px 4px;font-size:12px;line-height:1.3}
 .natgrid .fl{display:block;font-size:18px}
 .natgrid .opt .d{font-size:10px}
+.stks{display:grid;gap:6px}
+.stk{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stk.open{border-color:var(--soft)}
+.stk-h{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;width:100%;background:none;border:0;padding:8px 12px;text-align:left;cursor:pointer}
+.stk-h .nm b{display:block;font-size:14px}.stk-h small{display:block;font-size:11px;color:var(--muted)}
+.stk-h .pr{text-align:right;font-family:var(--num)}.stk-h .pr b{font-size:16px;display:block}
+.spk{display:block}
+.stk-own{padding:0 12px 6px;font-size:12px;color:var(--soft)}
+.stk-b{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px}
+.stk-b .opt.sm{flex:1 1 30%;padding:6px 4px;font-size:12px;min-height:0}
 
 </style>
 </head>
@@ -2793,6 +2803,7 @@ function monthlyCost(p){
   if(P&&P.married)items.push(['家族の生活費',10+p.fam.kids.length*8]);
   const rent={apart:15,tower:70}[p.home];if(rent)items.push(['家賃',rent]);
   if(p.car)items.push(['クルマの維持費',shopItem(p.car).up]);
+  Object.keys(p.items).forEach(k=>{const it=shopItem(k);if(it&&it.up&&it.type==='once')items.push([it.n+'の維持費',it.up])});
   Object.keys(p.subs).filter(k=>p.subs[k]).forEach(k=>items.push([shopItem(k).n,shopItem(k).price]));
   return items;
 }
@@ -5021,6 +5032,7 @@ H.life=()=>{
   <table class="st"><tbody><tr><th>年俸（額面）</th><td class="n">${p.salary?yen(p.salary):'—'}</td></tr><tr><th>毎月の手取り</th><td class="n">${yen(inc)}</td></tr>${costs.map(([n,v])=>`<tr><th>${esc(n)}</th><td class="n">-${yen(v)}</td></tr>`).join('')}<tr><th>毎月の収支</th><td class="n ${inc-cost<0?'bad':''}">${inc-cost>=0?'+':''}${yen(inc-cost)}</td></tr></tbody></table>
   <div class="seg c2" style="margin-top:10px"><button class="opt" data-act="invest" ${p.money>=1000?'':'disabled'}>1,000万円を運用に回す</button><button class="opt" data-act="withdraw" ${p.inv>0?'':'disabled'}>運用資金を引き出す</button></div>
   <p class="note" style="margin-top:8px">運用の結果は毎シーズンの開幕時に出る。平均は年+5%前後だが、大きく減る年もある。</p>
+  ${typeof stockHtml==='function'?stockHtml(p):''}
   <div class="kick">家族</div>${fam}${p.dog?`<div style="margin-top:8px">${dogBar(p)}</div>`:''}
   <p class="sub" style="margin-top:10px">住まい：${homeN}${p.car?`・クルマ：${esc(shopItem(p.car).n)}`:''}</p>
   <div class="kick">買い物</div>
@@ -6349,7 +6361,7 @@ function c2Make(pl,d){
 const ALLOC_K=['sho','pas','spd','tec','phy','def'],ALLOC_N=4;
 const restOf=p=>Math.max(0,ALLOC_N-ALLOC_K.reduce((s,k)=>s+((p.alloc&&p.alloc[k])||0),0));
 const REST_FX=[{g:1,inj:1.6,f:7,t:'休みなし：ケガのリスク大・疲労がたまる'},{g:1,inj:1,f:2,t:'休み1：標準'},{g:.88,inj:.8,f:-3,t:'休み2：回復しやすいが成長やや控えめ'},{g:.72,inj:.65,f:-6,t:'休み3：成長が鈍る'},{g:.55,inj:.5,f:-9,t:'休み4：ほとんど伸びない'}];
-function bodyInj(p){return (1+(p.fat||0)/110)*(1+.15*(p.oldInj||0))*(p.alloc?REST_FX[restOf(p)].inj:1)*(p.vet?.9:1)}
+function bodyInj(p){return (1+(p.fat||0)/110)*(1+.15*(p.oldInj||0))*(p.alloc?REST_FX[restOf(p)].inj:1)*(p.vet?.9:1)*(typeof c4Inj==='function'?c4Inj(p):1)}
 function growMul(p){return (1-(p.fat||0)/280)*(p.alloc?REST_FX[restOf(p)].g:1)}
 function c2Start(p,club){
   let r=0;
@@ -6381,6 +6393,7 @@ function c2Month(p,a,res,m,first){
     p.hope=clamp(p.hope-N.poor*1.1-(N.war?.6:0)+(p.scout>=30?.6:0)-(p.money<0?1.5:0),0,100);
     if(p.hope<=0&&!p.fate){p.fate={ty:'dream',why:N.war?'故郷の情勢と家族の暮らしを前に、プロの夢をあきらめた':'家族を支えるため、プロの夢をあきらめた'};res.notes.push('夢の灯が消えた…')}
   }
+  typeof c4Month==='function'&&c4Month(p,a,res,m,first);
 }
 function c2Season(p,cur,club,first){
   const N=NATN(p),L=LG[club.lg];
@@ -6445,7 +6458,7 @@ function clutchEv(p){
   if(!cand.length)return null;
   cand.sort((a,b)=>b.pri-a.pri);p._cc=cand[0];return 'sp:clutch';
 }
-function clutchRate(p,ty){const s=p.st,b=(has(p,'big')?.08:0)+(has(p,'kaminoko')?.08:0)+((p.cond||60)-60)/400-(p.fat||0)/400;
+function clutchRate(p,ty){const s=p.st,b=(p.subs&&p.subs.analyst?.05:0)+(has(p,'big')?.08:0)+(has(p,'kaminoko')?.08:0)+((p.cond||60)-60)/400-(p.fat||0)/400;
   const v={sho:s.sho,dri:(s.tec+s.spd)/2,pas:s.pas,def:s.def,hed:(s.phy+s.sho)/2,save:(s.spd+s.def)/2}[ty]||60;
   const lv=p.stage==='pro'?clubOf(p).rep:clubOf(p).rep+4;
   return clamp(.32+(v-lv)/55+b,.08,.85)}
@@ -6519,7 +6532,7 @@ function applyFx2(p,k,v){
   if(k==='army'){p.flags.armyDone=1;p.salary=Math.round(p.salary*.3/10)*10;p.st.phy=stAdd(p,'phy',2);p.mates=clamp((p.mates||50)+6,0,100);return ['兵役','軍のチームでプレー',0]}
   if(k==='armyEx'){p.flags.armyEx=1;return ['兵役','免除',1]}
   if(k==='posrWin'){if(p.posR)p.posR.o-=4;return ['ポジション争い','優位に立った',1]}
-  return null;
+  return typeof applyFx3==='function'?applyFx3(p,k,v):null;
 }
 function evOk(e,p){
   if(natOf(p)==='jp')return true;
@@ -6854,6 +6867,7 @@ function rules2(sec,ul){
    '<b>体</b>：疲労・古傷・年齢による衰えがある。30歳を過ぎると「ベテラン型」へのスタイル転向を選べることも。',
    '<b>移籍交渉</b>：年俸・出場保証・契約年数を要求できる。欲張ると決裂。代理人を雇うと成功しやすい。',
    '<b>進路</b>：高校卒業時に、プロ・大学に加えて「海外挑戦（入団テスト）」も選べる。引退後は監督・解説者・実業家・サッカー学校からエピローグを選ぶ。',
+   '<b>買い物と株</b>：「暮らし・買い物」に趣味・ぜいたく品など約70品。買ったものに応じた出来事が起きやすくなる。株は12銘柄。毎月値動きがあり、大ニュースで急騰・急落、毎年7月に配当。',
    '<b>ライバル年代記</b>：同い年のライバルが毎年ニュースになり、直接対決や代表争い、引退試合での再会がある。']));
 }
 function locH(h){
@@ -7220,6 +7234,285 @@ function c3Ev(id,p){
     {l:'仕事を減らしてサッカーに賭ける',d:'',pr:()=>.6,ok:{m:'収入は減ったが、練習時間が倍になった。',fx:{key:1,tec:1,money:-5}},ng:{m:'家計が苦しくなった。',fx:{money:-10,cond:-3}}}]};
   return null;
 }
+
+/* ========== 買い物の拡張・株式投資・買ったものの出来事 ========== */
+SHOPCAT.splice(1,0,['hobby','趣味']);SHOPCAT.splice(4,0,['lux','ぜいたく']);
+[
+ {id:'sauna',cat:'self',n:'自宅サウナ',d:'フィンランド式の本格サウナ',eff:'毎月の疲労回復が早くなる',price:800,type:'once'},
+ {id:'cryo',cat:'self',n:'冷却カプセル',d:'マイナス110度で炎症を抑える',eff:'ケガのリスク1割減',price:2000,type:'once'},
+ {id:'bed',cat:'self',n:'最高級マットレス',d:'眠りの質が変わる',eff:'毎月の体力回復+2',price:120,type:'once'},
+ {id:'vr',cat:'self',n:'VR戦術トレーナー',d:'仮想空間で何百試合も経験する',eff:'パス+2、テクニック+1',price:500,type:'once',fx:{pas:2,tec:1}},
+ {id:'smartspike',cat:'self',n:'スマートスパイク',d:'センサー入りでキックを分析',eff:'シュート+2',price:400,type:'once',fx:{sho:2}},
+ {id:'lang',cat:'self',n:'語学レッスン',d:'海外で通訳なしで話せるように',eff:'海外クラブで監督・チームメイトと打ち解けやすい',price:10,type:'sub'},
+ {id:'yoga',cat:'self',n:'ヨガ教室',d:'柔軟性と呼吸を整える',eff:'疲労がたまりにくく、ケガのリスク少し減',price:8,type:'sub'},
+ {id:'analyst',cat:'self',n:'専属データアナリスト',d:'相手の癖まで丸裸にする',eff:'大一番の成功率+5%',price:60,type:'sub'},
+ {id:'guitar',cat:'hobby',n:'アコースティックギター',d:'移動中の相棒',eff:'調子+5',price:60,type:'once',fx:{cond:5}},
+ {id:'game',cat:'hobby',n:'最新ゲーム機',d:'サッカーゲームで自分を操作できる',eff:'調子+4',price:50,type:'once',fx:{cond:4}},
+ {id:'golf',cat:'hobby',n:'ゴルフセット',d:'オフの社交の場に',eff:'調子+3、人気+1',price:300,type:'once',fx:{cond:3,pop:1}},
+ {id:'fishing',cat:'hobby',n:'釣り道具一式',d:'静かな湖で心を整える',eff:'調子+4',price:80,type:'once',fx:{cond:4}},
+ {id:'camera',cat:'hobby',n:'一眼レフカメラ',d:'遠征先の景色を残す',eff:'調子+3',price:150,type:'once',fx:{cond:3}},
+ {id:'books',cat:'hobby',n:'本棚いっぱいの本',d:'戦術書から小説まで',eff:'監督評価+2',price:30,type:'once',fx:{coach:2}},
+ {id:'cook',cat:'hobby',n:'料理教室',d:'自炊で体をつくる',eff:'毎月の体力回復+1',price:15,type:'sub'},
+ {id:'garden',cat:'hobby',n:'家庭菜園',d:'ベランダで野菜を育てる',eff:'調子+3',price:20,type:'once',fx:{cond:3}},
+ {id:'stream',cat:'hobby',n:'配信機材一式',d:'動画チャンネルを始める',eff:'人気+3、毎月少しずつ人気が上がる',price:200,type:'once',fx:{pop:3}},
+ {id:'piano',cat:'hobby',n:'グランドピアノ',d:'集中力を養う',eff:'調子+6',price:1500,type:'once',fx:{cond:6}},
+ {id:'art',cat:'hobby',n:'現代アートの絵画',d:'若手画家の作品。値上がりすることも',eff:'人気+2（売れば利益が出ることも）',price:5000,type:'once',fx:{pop:2}},
+ {id:'wine',cat:'hobby',n:'ワインセラー',d:'記念日に開ける一本を',eff:'調子+4',price:2000,type:'once',fx:{cond:4}},
+ {id:'watch',cat:'lux',n:'高級腕時計',d:'職人が仕上げた機械式時計',eff:'人気+2',price:800,type:'once',fx:{pop:2}},
+ {id:'suit',cat:'lux',n:'オーダースーツ',d:'授賞式や会見のために',eff:'人気+1',price:200,type:'once',fx:{pop:1}},
+ {id:'bike',cat:'lux',n:'大型バイク',d:'風を切って走る',eff:'調子+5（維持費 月2万円・ケガに注意）',price:500,type:'once',up:2,fx:{cond:5}},
+ {id:'villa',cat:'lux',n:'海辺の別荘',d:'オフを過ごす隠れ家',eff:'家族の満足度+10、調子+6（維持費 月20万円）',price:25000,type:'once',up:20,fx:{fam:10,cond:6}},
+ {id:'cruiser',cat:'lux',n:'クルーザー',d:'海の上で過ごす休日',eff:'人気+6（維持費 月50万円）',price:30000,type:'once',up:50,fx:{pop:6}},
+ {id:'horse',cat:'lux',n:'競走馬',d:'血統書つきの若駒',eff:'レースで賞金を稼ぐことも（維持費 月30万円）',price:8000,type:'once',up:30},
+ {id:'restaurant',cat:'lux',n:'レストラン経営',d:'自分の名前の店を出す',eff:'毎月の売上で黒字にも赤字にもなる',price:6000,type:'once'},
+ {id:'brand',cat:'lux',n:'自分のブランド設立',d:'ウェアとスパイクのブランド',eff:'人気に応じて毎月収入',price:20000,type:'once',fx:{pop:4}},
+ {id:'jet',cat:'lux',n:'プライベートジェット',d:'代表戦も移動もひとっ飛び',eff:'人気+12、海外クラブ在籍中は疲労が減る（維持費 月300万円）',price:200000,type:'once',up:300,fx:{pop:12}},
+ {id:'club',cat:'lux',n:'下部リーグのクラブ買収',d:'故郷の小さなクラブのオーナーに',eff:'人気+15（運営費 月100万円）',price:300000,type:'once',up:100,fx:{pop:15}},
+ {id:'island',cat:'lux',n:'南の島',d:'地図に載っている本物の島',eff:'人気+20、調子+10',price:500000,type:'once',fx:{pop:20,cond:10}},
+ {id:'ev',cat:'car',n:'電気自動車',d:'静かで環境にやさしい',eff:'体力回復+1、人気+1（維持費 月2万円）',price:450,type:'car',up:2,fx:{pop:1}},
+ {id:'camper',cat:'car',n:'キャンピングカー',d:'どこでも寝泊まりできる',eff:'家族の満足度+1/月（維持費 月8万円）',price:1200,type:'car',up:8},
+ {id:'classic',cat:'car',n:'クラシックカー',d:'60年前の名車',eff:'人気+4（維持費 月15万円）',price:5000,type:'car',up:15,fx:{pop:4}},
+ {id:'cat',cat:'fam',n:'猫を迎える',d:'保護猫の里親になる',eff:'調子+6',price:30,type:'once',fx:{cond:6}},
+ {id:'aquarium',cat:'fam',n:'熱帯魚の水槽',d:'リビングに小さな海を',eff:'調子+3',price:40,type:'once',fx:{cond:3}},
+ {id:'kidlesson',cat:'fam',n:'子どもの習い事',d:'ピアノ、スイミング、サッカー教室',eff:'家族の満足度が上がりやすい',price:10,type:'sub',req:p=>p.fam.kids.length>0,rq:'子どもがいるとき'},
+ {id:'famtrip',cat:'fam',n:'家族で世界一周',d:'オフの1か月をかけて',eff:'家族の満足度+20、調子+10（1シーズンに1回）',price:3000,type:'season',fx:{fam:20,cond:10},req:p=>p.fam.partner&&p.fam.partner.married,rq:'結婚しているとき'},
+ {id:'dinner',cat:'fam',n:'記念日のディナー',d:'夜景の見えるレストランで',eff:'家族の満足度+8',price:80,type:'repeat',fx:{fam:8},req:p=>p.fam.partner&&p.fam.partner.married,rq:'結婚しているとき'},
+ {id:'hospital',cat:'social',n:'小児病院への寄付',d:'新しい医療機器を贈る',eff:'人気+10',price:5000,type:'once',fx:{pop:10}},
+ {id:'scholar',cat:'social',n:'奨学金基金',d:'夢を追う子どもたちを支える',eff:'人気+5（1シーズンに1回）',price:3000,type:'season',fx:{pop:5}},
+ {id:'tree',cat:'social',n:'植林プロジェクト',d:'1ゴールごとに木を植える',eff:'人気+2（1シーズンに1回）',price:500,type:'season',fx:{pop:2}},
+ {id:'pitch',cat:'social',n:'故郷のグラウンドを芝生に',d:'土のグラウンドを天然芝に',eff:'人気+8',price:3000,type:'once',fx:{pop:8}},
+ {id:'refugee',cat:'social',n:'難民キャンプの支援',d:'ボールとユニフォームを届ける',eff:'人気+5（1シーズンに1回）',price:1000,type:'season',fx:{pop:5}},
+].forEach(it=>SHOP.push(it));
+
+/* ----- 株式投資 ----- */
+const STOCKS=[
+ {c:'GLN',n:'ゴールライン',s:'スポーツ用品',p:12,mu:.06,vol:.22,div:.02},
+ {c:'NXP',n:'ネクストパス',s:'IT',p:30,mu:.10,vol:.35,div:0},
+ {c:'HYT',n:'ハヤテ自動車',s:'自動車',p:20,mu:.04,vol:.20,div:.03},
+ {c:'MRI',n:'みらい製薬',s:'製薬',p:25,mu:.05,vol:.30,div:.015},
+ {c:'HKR',n:'ひかり銀行',s:'銀行',p:8,mu:.03,vol:.15,div:.04},
+ {c:'PXB',n:'ピクセルボックス',s:'ゲーム',p:15,mu:.08,vol:.40,div:0},
+ {c:'MPK',n:'まんぷく食品',s:'食品',p:6,mu:.03,vol:.12,div:.03},
+ {c:'AOZ',n:'あおぞら電力',s:'エネルギー',p:10,mu:.035,vol:.18,div:.035},
+ {c:'STR',n:'スターロード宇宙',s:'宇宙開発',p:5,mu:.12,vol:.60,div:0},
+ {c:'SNG',n:'シンギュラAI',s:'人工知能',p:40,mu:.14,vol:.50,div:0},
+ {c:'UMK',n:'うみかぜ海運',s:'海運',p:9,mu:.04,vol:.30,div:.05},
+ {c:'FBH',n:'フットボールHD',s:'クラブ経営',p:18,mu:.05,vol:.30,div:.01},
+];
+const STK_FEE=.005;
+const STK_NEWS={up:['新製品が大ヒット','決算が予想を大きく上回った','大型提携を発表','海外進出が成功','画期的な特許を取得'],dn:['不祥事が発覚','決算が赤字に転落','主力工場でトラブル','大口顧客を失った','規制強化の対象に']};
+function mkt(p){
+  if(!p.mkt){p.mkt={};STOCKS.forEach(s=>{let pr=s.p*Math.exp(gauss()*.15);const h=[pr];for(let i=0;i<11;i++){pr=Math.max(.2,pr*Math.exp(s.mu/12+s.vol*gauss()/Math.sqrt(12)-s.vol*s.vol/24));h.push(pr)}p.mkt[s.c]={pr,h}})}
+  if(!p.stk)p.stk={};return p.mkt;
+}
+const stkVal=p=>{if(!p.stk)return 0;const M=mkt(p);return Object.entries(p.stk).reduce((s,[c,h])=>s+h.sh*M[c].pr,0)};
+const stkCost=p=>p.stk?Object.values(p.stk).reduce((s,h)=>s+h.cost,0):0;
+const stkHeld=p=>p.stk?Object.values(p.stk).filter(h=>h.sh>0).length:0;
+function stkMonth(p,res,m){
+  const M=mkt(p),mf=gauss()*.035;
+  for(const s of STOCKS){const x=M[s.c];
+    let r=s.mu/12+s.vol*gauss()/Math.sqrt(12)-s.vol*s.vol/24+mf;
+    if(s.c==='GLN'&&p.pop>=70)r+=.01;
+    if(s.c==='FBH'&&p.stage==='pro'&&res.matches.some(x=>/優勝|金メダル/.test(x.note||'')))r+=.04;
+    let shock=null;if(Math.random()<.03){const up=Math.random()<.5;shock=up?'up':'dn';r+=(up?1:-1)*rnd(.15,.4)}
+    x.pr=Math.max(.2,x.pr*Math.exp(r));x.h.push(x.pr);if(x.h.length>24)x.h.shift();
+    if(shock){const h=p.stk[s.c];const t=`【株】${s.n}、${pick(STK_NEWS[shock])}で株価${shock==='up'?'急騰':'急落'}`;pushNews(t);if(h&&h.sh>0)res.notes.push(`${t}（保有中）`)}
+  }
+  if(m===11){let d=0;for(const s of STOCKS){const h=p.stk[s.c];if(h&&h.sh>0&&s.div)d+=h.sh*M[s.c].pr*s.div}d=Math.round(d);if(d>0){p.money+=d;p.earnings+=d;res.notes.push(`株の配当金 ${yen(d)}`)}}
+}
+function stkTrade(c,amt){
+  const p=S.p,M=mkt(p),pr=M[c].pr,s=STOCKS.find(x=>x.c===c);p.stk[c]=p.stk[c]||{sh:0,cost:0};const h=p.stk[c];
+  if(amt>0){if(p.money<amt)return;const sh=amt*(1-STK_FEE)/pr;h.sh+=sh;h.cost+=amt;p.money-=amt;S.stkMsg=`${s.n}を${yen(amt)}分買った`}
+  else{if(h.sh<=0)return;const part=amt===-1?1:.5,sh=h.sh*part,got=Math.round(sh*pr*(1-STK_FEE)),cb=h.cost*part,pl=got-cb;
+    h.sh-=sh;h.cost-=cb;p.money+=got;if(pl>0)p.earnings+=pl;if(h.sh<1e-6){h.sh=0;h.cost=0}
+    S.stkMsg=`${s.n}を売って${yen(got)}を受け取った（${pl>=0?'利益':'損失'} ${yen(Math.abs(pl))}）`;
+    if(pl>=5000)pushNews(`【話題】${p.sei}${p.mei}、株で${yen(pl)}の利益`)}
+}
+function spark(h,up){if(h.length<2)return '';const mn=Math.min(...h),mx=Math.max(...h),w=64,ht=18;
+  const pts=h.map((v,i)=>`${(i/(h.length-1)*w).toFixed(1)},${(ht-(mx===mn?ht/2:(v-mn)/(mx-mn)*ht)).toFixed(1)}`).join(' ');
+  return `<svg class="spk" viewBox="0 0 ${w} ${ht}" width="${w}" height="${ht}"><polyline points="${pts}" fill="none" stroke="${up?'var(--up)':'var(--down)'}" stroke-width="1.5"/></svg>`}
+function stockHtml(p){
+  const M=mkt(p),v=stkVal(p),c0=stkCost(p),pl=v-c0,sel=S.stkSel;
+  return `<div class="kick">株式投資<span class="r">評価額 ${yen(v)}${c0?`（<span style="color:${pl>=0?'var(--up)':'var(--down)'}">${pl>=0?'+':''}${yen(pl)}</span>）`:''}</span></div>
+  ${S.stkMsg?`<div class="toast">${esc(S.stkMsg)}</div>`:''}
+  <p class="note" style="margin:0 0 8px">株価は毎月動く。たまに大ニュースで急騰・急落する。配当は毎年7月。売買手数料0.5%。</p>
+  <div class="stks">${STOCKS.map(s=>{const x=M[s.c],pr=x.pr,prev=x.h.length>1?x.h[x.h.length-2]:pr,ch=(pr/prev-1)*100,h=p.stk[s.c],hv=h&&h.sh>0?h.sh*pr:0,open=sel===s.c;
+    return `<div class="stk ${open?'open':''}"><button class="stk-h" data-act="stkSel" data-v="${s.c}"><span class="nm"><b>${s.n}</b><small>${s.s}${s.div?`・配当${(s.div*100).toFixed(1)}%`:''}</small></span>${spark(x.h,pr>=x.h[0])}<span class="pr"><b>${pr>=10?pr.toFixed(1):pr.toFixed(2)}万</b><small style="color:${ch>=0?'var(--up)':'var(--down)'}">${ch>=0?'+':''}${ch.toFixed(1)}%</small></span></button>
+    ${hv?`<div class="stk-own">保有 ${yen(hv)}（${hv-h.cost>=0?'+':''}${yen(hv-h.cost)}）</div>`:''}
+    ${open?`<div class="stk-b"><button class="opt sm" data-act="stkBuy" data-v="${s.c}:10" ${p.money>=10?'':'disabled'}>10万買う</button><button class="opt sm" data-act="stkBuy" data-v="${s.c}:100" ${p.money>=100?'':'disabled'}>100万買う</button><button class="opt sm" data-act="stkBuy" data-v="${s.c}:1000" ${p.money>=1000?'':'disabled'}>1000万買う</button><button class="opt sm" data-act="stkSell" data-v="${s.c}:-0.5" ${hv?'':'disabled'}>半分売る</button><button class="opt sm" data-act="stkSell" data-v="${s.c}:-1" ${hv?'':'disabled'}>全部売る</button></div>`:''}</div>`}).join('')}</div>`;
+}
+Object.assign(ACT,{
+ stkSel:v=>{S.stkSel=S.stkSel===v?null:v;S.stkMsg=null},
+ stkBuy:v=>{const [c,a]=v.split(':');stkTrade(c,+a)},
+ stkSell:v=>{const [c,a]=v.split(':');stkTrade(c,+a)},
+});
+
+/* ----- 持ち物の毎月の効果 ----- */
+function c4Month(p,a,res,m,first){
+  const it=p.items||{},sb=p.subs||{};
+  if(it.sauna)p.fat=clamp((p.fat||0)-2.5,0,100);
+  if(sb.yoga)p.fat=clamp((p.fat||0)-1,0,100);
+  if(it.bed)p.sta=clamp(p.sta+2,0,100);
+  if(sb.cook)p.sta=clamp(p.sta+1,0,100);
+  if(p.car==='ev')p.sta=clamp(p.sta+1,0,100);
+  if(p.car==='camper'&&p.fam.partner&&p.fam.partner.married)p.fam.happy=clamp(p.fam.happy+1,0,100);
+  if(sb.kidlesson&&p.fam.kids.length)p.fam.happy=clamp(p.fam.happy+1.5,0,100);
+  if(sb.lang&&isAbroad(p)){p.mates=clamp((p.mates==null?50:p.mates)+.8,0,100);p.coach=clamp(p.coach+.4,0,100)}
+  if(it.jet&&isAbroad(p))p.fat=clamp((p.fat||0)-2,0,100);
+  if(it.stream)p.pop=clamp(p.pop+.25,0,100);
+  if(it.brand){const g=Math.round(p.pop*3+rnd(-10,30));p.money+=g;p.earnings+=Math.max(0,g);res.inc+=g}
+  if(it.restaurant){const g=Math.round(rnd(-40,70)+p.pop*.3);p.money+=g;if(g>0)p.earnings+=g;res.inc+=g}
+  stkMonth(p,res,m);
+}
+function c4Inj(p){return (p.items&&p.items.cryo?.9:1)*(p.subs&&p.subs.yoga?.92:1)*(p.items&&p.items.bike?1.04:1)}
+function applyFx3(p,k,v){
+  if(k==='stkMul'){const held=STOCKS.filter(s=>p.stk&&p.stk[s.c]&&p.stk[s.c].sh>0);if(!held.length)return null;const s=pick(held),x=mkt(p)[s.c];x.pr=Math.max(.2,x.pr*v);return [`${s.n}の株価`,v>=1?`+${Math.round((v-1)*100)}%`:`${Math.round((v-1)*100)}%`,v>=1?1:-1]}
+  if(k==='stkAll'){const M=mkt(p);STOCKS.forEach(s=>{M[s.c].pr=Math.max(.2,M[s.c].pr*v)});return ['株式市場',v>=1?'全面高':'全面安',v>=1?1:-1]}
+  if(k==='sellItem'){if(p.items[v]){delete p.items[v];return [shopItem(v).n,'手放した',0]}return null}
+  if(k==='artSale'){const g=Math.round(5000*v);p.money+=g;p.earnings+=Math.max(0,g-5000);delete p.items.art;return ['絵画の売却',`+${yen(g)}`,1]}
+  return null;
+}
+
+/* ----- 買ったものの出来事 ----- */
+const C4=(l,d,pr,om,of,nm,nf)=>({l,d,pr:typeof pr==='number'?()=>pr:pr,ok:{m:om,fx:of||{}},ng:{m:nm||'',fx:nf||{}}});
+const IT=k=>c=>!!c.p.items[k],SB4=k=>c=>!!c.p.subs[k],SZ=k=>c=>!!c.p.seasonBuys[k],CR4=k=>c=>c.p.car===k,STK4=c=>stkHeld(c.p)>0;
+const MAR=c=>c.p.fam.partner&&c.p.fam.partner.married;
+const ALL3=['hs','uni','pro'];
+const IEV=[
+ ['vsoft',ALL3,IT('vsoft'),'相手の癖を見つけた','映像分析ソフトで次の対戦相手を見ていたら、センターバックが必ず右足から踏み出す癖に気づいた。',
+  C4('監督に報告する','',.7,'監督は感心し、チーム全体の作戦に組み込んだ。',{coach:8,pas:1},'「それくらい知っている」と言われた。',{coach:-1}),C4('自分だけの武器にする','',.6,'試合でその癖を突いて、決定機を2度つくった。',{key:1,pop:3},'相手も癖を修正していた。',{})],
+ ['altitude',ALL3,SZ('altitude'),'高地合宿で出会ったランナー','高地合宿の宿で、マラソンの日本記録保持者と相部屋になった。毎朝4時に起きて走っている。',
+  C4('一緒に早朝ランへ','',.7,'呼吸の仕方から教わった。90分走り切れる気がする。',{phy:2,fat:6},'ついていけず、途中でばてた。',{sta:-8}),C4('食事の秘訣を聞く','',1,'鉄分の摂り方を教わった。',{sta:6})],
+ ['lesson',ALL3,SZ('lesson'),'名コーチからの宿題','個人レッスンの最後に、名将が1枚の紙を渡した。「毎日100回、これをやれ」。',
+  C4('毎日欠かさずやる','',.75,'3か月後、無意識に体が動くようになった。',{key:2},'途中でさぼってしまった。',{cond:-3}),C4('自分流にアレンジする','',.45,'名将は「それでいい」と笑った。',{key:1,tec:1,coach:3},'基本を崩してしまった。',{key:-1})],
+ ['secret',ALL3,SZ('secret'),'伝説の特訓の反動','門外不出の特訓メニューは、想像以上に体を削った。全身が悲鳴を上げている。',
+  C4('それでも続ける','',.55,'限界の先に、新しい自分がいた。',{all:1,fat:15},'体が言うことをきかなくなった。',{inj:4,fat:20}),C4('1週間休んで回復に専念','',1,'焦らず、体の声を聞いた。',{fat:-20,sta:10})],
+ ['apart',ALL3,c=>c.p.home==='apart','隣の部屋からの苦情','夜中の自主トレの音がうるさいと、隣の人から手紙が届いた。',
+  C4('お詫びにサイン入りユニフォーム','',.8,'隣人はなんとファンになってくれた。',{pop:2,cond:3},'「サインはいらない」と冷たく返された。',{cond:-3}),C4('トレーニングは外でやる','',1,'夜の公園で走るのが日課になった。',{phy:1})],
+ ['edu',['pro'],SZ('edu'),'子どもの発表会','積み立てていた教育資金で始めた習い事の発表会。子どもが舞台の上から手を振っている。',
+  C4('練習を休んで見に行く','',1,'子どもは誇らしげに一礼した。涙が出た。',{fam:12,coach:-2}),C4('試合後に駆けつける','',.5,'最後の演目にぎりぎり間に合った。',{fam:8},'着いた時にはもう終わっていた。',{fam:-6})],
+ ['stadium',['pro'],IT('stadium'),'練習場のこけら落とし','寄贈した練習場が完成した。育ったクラブの子どもたちが、真新しい芝の上を走り回っている。',
+  C4('子どもたちとミニゲーム','',1,'本気でボールを追う子どもたち。昔の自分を見ているようだった。',{pop:6,cond:8}),C4('スピーチをする','',.8,'「夢は叶う」。その言葉に会場が拍手で包まれた。',{pop:8},'緊張で言葉が出てこなかった。',{pop:2})],
+ ['sauna',ALL3,IT('sauna'),'サウナで監督と鉢合わせ','自宅サウナにチームメイトを招いたら、なぜか監督までついてきた。熱気の中で2人きりになった。',
+  C4('サッカー談義に花を咲かせる','',.75,'裸の付き合いで、監督の本音が聞けた。',{coach:10},'暑さで頭が回らなかった。',{coach:-2}),C4('先に水風呂へ逃げる','',1,'水風呂で整った。',{fat:-6})],
+ ['sauna2',ALL3,IT('sauna'),'サウナ仲間','チームメイトの間で、うちのサウナが評判になった。週末になると誰かが来る。',
+  C4('サウナの日を作る','',1,'毎週土曜はサウナ会。チームの空気がよくなった。',{mates:12}),C4('ひとりの時間も大事にする','',1,'静かにととのった。',{cond:5,fat:-5})],
+ ['cryo',ALL3,IT('cryo'),'冷却カプセルの故障','冷却カプセルの温度が下がらなくなった。修理業者は「部品の取り寄せに1か月」と言う。',
+  C4('高額でも特急修理を頼む','',1,'すぐに直った。',{money:-150}),C4('しばらくアイスバスで代用','',.7,'昔ながらの方法も悪くない。',{phy:1},'寒さに耐えきれなかった。',{cond:-4})],
+ ['bed',ALL3,IT('bed'),'快適すぎて寝坊','最高級マットレスの寝心地がよすぎて、目覚ましを3回止めてしまった。練習開始まであと15分。',
+  C4('全力で走って向かう','',.5,'ぎりぎり間に合った。ウォーミングアップ代わりになった。',{spd:1},'5分遅刻し、罰金を払った。',{coach:-6,money:-10}),C4('正直に連絡する','',1,'監督は苦笑いした。',{coach:-3})],
+ ['vr',ALL3,IT('vr'),'VRで未来の対戦相手を予習','VR戦術トレーナーに、来週の対戦相手のデータを読み込ませた。仮想の90分を何度も繰り返す。',
+  C4('夜通しシミュレーション','',.6,'本番で「この場面は見たことがある」と感じた。',{pas:1,tec:1,fat:6},'VR酔いでフラフラになった。',{cond:-5}),C4('1日1試合だけにする','',1,'ほどよい予習になった。',{pas:1})],
+ ['smartspike',ALL3,IT('smartspike'),'スマートスパイクのデータ','スパイクのセンサーが、自分のキックの「くせ」を数値で示した。インパクトが0.02秒遅れている。',
+  C4('フォームを修正する','',.6,'シュートの伸びが変わった。',{sho:2},'修正しすぎてタイミングが狂った。',{sho:-1}),C4('データをメーカーに提供する','',1,'謝礼と新作が届いた。',{money:30,pop:1})],
+ ['lang',ALL3,SB4('lang'),'通訳なしのインタビュー','試合後のインタビューで、通訳がいないことに気づいた。カメラが回っている。',
+  C4('覚えた言葉で話してみる','',.65,'たどたどしい言葉に、現地のファンが大喜びした。',{pop:8,mates:6},'言い間違えて、変な意味になってしまった。',{pop:-2}),C4('笑顔と身ぶりで乗り切る','',1,'なんとか伝わった。',{pop:2})],
+ ['lang2',ALL3,SB4('lang'),'語学の先生と市場へ','語学の先生が「教室より市場で学べ」と、朝市に連れ出した。',
+  C4('値切り交渉に挑戦','',.6,'店主に気に入られ、果物をおまけしてもらった。',{cond:6,mates:3},'まったく通じなかった。',{cond:-2}),C4('地元の人と世間話','',1,'少しずつ、この街が好きになってきた。',{cond:4})],
+ ['yoga',ALL3,SB4('yoga'),'体の歪みに気づく','ヨガの先生に「右の股関節が固い」と言われた。ケガの前ぶれかもしれない。',
+  C4('毎朝ストレッチを続ける','',.85,'体の左右差がなくなり、動きが軽くなった。',{fat:-8,phy:1},'効果は感じられなかった。',{}),C4('トレーナーに相談する','',1,'早めに手を打てた。',{sta:6})],
+ ['analyst',['uni','pro'],SB4('analyst'),'アナリストの予言','専属アナリストが言った。「次の相手GKは、PKの7割を右に跳ぶ」。',
+  C4('データを信じる','',.7,'PKを左に蹴り込み、決勝点になった。',{pop:6,sho:1},'GKは左に跳んだ。データは万能ではない。',{cond:-5}),C4('自分の感覚を信じる','',.55,'感覚で決めた一撃が、ネットを揺らした。',{pop:4},'迷いが残り、ふかしてしまった。',{cond:-4})],
+ ['guitar',ALL3,IT('guitar'),'宴会でギター演奏','チームの食事会で「何か一曲」と振られた。ギターは持ってきている。',
+  C4('思い切って弾き語る','',.6,'大合唱になった。忘れられない夜だ。',{mates:12,pop:2},'弦が切れた。それも含めて盛り上がった。',{mates:5}),C4('みんなの好きな曲をリクエスト制で','',1,'場がひとつになった。',{mates:8})],
+ ['guitar2',['uni','pro'],IT('guitar'),'作った曲がバズった','遠征の移動中に作った曲を動画に上げたら、再生回数が100万回を超えた。',
+  C4('配信で曲を発表する','',.7,'音楽ファンにも名前が知られた。',{pop:8,money:50},'「サッカーに集中しろ」と批判された。',{pop:-2,coach:-4}),C4('チームの応援歌として贈る','',1,'サポーターがスタジアムで歌ってくれた。',{pop:5,mates:5})],
+ ['game',ALL3,IT('game'),'ゲームで夜更かし','サッカーゲームで自分を操作するのが楽しすぎて、気づけば午前3時だった。',
+  C4('あと1試合だけ','',.3,'奇跡的に翌日は絶好調だった。',{cond:4},'練習で足がもつれた。',{cond:-6,fat:8}),C4('電源を切って寝る','',1,'えらい。',{sta:4})],
+ ['game2',['uni','pro'],IT('game'),'eスポーツ大会への招待','サッカーゲームのチャリティー大会に招待された。対戦相手は世界ランカーだ。',
+  C4('本気で勝ちにいく','',.3,'まさかの優勝。世界中で話題になった。',{pop:10},'ボコボコにされたが、それも話題になった。',{pop:3}),C4('ファンサービスに徹する','',1,'視聴者と一緒に楽しんだ。',{pop:4})],
+ ['golf',['pro'],IT('golf'),'監督とゴルフ','オフの日、監督にゴルフに誘われた。監督はかなりの負けず嫌いらしい。',
+  C4('全力で勝ちにいく','',.4,'勝った。監督は悔しそうに、でも楽しそうに笑った。',{coach:6,cond:4},'勝ったが、監督は口をきいてくれなくなった。',{coach:-6}),C4('うまく接待する','',.8,'監督は上機嫌だった。',{coach:8},'わざと負けたのがばれた。',{coach:-3})],
+ ['fishing',ALL3,IT('fishing'),'湖で大物','早朝の湖に糸を垂らしていたら、竿が大きくしなった。',
+  C4('じっくり粘る','',.5,'1m近い大物を釣り上げた。写真が地元紙に載った。',{cond:10,pop:2},'糸が切れた。でも心は凪いだ。',{cond:4}),C4('子どもたちに竿を貸す','',1,'子どもが初めての一匹を釣り上げた。',{cond:6,pop:1})],
+ ['camera',ALL3,IT('camera'),'撮った写真が話題に','遠征先で撮った夕焼けの写真をSNSに上げたら、写真家から連絡が来た。',
+  C4('写真展に出品する','',.6,'「サッカー選手の目」と評判になった。',{pop:6,cond:5},'厳しい講評をもらった。',{cond:-2}),C4('チームメイトを撮る','',1,'みんなのいい顔が撮れた。',{mates:8})],
+ ['books',ALL3,IT('books'),'1冊の戦術書','本棚の奥から、古い戦術書を見つけた。偽9番、ゾーンディフェンス……線を引きながら読みふけった。',
+  C4('監督と議論する','',.7,'監督は「よく勉強しているな」とうなずいた。',{coach:8,pas:1},'「理屈ばかりだ」と言われた。',{coach:-2}),C4('自分のプレーに落とし込む','',.7,'ポジショニングが変わった。',{def:1,pas:1},'',{})],
+ ['books2',['pro'],IT('books'),'自伝を書かないか','出版社から自伝の執筆依頼が来た。',
+  C4('正直にすべてを書く','',.6,'ベストセラーになった。',{pop:10,money:300},'暴露本と受け取られた。',{pop:-4,coach:-5}),C4('まだ早いと断る','',1,'自伝は引退してからだ。',{cond:2})],
+ ['cook',ALL3,SB4('cook'),'手料理をふるまう','料理教室で覚えた料理を、チームメイトにふるまうことになった。',
+  C4('自信作のパスタ','',.7,'「店を出せる」と絶賛された。',{mates:10},'塩を入れすぎた。',{mates:3}),C4('栄養満点の和定食','',.8,'体づくりの話で盛り上がった。',{mates:6,phy:1},'',{})],
+ ['garden',ALL3,IT('garden'),'家庭菜園の初収穫','ベランダのトマトが真っ赤に色づいた。',
+  C4('チームに差し入れ','',1,'「最高のトマトだ」とみんな笑った。',{mates:6}),C4('自分で料理する','',1,'自分で育てた野菜の味は格別だ。',{cond:5,sta:3})],
+ ['stream',['uni','pro'],IT('stream'),'生配信で失言','配信中に、うっかり次の試合のスタメンをほのめかしてしまった。',
+  C4('すぐに謝罪する','',.7,'誠実な対応で炎上は収まった。',{pop:-1},'監督にこっぴどく叱られた。',{coach:-10,pop:-3}),C4('冗談で切り抜ける','',.4,'笑いに変えられた。',{pop:2},'火に油を注いだ。',{coach:-8,pop:-6})],
+ ['stream2',['uni','pro'],IT('stream'),'ファンとの交流配信','配信のコメント欄に「入院中の弟があなたのファンです」というメッセージが届いた。',
+  C4('病院にビデオメッセージを送る','',1,'少年から手紙が届いた。「次の試合、ゴール決めてね」。',{pop:6,cond:8}),C4('次の試合でゴールを約束する','',.5,'約束どおりゴールを決め、カメラに向かって指をさした。',{pop:12,cond:6},'決められなかった。でも少年は笑顔だったと聞いた。',{cond:-2})],
+ ['piano',ALL3,IT('piano'),'ピアノで集中力','大一番の前夜、ピアノに向かうと不思議と心が落ち着く。',
+  C4('朝まで弾き続ける','',.4,'すっきりした頭でピッチに立てた。',{cond:8},'寝不足になった。',{fat:8}),C4('1曲だけ弾いて寝る','',1,'ほどよく心が整った。',{cond:5})],
+ ['art',['pro'],IT('art'),'絵画の価値が急騰','買った絵の画家が国際的な賞を取り、作品の値段が跳ね上がった。画商が「売ってほしい」と言ってきた。',
+  C4('売って利益を出す','',.8,'購入額の何倍にもなった。',{artSale:3.2},'足元を見られ、思ったほどにはならなかった。',{artSale:1.4}),C4('手元に残す','',1,'この絵は、自分の歩みとともにある。',{cond:5,pop:2})],
+ ['wine',['pro'],IT('wine'),'特別な一本','ワインセラーの奥に、生まれ年のワインが眠っている。',
+  C4('優勝の夜に開ける','',.5,'その夜、最高の祝杯になった。',{cond:10,mates:5},'まだその日は来ない。',{cond:-1}),C4('両親に贈る','',1,'父は黙ってグラスを掲げた。',{cond:6})],
+ ['watch',['pro'],IT('watch'),'腕時計が盗まれた','遠征先のホテルで、高級腕時計がなくなった。',
+  C4('警察に届けてSNSでも呼びかける','',.4,'数日後、親切な人が見つけて届けてくれた。',{pop:4},'見つからなかった。',{sellItem:'watch',cond:-6}),C4('「縁がなかった」とあきらめる','',1,'物より大事なものがある。',{sellItem:'watch',cond:-2})],
+ ['suit',['pro'],IT('suit'),'授賞式の装い','年間表彰式に、仕立てたばかりのオーダースーツで出席した。',
+  C4('堂々と赤じゅうたんを歩く','',.8,'ファッション誌にも取り上げられた。',{pop:6},'裾を踏んでつまずいた。それも愛嬌だ。',{pop:2}),C4('控えめに会場の隅で','',1,'先輩から声をかけられた。',{coach:2})],
+ ['bike',ALL3,IT('bike'),'大型バイクで峠へ','休みの日、バイクで峠道を走りに行こうか迷っている。クラブは選手のバイク運転にいい顔をしない。',
+  C4('安全運転でツーリング','',.85,'山の空気で頭が空っぽになった。',{cond:8},'雨に降られて風邪をひいた。',{sta:-10}),C4('思い切って手放す','',1,'プロとしての決断だ。監督も喜んだ。',{sellItem:'bike',coach:5,money:250})],
+ ['villa',['pro'],IT('villa'),'海辺の別荘で','オフの海辺の別荘。波の音しか聞こえない。',
+  C4('家族や仲間を招く','',1,'夜遅くまで笑い声が絶えなかった。',{fam:10,mates:6,cond:6}),C4('ひとりで静かに過ごす','',1,'自分と向き合う時間になった。',{cond:8,fat:-10})],
+ ['cruiser',['pro'],IT('cruiser'),'クルーザーで沖へ','チームメイトを乗せてクルーザーで沖に出た。',
+  C4('イルカを探しに行く','',.6,'イルカの群れに出会えた。全員の宝物の思い出だ。',{mates:12,cond:8},'船酔いでみんなぐったりした。',{mates:3,sta:-6}),C4('釣り大会を開く','',1,'一番の大物は控えGKが釣り上げた。',{mates:8})],
+ ['jet',['pro'],IT('jet'),'ジェットで代表に合流','代表戦の前日、定期便が欠航した。チャーター便ではなく、自分のジェットがある。',
+  C4('チームメイトも乗せて飛ぶ','',1,'「最高のキャプテンだ」と言われた。',{mates:10,nat:5}),C4('ひとりで向かう','',1,'時間どおりに合流できた。',{nat:3})],
+ ['horse',['pro'],IT('horse'),'愛馬が大レースに出走','持っている競走馬が、大きなレースに出走することになった。',
+  C4('スタンドで応援する','',.3,'ゴール前で差し切り、優勝！ 賞金が入った。',{money:2000,pop:6,cond:8},'見せ場なく敗れた。',{cond:-2}),C4('試合に集中して結果だけ聞く','',.3,'試合後に勝利を知った。最高の一日だ。',{money:2000,cond:6},'着外だった。',{})],
+ ['horse2',['pro'],IT('horse'),'愛馬の引退','愛馬が脚を痛め、競走馬を引退することになった。',
+  C4('牧場で余生を送らせる','',1,'ゆっくり草をはむ姿を見に行くのが楽しみになった。',{cond:5,sellItem:'horse'}),C4('乗馬クラブに譲る','',1,'子どもたちを乗せる馬になった。',{pop:3,sellItem:'horse'})],
+ ['restaurant',['pro'],IT('restaurant'),'店に料理評論家が来た','経営するレストランに、有名な料理評論家が予約を入れた。',
+  C4('自分も店に立って出迎える','',.6,'「料理も接客も一流」と書かれ、予約が殺到した。',{money:300,pop:4},'評論は辛口だった。',{money:-100}),C4('シェフにすべて任せる','',.5,'星つきの評価をもらった。',{money:200},'普通の評価だった。',{})],
+ ['restaurant2',['pro'],IT('restaurant'),'店の経営難','レストランの客足が落ち、赤字が続いている。',
+  C4('自腹で立て直す','',.6,'新メニューが当たり、黒字に戻った。',{money:-500,pop:2},'立て直せず、店を閉めた。',{money:-800,sellItem:'restaurant'}),C4('閉店を決める','',1,'つらい決断だったが、損は最小限にできた。',{sellItem:'restaurant',money:1500})],
+ ['brand',['pro'],IT('brand'),'ブランドの新作','自分のブランドの新作スパイクを発表することになった。デザインは2案ある。',
+  C4('派手な金色のモデル','',.5,'子どもたちに大人気。売上が倍になった。',{money:800,pop:6},'「趣味が悪い」と酷評された。',{pop:-3}),C4('シンプルな黒のモデル','',.8,'プロ選手にも愛用者が増えた。',{money:500,pop:3},'売れ行きはいまひとつだった。',{})],
+ ['brand2',['pro'],IT('brand'),'工場の労働環境','ブランドの製品を作る海外工場で、長時間労働が問題になっていると記者から聞かされた。',
+  C4('自ら現地を視察して改善する','',1,'費用はかかったが、誠実な対応が評価された。',{money:-1000,pop:8}),C4('委託先に任せて様子を見る','',.4,'問題は大きくならなかった。',{},'大きく報じられ、批判が殺到した。',{pop:-12,money:-500})],
+ ['club',['pro'],IT('club'),'オーナーとしての決断','買収したクラブが昇格争いをしている。監督から「補強資金がほしい」と言われた。',
+  C4('思い切って資金を出す','',.55,'補強が当たり、昇格を決めた。',{money:-3000,pop:12},'補強は空振りに終わった。',{money:-3000,pop:-2}),C4('育成を信じて我慢する','',.5,'若手が躍動し、昇格した。',{pop:10},'あと一歩届かなかった。',{pop:1})],
+ ['island',['pro'],IT('island'),'島の名前を決める','買った南の島に、名前をつけることになった。',
+  C4('家族の名前をつける','',1,'家族は照れくさそうに喜んだ。',{fam:15,cond:6}),C4('島で子どもたちのサッカー合宿','',1,'世界中から子どもたちが集まった。',{pop:10})],
+ ['ev',['uni','pro'],CR4('ev'),'電気自動車の充電切れ','練習場に向かう途中で、電気自動車のバッテリーが切れた。',
+  C4('近くの人に助けを求める','',.8,'通りかかったファンが充電スポットまで案内してくれた。',{pop:2},'結局、遅刻した。',{coach:-4}),C4('走って向かう','',.5,'ウォーミングアップは完璧だ。',{phy:1},'間に合わなかった。',{coach:-5})],
+ ['classic',['pro'],CR4('classic'),'クラシックカーのレストア','60年前の名車のエンジンが不調だ。専門の職人に頼むか、自分で直すか。',
+  C4('職人に頼む','',1,'新車のような音で走るようになった。',{money:-200,cond:4}),C4('自分でいじってみる','',.3,'エンジンがかかった瞬間、思わずガッツポーズした。',{cond:10},'余計に壊した。',{money:-400})],
+ ['camper',['uni','pro'],CR4('camper'),'キャンピングカーで星空','キャンピングカーで山の上まで来た。満天の星だ。',
+  C4('家族や恋人と寝転ぶ','',1,'流れ星に、それぞれの願いをかけた。',{fam:10,love:10,cond:6}),C4('ひとりでこれからを考える','',1,'目標がはっきりした。',{cond:8})],
+ ['cat',ALL3,IT('cat'),'ユニフォームの上の猫','試合に持っていくユニフォームの上で、猫が気持ちよさそうに寝ている。',
+  C4('そっと別のユニフォームを持っていく','',1,'猫の毛がついたユニフォームは、お守りとして部屋に飾った。',{cond:6}),C4('一緒に写真を撮ってSNSに','',1,'世界中の猫好きから「いいね」が届いた。',{pop:5})],
+ ['cat2',ALL3,IT('cat'),'猫が脱走した','ドアを開けたすきに、猫が外に飛び出していった。',
+  C4('近所を探し回る','',.7,'夜、公園のベンチの下で見つけた。',{cond:4},'翌朝、自分で帰ってきた。心配した。',{cond:-3}),C4('SNSで呼びかける','',.85,'ファンが見つけて連絡をくれた。',{pop:3},'',{})],
+ ['aquarium',ALL3,IT('aquarium'),'熱帯魚の世話','水槽の熱帯魚に、小さな稚魚が生まれた。',
+  C4('稚魚用の水槽を用意する','',1,'命が育つのを見るのは、いいものだ。',{cond:6}),C4('チームメイトに分ける','',1,'ロッカールームに水槽が増えた。',{mates:5})],
+ ['kidlesson',['pro'],SB4('kidlesson'),'子どものサッカー教室','子どもが通うサッカー教室に、コーチとして呼ばれた。',
+  C4('全力で教える','',1,'子どもたちの目が輝いていた。わが子は少し照れくさそうだ。',{fam:10,pop:4}),C4('親として見守る','',1,'わが子のゴールに、誰よりも大きな声を出した。',{fam:8})],
+ ['famtrip',['pro'],SZ('famtrip'),'世界一周の旅先で','家族旅行で訪れた国の路地裏で、子どもたちがボールを蹴っていた。',
+  C4('輪に入って一緒に遊ぶ','',1,'言葉はいらなかった。',{cond:8,pop:3}),C4('家族で記念写真','',1,'一生の思い出になった。',{fam:8})],
+ ['hospital',['pro'],IT('hospital'),'病院の子どもたちを訪問','寄付した小児病院から、子どもたちに会ってほしいと連絡があった。',
+  C4('ボールを持って会いに行く','',1,'ベッドの上の小さな手とハイタッチした。',{pop:8,cond:8}),C4('次のゴールを病院に捧げる','',.5,'ゴール後、病院のある方角を指さした。',{pop:10},'ゴールは奪えなかった。次こそ。',{cond:-2})],
+ ['scholar',['pro'],SZ('scholar'),'奨学生からの手紙','奨学金を受けた子から手紙が届いた。「大学に合格しました。いつか恩返しします」。',
+  C4('返事を書く','',1,'手紙は宝物になった。',{cond:8}),C4('基金を広く呼びかける','',.8,'賛同者が集まり、基金が倍になった。',{pop:6},'',{})],
+ ['tree',['pro'],SZ('tree'),'植えた木','ゴールのたびに植えてきた木が、小さな林になった。',
+  C4('記念の植樹イベントを開く','',1,'子どもたちと一緒に木を植えた。',{pop:5}),C4('静かに見に行く','',1,'風に揺れる若木を見て、ゴールの数を思い出した。',{cond:6})],
+ ['pitch',['pro'],IT('pitch'),'故郷の芝生のグラウンド','故郷のグラウンドが芝生になり、地元の大会が開かれた。',
+  C4('始球式に参加する','',1,'子どもたちが自分の名前を呼んでくれた。',{pop:6,hope:5}),C4('大会のスポンサーになる','',1,'大会は毎年続くことになった。',{pop:8,money:-200})],
+ ['refugee',['pro'],SZ('refugee'),'支援先のキャンプで','ボールとユニフォームを届けた難民キャンプで、子どもたちが試合を見せてくれた。',
+  C4('一緒にプレーする','',1,'砂ぼこりの中、全員が笑っていた。',{pop:6,cond:6}),C4('才能ある子を紹介する','',.5,'クラブのテストにつなげることができた。',{pop:8},'すぐには道が開けなかった。',{pop:2})],
+ ['stk1',['uni','pro'],STK4,'インサイダー情報の誘い','知り合いの社長が「来週うちが大型買収を発表する。今のうちに株を買っておけ」とささやいた。',
+  C4('きっぱり断る','',1,'それは違法だ。社長は気まずそうに笑った。',{coach:2}),C4('こっそり買う','',.4,'株価は上がった。だが後味は悪い。',{money:400,cond:-6},'証券取引の調査が入り、大きく報じられた。',{pop:-15,coach:-10,money:-500})],
+ ['stk2',['uni','pro'],STK4,'株価暴落の夜','世界的な金融不安で、株式市場が全面安になった。',
+  C4('慌てず持ち続ける','',.6,'数か月後、相場は持ち直した。',{stkAll:1.15},'下落はさらに続いた。',{stkAll:.85}),C4('全部売って様子を見る','',1,'損は確定したが、心は落ち着いた。',{cond:2,stkAll:.92})],
+ ['stk3',['pro'],STK4,'株主総会への招待','株を持っている会社の株主総会に、有名人として招かれた。',
+  C4('質問に立つ','',.6,'鋭い質問が話題になった。',{pop:4,stkMul:1.05},'場違いな質問で失笑を買った。',{pop:-2}),C4('おみやげだけもらって帰る','',1,'会社の製品の詰め合わせをもらった。',{cond:3})],
+ ['stk4',['pro'],STK4,'持ち株の会社からCM依頼','株を持っている会社から、CM出演の依頼が来た。',
+  C4('出演する','',1,'CMは評判になり、株価も上がった。',{money:300,pop:4,stkMul:1.12}),C4('利益相反を避けて断る','',1,'誠実な姿勢が評価された。',{coach:2})],
+ ['stk5',['pro'],c=>stkHeld(c.p)>=3,'「サッカー界の投資家」','テレビ番組から「資産運用の極意」を語ってほしいと出演依頼が来た。',
+  C4('分散投資の大切さを語る','',.8,'わかりやすいと好評だった。',{pop:5}),C4('一発逆転の夢を語る','',.4,'番組は盛り上がった。',{pop:6},'「軽率だ」と批判された。',{pop:-4})],
+ ['stk6',['hs','uni','pro'],STK4,'初めての株','少しだけ買った株の値動きが気になって、練習中もスマホを見てしまう。',
+  C4('アプリを消して練習に集中','',1,'株は長い目で見るものだ。',{coach:3,cond:2}),C4('毎日チェックする','',.5,'値上がりして気分がいい。',{cond:3},'値下がりに一喜一憂して、集中を欠いた。',{coach:-4,cond:-4})],
+];
+IEV.forEach(([k,st,when,t,x,a,b])=>{const e={id:'i4_'+k,st,mo:ALLM,w:2.5,when,t,x,ch:[a,b]};EV.push(e);EVM[e.id]=e});
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
