@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-114958';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-124015';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5370,7 +5370,7 @@ function pkHtml(){
   if(P.phase==='setup'){
     const gk=P.gkId?cardById(P.gkId):null;
     return `<div class="kick">フリックPK対戦<span class="r">5人ずつ・決まらなければサドンデス</span></div>
-    <p class="note"><b>蹴るとき</b>：ボールから上へ指をはじく。向きでコース、速さで高さ（速すぎるとバーの上）、指を曲げるとボールも曲がる。<br><b>守るとき</b>：相手が蹴る瞬間に、跳びたい方向へ指をはじく。早く跳びすぎると逆を突かれる。</p>
+    <p class="note"><b>蹴るとき</b>：ボールから上へ指をはじく。向きでコース、速さで高さ（速すぎるとバーの上）、指を曲げるとボールも曲がる。<br><b>守るとき</b>：相手が蹴る前に、画面下の「左・真ん中・右」から跳ぶ方向を選ぶ。読みが当たれば、キーパーの能力の範囲でボールに飛びつく。</p>
     <div class="label">相手</div><div class="seg c3">${PK_LV.map((L,i)=>`<button class="opt" aria-pressed="${P.lv===i}" data-act="pkLv" data-v="${i}">${L.n}<span class="d">勝ち${L.rw[0]}・負け${L.rw[1]}</span></button>`).join('')}</div>
     <div class="label">キッカーの順番（▲▼で入れ替え・上から5人が1〜5番手）</div>
     ${P.order.length?`<ol class="pko">${P.order.map((id,i)=>{const c=cardById(id);return `<li class="${i<5?'top':''}"><span class="no num">${i<5?i+1:'SD'}</span><span class="pf">${sprOf(c)}</span><b>${esc(c.name)}</b><span class="sub">シュート${effSt(c,'sho')}・テク${effSt(c,'tec')}</span>${condChip(P.cond[id])}<span class="mv"><button class="opt" data-act="pkUp" data-v="${i}" ${i?'':'disabled'} aria-label="上へ">▲</button><button class="opt" data-act="pkDn" data-v="${i}" ${i<P.order.length-1?'':'disabled'} aria-label="下へ">▼</button></span></li>`}).join('')}</ol>`:'<p class="note">スカッドに選手がいない。控え選手が蹴ることになる。<button class="linkbtn" data-act="go" data-v="squad">スカッドを編成する</button></p>'}
@@ -5384,7 +5384,7 @@ function pkHtml(){
   <div id="pkhost" class="pkhost"></div>
   ${done?`<div class="verdict big ${P.win?'ok':'ng'}"><span class="vbig">${P.win?'勝利！':'敗戦…'}</span><span class="sub">PK ${S.g[0]}-${S.g[1]}・${P.coins}コイン獲得</span></div>${P.gikkuri?`<div class="toast"><b>😱 ${esc(P.gikkuri)}がぎっくり腰！</b>途中から控えGKが守った。</div>`:''}
    <div class="stack"><button class="btn red" data-act="pkAgain">もう一度（コンディションが変わる）</button><button class="btn ghost" data-act="btMenu">対戦メニューへ</button></div>`
-   :`<p class="sub center">蹴るとき：ボールから上へフリック／守るとき：跳ぶ方向へフリック</p><button class="linkbtn center" data-act="pkQuit">試合をやめる（負け扱い）</button>`}`;
+   :`<p class="sub center">蹴るとき：ボールから上へフリック／守るとき：左・真ん中・右を選ぶ</p><button class="linkbtn center" data-act="pkQuit">試合をやめる（負け扱い）</button>`}`;
 }
 /* ---------- ゲーム本体 ---------- */
 const PKG={cv:null,g:null,raf:0,s:null,pts:[],down:false};
@@ -5400,10 +5400,10 @@ function pkStart(){
   setTimeout(()=>pkNext(),1100);
 }
 function pkMakeCanvas(){
-  const cv=document.createElement('canvas');cv.className='pkcv';cv.setAttribute('aria-label','PK戦の画面。上へフリックしてシュート、守るときは跳ぶ方向へフリック');
+  const cv=document.createElement('canvas');cv.className='pkcv';cv.setAttribute('aria-label','PK戦の画面。上へフリックしてシュート、守るときは左・真ん中・右を選ぶ');
   PKG.cv=cv;PKG.g=cv.getContext('2d');
   const pos=e=>{const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*PW,y:(e.clientY-r.top)/r.height*PH,t:performance.now()}};
-  cv.addEventListener('pointerdown',e=>{e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(_){}PKG.down=true;PKG.pts=[pos(e)];PKG.trail=[pos(e)]},{passive:false});
+  cv.addEventListener('pointerdown',e=>{e.preventDefault();const q=pos(e);if(pkPickAt(q))return;try{cv.setPointerCapture(e.pointerId)}catch(_){}PKG.down=true;PKG.pts=[q];PKG.trail=[q]},{passive:false});
   cv.addEventListener('pointermove',e=>{if(!PKG.down)return;e.preventDefault();const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];evs.forEach(ev=>{const p=pos(ev);PKG.pts.push(p);PKG.trail.push(p)});if(PKG.trail.length>40)PKG.trail.splice(0,PKG.trail.length-40)},{passive:false});
   const up=e=>{if(!PKG.down)return;PKG.down=false;const p=pos(e);PKG.pts.push(p);pkFlick(PKG.pts);PKG.fade=performance.now()};
   cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',()=>{PKG.down=false;PKG.pts=[]});
@@ -5424,9 +5424,9 @@ function pkNext(){
   const S=PKG.s;if(!S)return;
   if(pkDone(S.g,S.n)){pkEnd();return}
   S.turn=S.n[0]===S.n[1]?S.first:1-S.first;
-  const now=performance.now();S.ball={x:BALL0.x,y:BALL0.y,r:11,shY:BALL0.y,spin:0};S.shot=null;S.kp={x:0,h:0,p:0,t0:0,dur:.3,dx:0,dh:0,rot:0,set:false};S.ripple=null;S.res=null;
+  const now=performance.now();S.ball={x:BALL0.x,y:BALL0.y,r:11,shY:BALL0.y,spin:0};S.shot=null;S.gkPick=null;S.kp={x:0,h:0,p:0,t0:0,dur:.3,dx:0,dh:0,rot:0,set:false};S.ripple=null;S.res=null;
   if(S.turn===0){const k=S.my[S.n[0]%S.my.length];S.kicker=k;S.mode='aim';S.msg={tx:`${S.n[0]+1}本目：${k.n}`,t0:now,col:'#ffffff',sub:condOf(k.cond).n}}
-  else{const k=S.opp.ks[S.n[1]%S.opp.ks.length];S.kicker=k;S.mode='runup';S.ru={t0:now+500,dur:(800+Math.random()*600)/1000};S.msg={tx:`相手 ${S.n[1]+1}本目：${k.n}`,t0:now,col:'#9fd0ff',sub:'跳ぶ方向へフリック！'};
+  else{const k=S.opp.ks[S.n[1]%S.opp.ks.length];S.kicker=k;S.mode='runup';S.ru={t0:now+500,dur:(800+Math.random()*600)/1000};S.msg={tx:`相手 ${S.n[1]+1}本目：${k.n}`,t0:now,col:'#9fd0ff',sub:'左・真ん中・右を選ぶ！'};
     // 緊急時（入れられたら負けが近い）にバツ丸尾君が覚醒
     const g2=S.g.slice(),n2=S.n.slice();g2[1]++;n2[1]++;const danger=pkDone(g2,n2)&&g2[1]>g2[0]||S.n[1]>=5;
     S.oibNow=!!(S.gk.oib&&!S.oibUsed&&danger);if(S.oibNow){S.oibUsed=true;S.msg={tx:'「おいぼれでも経験はあるんじゃよ」',t0:now,col:'#ffd23a',sub:'判断180！ 守備範囲が大きく広がる'}}}
@@ -5443,9 +5443,7 @@ function pkFlick(pts){
     // 曲がり：指の軌跡が直線からどれだけふくらんだか（右にふくらむと＋）
     let dev=0;const nx=-dy/len,ny=dx/len;pts.forEach(p=>{const d=(p.x-a.x)*nx+(p.y-a.y)*ny;if(Math.abs(d)>Math.abs(dev))dev=d});
     const c=clamp(-dev/len,-.45,.45);pkShoot(Math.atan2(dx,-dy),speed,c)}
-  else if(S.turn===1&&(S.mode==='runup'||S.mode==='fly')&&!S.kp.set){
-    const now=performance.now();if(len<18){pkDive(0,.25,now);return}
-    pkDive(dx/len*Math.min(len*1.5,400),-dy/len*Math.min(len*1.5,400),now)}
+
 }
 // 自分のシュート
 function pkShoot(ang,speed,curve){
@@ -5469,16 +5467,28 @@ function pkDive(dx,dh,now,G0){
   let reach=mine?72+(gk.st.phy-70)*.6+(gk.st.spd-70)*.5+cd*2.2:1e9;if(mine&&S.oibNow)reach*=1.7;
   const d=Math.hypot(dx,dh);if(d>reach){dx*=reach/d;dh*=reach/d}dh=Math.min(dh,GHT*.62);
   S.kp={x:0,h:0,p:0,t0:now,dur:Math.max(.2,.32-(gk.st.spd-70)*.002),dx,dh:Math.max(-10,dh),set:true,rot:clamp(dx/90,-1,1)*1.35,hand:12+(gk.st.sho-70)*.18+(mine&&S.oibNow?8:0)+cd*.4};
-  if(mine&&S.mode==='runup'&&now<S.ru.t0+S.ru.dur*1000-120)S.early=true;
 }
 function pkCpuKick(now){
   const S=PKG.s,k=S.kicker,cd=condOf(k.cond).d;
-  let side=Math.random()<.5?-1:1;if(S.early&&S.kp.set&&Math.random()<.78)side=S.kp.dx>0?-1:S.kp.dx<0?1:side;// 早く跳ぶと逆を突かれる
+  const side=Math.random()<.5?-1:1;
   let gx=KP0.x+side*(30+Math.random()*62),gh=.08+Math.random()*.78;if(Math.random()<.15){gx=KP0.x+(Math.random()-.5)*40;gh=.2+Math.random()*.5}
   if(Math.random()<clamp(.1-(k.st.sho-70)*.004-cd*.012,.02,.25)){if(Math.random()<.5)gh=1.08+Math.random()*.3;else gx=KP0.x+side*(100+Math.random()*30)}
   const D=clamp(.62-(k.st.sho-70)*.006,.4,.66);
   S.shot={sx:BALL0.x,sy:BALL0.y,gx,gh,curve:(Math.random()-.5)*60,D,lift:10+gh*18,t0:now,mine:0};S.mode='fly';S.kickT=now;
+  if(S.gkPick)pkGkGo(now);
 }
+/* キーパーの選択：左・真ん中・右（画面の向き）。蹴った瞬間に、選んだ方向へ跳ぶ */
+const PK_BTN=[['L','← 左',58],['C','真ん中',180],['R','右 →',302]],PK_BY=PH-74,PK_BH=40,PK_BW=104;
+function pkPickAt(q){const S=PKG.s;if(!S||S.turn!==1||!(S.mode==='runup'||S.mode==='fly')||S.gkPick||S.kp.set)return false;
+  const b=PK_BTN.find(([,,x])=>Math.abs(q.x-x)<PK_BW/2&&q.y>PK_BY&&q.y<PK_BY+PK_BH);if(!b)return S.turn===1;
+  S.gkPick=b[0];if(S.mode==='fly')pkGkGo(performance.now());return true}
+function pkGkGo(now){const S=PKG.s,sh=S.shot,gk=S.gk,pick=S.gkPick;if(!sh||S.kp.set)return;
+  const bx=sh.gx-KP0.x,zone=Math.abs(bx)<30?'C':bx<0?'L':'R';let dx,dh;
+  if(pick==='C'){dx=zone==='C'?bx:0;dh=zone==='C'?Math.min(.9,sh.gh)*GHT*.8:GHT*.25}
+  else if(pick===zone){dx=bx;dh=Math.min(.95,sh.gh)*GHT}// 読みが当たった：ボールへ（届くかは能力しだい）
+  else{dx=pick==='L'?-78:78;dh=GHT*.35}
+  const delay=Math.max(.02,.1-(gk.st.spd-70)*.002-(S.oibNow?.04:0));
+  setTimeout(()=>{if(PKG.s===S&&!S.kp.set&&S.mode==='fly')pkDive(dx,dh,performance.now())},delay*1000)}
 function shotPos(sh,t){
   const e=1-Math.pow(1-Math.min(t,1.2),1.5),gy=GL.bot-sh.gh*GHT;
   const ground=lerp1(sh.sy,GL.bot,Math.min(e,1)),hgt=(GL.bot-gy)*e+sh.lift*Math.sin(Math.PI*Math.min(e,1));
@@ -5549,6 +5559,10 @@ function pkDraw(ts){
   const tr=PKG.trail;if(tr&&tr.length>1){const fa=PKG.down?1:Math.max(0,1-(now-(PKG.fade||0))/350);if(fa>0){for(let i=1;i<tr.length;i++){const q=i/tr.length;g.strokeStyle=`rgba(255,255,255,${.65*q*fa})`;g.lineWidth=2+q*7;g.lineCap='round';g.beginPath();g.moveTo(tr[i-1].x,tr[i-1].y);g.lineTo(tr[i].x,tr[i].y);g.stroke()}}}
   if(S.turn===0&&S.mode==='aim'){const a=.5+.5*Math.sin(now/250);g.strokeStyle=`rgba(255,210,58,${.35+a*.4})`;g.lineWidth=2;g.beginPath();g.arc(BALL0.x,BALL0.y,18+a*4,0,Math.PI*2);g.stroke();
     g.fillStyle=`rgba(255,255,255,${.4+a*.4})`;for(let i=0;i<3;i++){const y=BALL0.y-34-i*12-((now/12)%12);g.beginPath();g.moveTo(BALL0.x,y-6);g.lineTo(BALL0.x-6,y);g.lineTo(BALL0.x+6,y);g.fill()}}
+  if(S.turn===1&&(S.mode==='runup'||S.mode==='fly')&&!S.res){PK_BTN.forEach(([k,lb,x])=>{const on=S.gkPick===k,dim=S.gkPick&&!on;
+    g.fillStyle=on?'rgba(242,196,0,.95)':dim?'rgba(0,0,0,.35)':'rgba(0,0,0,.6)';g.strokeStyle=on?'#fff':'rgba(255,255,255,.7)';g.lineWidth=2;
+    const x0=x-PK_BW/2;g.beginPath();g.roundRect?g.roundRect(x0,PK_BY,PK_BW,PK_BH,10):g.rect(x0,PK_BY,PK_BW,PK_BH);g.fill();g.stroke();
+    g.fillStyle=on?'#111':dim?'rgba(255,255,255,.4)':'#fff';g.font='bold 16px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(lb,x,PK_BY+PK_BH/2)})}
   pkHud(g,S,now);
   g.setTransform(1,0,0,1,0,0);
 }
@@ -5587,7 +5601,7 @@ function pkHud(g,S,now){
     g.font=`900 ${m.big?40:17}px sans-serif`;g.lineWidth=m.big?6:4;g.strokeStyle='rgba(0,0,0,.7)';g.strokeText(m.tx,0,0);g.fillStyle=m.col||'#fff';g.fillText(m.tx,0,0);
     if(m.sub){g.font='bold 12px sans-serif';g.lineWidth=3;g.strokeText(m.sub,0,22);g.fillStyle='#ffffff';g.fillText(m.sub,0,22)}g.restore()}}
   if(S.mode==='aim'||S.mode==='runup'){const k=S.kicker;g.fillStyle='rgba(0,0,0,.45)';g.fillRect(0,PH-24,PW,24);g.fillStyle='#fff';g.font='bold 12px sans-serif';g.textAlign='center';g.textBaseline='middle';
-    g.fillText(S.turn===0?`${k.n}（${condOf(k.cond).n}）　上へフリックでシュート`:`${S.gk.n}（${condOf(S.gk.cond).n}）　跳ぶ方向へフリック`,PW/2,PH-12)}
+    g.fillText(S.turn===0?`${k.n}（${condOf(k.cond).n}）　上へフリックでシュート`:S.gkPick?`${S.gk.n}：${({L:'左',C:'真ん中',R:'右'})[S.gkPick]}に決めた`:`${S.gk.n}（${condOf(S.gk.cond).n}）　跳ぶ方向を選ぶ`,PW/2,PH-12)}
 }
 Object.assign(ACT,{
  pkLv:v=>{G.pk.lv=+v},
@@ -5653,7 +5667,7 @@ function rulesHtml(){
   ${sec('スペシャルマッチ',`
     <p class="note"><b>フリックPK対戦</b></p>${ul([
       'ボールから上へ指をはじいて蹴る。向き＝コース、速さ＝高さ（速すぎるとバーの上）、指を曲げるとボールも曲がる',
-      '守るときは、相手が蹴る瞬間に跳びたい方向へはじく。早く跳びすぎると逆を突かれやすい',
+      '守るときは、相手が蹴る前に「左・真ん中・右」から跳ぶ方向を選ぶ。読みが当たると、キーパーの能力の範囲でボールに飛びつく（高いコースは届かないこともある）',
       '蹴る順番はスカッドから自由に並べ替えられる。選手ごと・GKにもコンディションがある',
       '5人ずつ蹴って、決まらなければサドンデス。'+PK_LV.map(L=>`${L.n}：勝ち${L.rw[0]}・負け${L.rw[1]}`).join('、')+'コイン'])}
     <p class="note"><b>ワールドカップ</b></p>${ul([
