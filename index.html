@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-165713';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-170943';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4156,7 +4156,7 @@ async function netInit(){
     NET.db=db||null;NET.user=user||null;
     if(user){try{NET.uid=await user.id()}catch(e){NET.uid=null}try{NET.canWrite=await user.can('data.write')}catch(e){NET.canWrite=null}}
     NET.ready=!!NET.db;
-    await cloudLoad();
+    await cloudLoad();typeof spResume==='function'&&spResume();
     await cloudLoadPlay();
     render();
   }catch(e){}
@@ -5189,6 +5189,7 @@ function boot(){
   document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(!f)return;trackTime();if(/^mg/.test(b.dataset.act))G.mgTouched=true;f(b.dataset.v);save();mgSave();metaSave();render()});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushAll()});
   window.addEventListener('pagehide',flushAll);
+  setTimeout(()=>{typeof spResume==='function'&&spResume()},800);
   setInterval(()=>{const el=document.getElementById('autosv');if(el)el.innerHTML=autoLabel()},20000);
   document.addEventListener('input',e=>{if(e.target.id==='sei'||e.target.id==='mei')syncNames()});
   document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='rcode'){e.preventDefault();ACT.btJoin();render()}});
@@ -5300,6 +5301,7 @@ H.squad=()=>{
   return `${seg}
   <div class="label">チーム名</div><div class="field one"><input id="tname" aria-label="チーム名" value="${esc(M.squad.name)}" maxlength="14"></div>
   <div class="label">フォーメーション</div><div class="seg c4">${Object.entries(FORMS).map(([k,F])=>`<button class="opt" aria-pressed="${M.squad.form===k}" data-act="sqForm" data-v="${k}">${F.n}</button>`).join('')}</div>
+  ${typeof autoBtns==='function'?autoBtns():''}
   <div class="label">戦術<span class="r">試合の最初の戦術（CPU戦は試合中に変えられる）</span></div><div class="seg c3">${Object.entries(TACS).map(([k,t])=>`<button class="opt" aria-pressed="${(M.squad.tac||'bal')===k}" data-act="sqTac" data-v="${k}">${t.n}<span class="d">${t.d}</span></button>`).join('')}</div>
   ${pitchHtml(T)}
   <div class="label">ベンチ（交代要員・5人まで）</div>
@@ -5632,7 +5634,8 @@ function lgdHtml(){
 function spMatch(Bt,sp,title,extra){
   const seed=Math.floor(Math.random()*4294967295),A=teamSnap();
   const X=mStart(A,Bt,seed,0);X.lazy=true;X.until=0;mRun(X);
-  G.bt.view='match';G.bt.match=Object.assign({A,B:Bt,res:null,live:X,side:0,kind:'cpu',sp,title,rw:null,lv:-1,key:sp+':'+seed},extra||{});G.bt.play={t0:Date.now()};G.bt.scnSet=0;G.bt.goalsSeen=0;G.bt.ht=null;
+  G.bt.view='match';G.bt.match=Object.assign({A,B:Bt,res:null,live:X,side:0,kind:'cpu',sp,title,rw:null,lv:-1,key:sp+':'+seed},extra||{});
+  M.spPend={sp,title,A,B:Bt,seed,extra:extra||null,t:Date.now()};metaSave();G.bt.play={t0:Date.now()};G.bt.scnSet=0;G.bt.goalsSeen=0;G.bt.ht=null;
 }
 // 途中で抜けたら、残りは自動で進めて結果を確定する（やり直しはできない）
 function spAutoFinish(X){const L=X.live;if(!L||L.done)return;L.lazy=false;let g=0;mRun(L);while(!L.done&&g++<200){if(L.pend){const P=L.pend;mDecide(L,P.ty==='ht'?null:Math.floor(Math.random()*3))}else mRun(L)}
@@ -5644,7 +5647,7 @@ function spFinish(X){
   if(X.sp==='wc')wcMyResult(X,res,o);
   M.coins+=coins;M.rec[['w','d','l'][o]]++;
   M.hist.unshift({t:Date.now(),kind:X.sp,opp:X.B.name,gf:res.sc[0],ga:res.sc[1],o,pk:res.pk?res.pk[0]+'-'+res.pk[1]:null});M.hist=M.hist.slice(0,15);
-  X.rw={coins,o};metaSave();
+  X.rw={coins,o};delete M.spPend;metaSave();
 }
 
 /* ---------- 他の人のスカッド（対戦したことのある相手・共有プール） ---------- */
@@ -7930,6 +7933,58 @@ function wxOverlay(g,id,t,Wd,Hd){
   else if(v==='wind'){g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=1;for(let i=0;i<10;i++){const y=(i*37)%h,x=(i*71+t*160)%(w+60)-60;g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+20,y-4,x+42,y);g.stroke()}}
   else if(v==='heat'){g.fillStyle='rgba(255,140,40,.12)';g.fillRect(0,0,w,h)}
   else if(v==='cold'){g.fillStyle='rgba(160,200,255,.14)';g.fillRect(0,0,w,h)}
+}
+
+/* ========== スカッドの一括編成：能力を見て、各ポジションにいちばん合う選手を入れる ========== */
+function autoPlan(form){
+  const F=FORMS[form]||FORMS['433'],roles=F.s.map(s=>s[0]);
+  const pool=M.roster.filter(c=>!isMgr(c)&&!isLegSup(c)&&!(c.gikkuri>0));
+  const val=(c,role)=>cardOvr(c,role)*fitMul(c.pos,role);
+  // 1) 値の高い組み合わせから順に埋める
+  const pairs=[];roles.forEach((r,i)=>pool.forEach(c=>pairs.push({i,c,v:val(c,r)})));pairs.sort((a,b)=>b.v-a.v);
+  const slots=Array(11).fill(null),used=new Set();
+  for(const q of pairs){if(slots[q.i]||used.has(q.c.id))continue;slots[q.i]=q.c.id;used.add(q.c.id)}
+  const sq=()=>({form,slots,bench:[],mgr:null,tac:M.squad.tac,name:M.squad.name});
+  const score=()=>{const T=teamCalc(sq());return T.atk+T.mid+T.def};
+  // 2) 特別スキルのあるキャラ（キャプテン・帝国・政夫と犬など）は、入れたほうが強くなるなら入れ替える
+  let best=score();
+  for(const c of pool.filter(c=>c.special&&!slots.includes(c.id))){
+    let bi=-1,bs=best;
+    for(let i=0;i<11;i++){if(roles[i]==='GK'&&c.pos!=='GK')continue;const old=slots[i];slots[i]=c.id;const s=score();if(s>bs+.05){bs=s;bi=i}slots[i]=old}
+    if(bi>=0){slots[bi]=c.id;best=bs}
+  }
+  // 3) ベンチ：残りから総合力の高い順（GKの控えを1人は入れる）
+  const rest=pool.filter(c=>!slots.includes(c.id)).sort((a,b)=>cardOvr(b)-cardOvr(a));
+  const bench=[];const gk=rest.find(c=>c.pos==='GK');if(gk)bench.push(gk.id);
+  for(const c of rest){if(bench.length>=5)break;if(!bench.includes(c.id))bench.push(c.id)}
+  while(bench.length<5)bench.push(null);
+  const mg=M.mgrs.slice().sort((a,b)=>mgrOvr(b)-mgrOvr(a))[0];
+  return {form,slots,bench,mgr:mg?mg.id:M.squad.mgr,tot:Math.round(best/3*10)/10};
+}
+function autoSquad(mode){
+  const before=teamCalc().tot;
+  let P;if(mode==='best'){P=Object.keys(FORMS).map(f=>autoPlan(f)).sort((a,b)=>b.tot-a.tot)[0]}else P=autoPlan(M.squad.form);
+  M.squad.form=P.form;M.squad.slots=P.slots;M.squad.bench=P.bench;M.squad.mgr=P.mgr;G.sq.slot=null;
+  const after=teamCalc().tot;
+  G.toastMsg=`一括編成した（${FORMS[P.form].n}・総合 ${before} → ${after}）`;
+  metaSave();
+}
+Object.assign(ACT,{sqAuto:v=>{syncInputs();autoSquad(v)}});
+function autoBtns(){return `<div class="seg c2" style="margin-top:8px"><button class="opt" data-act="sqAuto" data-v="cur">能力で一括編成<span class="d">今のフォーメーションで</span></button><button class="opt" data-act="sqAuto" data-v="best">フォーメーションもおまかせ<span class="d">いちばん強い形を選ぶ</span></button></div>`}
+
+/* ========== 特別試合の途中で閉じても、結果とコインを受け取れるようにする ========== */
+function spResume(){
+  const P=M.spPend;if(!P||(G.bt&&G.bt.match&&G.bt.match.live&&G.bt.match.live.seed===P.seed))return;
+  try{
+    const L=mStart(P.A,P.B,P.seed,0);let g=0;mRun(L);
+    while(!L.done&&g++<400){if(L.pend){const Q=L.pend;mDecide(L,Q.ty==='ht'?null:Math.floor(Math.random()*3))}else mRun(L)}
+    if(!L.done){delete M.spPend;metaSave();return}
+    const X=Object.assign({A:P.A,B:P.B,res:L.res,live:L,side:0,kind:'cpu',sp:P.sp,title:P.title,rw:null,lv:-1,key:P.sp+':'+P.seed},P.extra||{});
+    spFinish(X);
+    const sc=L.res.sc,pk=L.res.pk?`（PK ${L.res.pk[0]}-${L.res.pk[1]}）`:'';
+    G.toastMsg=`途中で閉じた「${P.title}」の残りを自動で進めた：${sc[0]}-${sc[1]}${pk}${X.rw&&X.rw.coins?` ${X.rw.coins.toLocaleString('ja-JP')}コイン獲得！`:''}`;
+    render();
+  }catch(e){delete M.spPend;metaSave()}
 }
 
 </script>
