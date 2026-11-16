@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-113623';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-114319';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5719,15 +5719,12 @@ function tkBlock(d){
    コードを作っただけでは消えない。「コピーして送る」「LINEで送る」を押したときに手元からいなくなる。
    送ったあとでも、相手がまだ受け取っていなければ取り戻せる（共有データが使える画面では、受け取り済みかを確かめる） */
 const inSquad=id=>M.squad.slots.includes(id)||M.squad.bench.includes(id)||M.squad.mg===id;
-// 強化したキャラは交換できない
-const enhed=c=>(c.enh||0)>0;
 const giftable=()=>M.roster.filter(c=>c.from==='育成').concat(M.mgrs||[]);
 const findCard=id=>M.roster.find(x=>x.id===id)||(M.mgrs||[]).find(x=>x.id===id);
 const TR_MSG=c=>`サッカーやるよんの「${c}」をあげる！ アプリの「スカッド→交換」で「コピーしたコードを貼って受け取る」を押してね\n`;
 async function tradeMake(id){
   const c=findCard(id);if(!c)throw new Error('キャラが見つからない');
   if(inSquad(id))throw new Error('スカッドで使っているキャラはあげられない。先にスカッドから外してね');
-  if(enhed(c))throw new Error('強化したキャラはあげられない');
   const o={gift:1,id:uidGen('gf'),t:Date.now(),from:(teamCalc().name||'だれか'),c:JSON.parse(JSON.stringify(c))};
   return {code:await b64z(JSON.stringify(o)),gid:o.id,name:c.name,cid:id};
 }
@@ -5762,14 +5759,14 @@ async function tradeBack(i){
 function tradeHtml(){
   const T=G.tr||(G.tr={}),list=giftable(),P=T.pend;
   return `<div class="kick">キャラの交換<span class="r">育成した選手・監督をあげる</span></div>
-  <p class="note">あげたいキャラを選んで「コピーして送る」か「LINEで送る」を押す。<b>送ったときに手元からいなくなる</b>（コードを作っただけでは消えない）。スカッド（スタメン・ベンチ・監督）に入っているキャラと、強化したキャラはあげられない。</p>
+  <p class="note">あげたいキャラを選んで「コピーして送る」か「LINEで送る」を押す。<b>送ったときに手元からいなくなる</b>（コードを作っただけでは消えない）。スカッド（スタメン・ベンチ・監督）に入っているキャラはあげられない。強化した分はそのまま相手に引き継がれる。</p>
   ${T.msg?`<div class="toast"><b>${esc(T.msg)}</b></div>`:''}
   ${P?`<div class="trconf"><p><b>${esc(P.name)}</b>のコードができた。送ると手元からいなくなる。</p>
     <div class="seg c2"><button class="opt" data-act="trCopy">コピーして送る</button><button class="opt" data-act="trLine">LINEで送る</button></div>
     <button class="linkbtn center" data-act="trCancel">やめる（あげない）</button></div>`:''}
   <div class="label">あげるキャラを選ぶ（${list.length}人）</div>
-  ${list.length?`<div class="plist">${list.map(c=>{const sel=T.sel===c.id,eh=enhed(c),inSq=inSquad(c.id)||eh;
-    return `<button class="prow ${sel?'on':''} ${inSq?'lock':''}" data-act="trSel" data-v="${c.id}" ${inSq?'disabled aria-disabled="true"':''}><span class="pf">${sprOf(c,c.kind==='mg'?'mg':undefined)}</span><span class="po">${c.kind==='mg'?'監督':c.pos}</span><b>${esc(c.name)}</b><span class="sub">${eh?`🔒 強化済み（+${c.enh}）なので交換できない`:inSq?'🔒 スカッドで使用中（外すと交換できる）':`${c.grade?`評価${c.grade}`:''}${c.giftFrom?`・${esc(c.giftFrom)}からもらった`:''}`}</span><span class="num">${c.kind==='mg'?'':cardOvr(c)}</span></button>
+  ${list.length?`<div class="plist">${list.map(c=>{const sel=T.sel===c.id,inSq=inSquad(c.id);
+    return `<button class="prow ${sel?'on':''} ${inSq?'lock':''}" data-act="trSel" data-v="${c.id}" ${inSq?'disabled aria-disabled="true"':''}><span class="pf">${sprOf(c,c.kind==='mg'?'mg':undefined)}</span><span class="po">${c.kind==='mg'?'監督':c.pos}</span><b>${esc(c.name)}</b><span class="sub">${inSq?'🔒 スカッドで使用中（外すと交換できる）':`${c.enh?`強化+${c.enh}（引き継ぐ）・`:''}${c.grade?`評価${c.grade}`:''}${c.giftFrom?`・${esc(c.giftFrom)}からもらった`:''}`}</span><span class="num">${c.kind==='mg'?'':cardOvr(c)}</span></button>
       ${sel&&!inSq&&!P?`<div class="trconf"><p>${esc(c.name)}をあげる？</p><div class="seg c2"><button class="opt" data-act="trMake" data-v="${c.id}">あげるコードを作る</button><button class="opt" data-act="trSel" data-v="">やめる</button></div></div>`:''}`}).join('')}</div>`:'<p class="note">育成した選手・監督がまだいない。ガチャで出たキャラはあげられない。</p>'}
   <div class="label">もらったキャラを受け取る</div>
   <div class="stack"><button class="btn red" data-act="trPaste">コピーしたコードを貼って受け取る</button></div>
