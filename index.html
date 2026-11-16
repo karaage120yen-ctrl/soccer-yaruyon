@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-163427';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-164503';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5885,7 +5885,7 @@ function pkNext(){
   const S=PKG.s;if(!S)return;
   if(pkDone(S.g,S.n)){pkEnd();return}
   S.turn=S.n[0]===S.n[1]?S.first:1-S.first;
-  const now=performance.now();S.ball={x:BALL0.x,y:BALL0.y,r:11,shY:BALL0.y,spin:0};S.shot=null;S.gkPick=null;S.kp={x:0,h:0,p:0,t0:0,dur:.3,dx:0,dh:0,rot:0,set:false};S.ripple=null;S.res=null;
+  const now=performance.now();S.ball={x:BALL0.x,y:BALL0.y,r:11,shY:BALL0.y,spin:0};S.shot=null;S.gkPick=null;S.gkSave=null;S.kpFull=0;S.kp={x:0,h:0,p:0,t0:0,dur:.3,dx:0,dh:0,rot:0,set:false};S.ripple=null;S.res=null;
   if(S.turn===0){const k=S.my[S.n[0]%S.my.length];S.kicker=k;S.mode='aim';S.msg={tx:`${S.n[0]+1}本目：${k.n}`,t0:now,col:'#ffffff',sub:condOf(k.cond).n}}
   else{const k=S.opp.ks[S.n[1]%S.opp.ks.length];S.kicker=k;S.mode='runup';S.ru={t0:now+500,dur:(800+Math.random()*600)/1000};S.msg={tx:`相手 ${S.n[1]+1}本目：${k.n}`,t0:now,col:'#9fd0ff',sub:'左・真ん中・右を選ぶ！'};
     // 緊急時（入れられたら負けが近い）にバツ丸尾君が覚醒
@@ -5925,8 +5925,8 @@ function pkShoot(ang,speed,curve){
 // キーパーのダイブ（dx：横、dh：上方向のpx）
 function pkDive(dx,dh,now,G0){
   const S=PKG.s,mine=!G0,gk=G0||S.gk,cd=condOf(gk.cond).d;
-  let reach=mine?72+(gk.st.phy-70)*.6+(gk.st.spd-70)*.5+cd*2.2:1e9;if(mine&&S.oibNow)reach*=1.7;
-  const d=Math.hypot(dx,dh);if(d>reach){dx*=reach/d;dh*=reach/d}dh=Math.min(dh,GHT*.62);
+  let reach=mine&&!S.kpFull?72+(gk.st.phy-70)*.6+(gk.st.spd-70)*.5+cd*2.2:1e9;if(mine&&S.oibNow)reach*=1.7;
+  const d=Math.hypot(dx,dh);if(d>reach){dx*=reach/d;dh*=reach/d}dh=Math.min(dh,S.kpFull&&mine?GHT*.85:GHT*.62);
   S.kp={x:0,h:0,p:0,t0:now,dur:Math.max(.2,.32-(gk.st.spd-70)*.002),dx,dh:Math.max(-10,dh),set:true,rot:clamp(dx/90,-1,1)*1.35,hand:12+(gk.st.sho-70)*.18+(mine&&S.oibNow?8:0)+cd*.4};
 }
 function pkCpuKick(now){
@@ -5939,14 +5939,17 @@ function pkCpuKick(now){
   if(S.gkPick)pkGkGo(now);
 }
 /* キーパーの選択：左・真ん中・右（画面の向き）。蹴った瞬間に、選んだ方向へ跳ぶ */
+const PK_SLIP=.07;
 const PK_BTN=[['L','← 左',58],['C','真ん中',180],['R','右 →',302]],PK_BY=PH-74,PK_BH=40,PK_BW=104;
 function pkPickAt(q){const S=PKG.s;if(!S||S.turn!==1||!(S.mode==='runup'||S.mode==='fly')||S.gkPick||S.kp.set)return false;
   const b=PK_BTN.find(([,,x])=>Math.abs(q.x-x)<PK_BW/2&&q.y>PK_BY&&q.y<PK_BY+PK_BH);if(!b)return S.turn===1;
   S.gkPick=b[0];if(S.mode==='fly')pkGkGo(performance.now());return true}
 function pkGkGo(now){const S=PKG.s,sh=S.shot,gk=S.gk,pick=S.gkPick;if(!sh||S.kp.set)return;
   const bx=sh.gx-KP0.x,zone=Math.abs(bx)<30?'C':bx<0?'L':'R';let dx,dh;
+  // 飛んだ方向にボールが来たら止められる（ごくたまに指先をすり抜ける）
+  if(pick===zone){S.gkSave=Math.random()>=PK_SLIP;S.kpFull=S.gkSave?1:0}else S.gkSave=null;
   if(pick==='C'){dx=zone==='C'?bx:0;dh=zone==='C'?Math.min(.9,sh.gh)*GHT*.8:GHT*.25}
-  else if(pick===zone){dx=bx;dh=Math.min(.95,sh.gh)*GHT}// 読みが当たった：ボールへ（届くかは能力しだい）
+  else if(pick===zone){if(S.kpFull){const by=GL.bot-Math.min(1,sh.gh)*GHT;dx=bx*.8;dh=Math.max(0,(KP0.y-40)-by-16)}else{dx=bx;dh=Math.min(.95,sh.gh)*GHT}}// 読みが当たった：ボールへ（届くかは能力しだい）
   else{dx=pick==='L'?-78:78;dh=GHT*.35}
   const delay=Math.max(.02,.1-(gk.st.spd-70)*.002-(S.oibNow?.04:0));
   setTimeout(()=>{if(PKG.s===S&&!S.kp.set&&S.mode==='fly')pkDive(dx,dh,performance.now())},delay*1000)}
@@ -5963,11 +5966,12 @@ function pkResolve(now){
   const S=PKG.s,sh=S.shot,bx=sh.gx,by=GL.bot-sh.gh*GHT,br=4.6;
   const inside=bx>GL.l+br&&bx<GL.r-br&&sh.gh<1-br/GHT,post=!inside&&((Math.abs(bx-GL.l)<7||Math.abs(bx-GL.r)<7)&&sh.gh<1.05||Math.abs(sh.gh-1)<.05&&bx>GL.l-4&&bx<GL.r+4);
   const K=kpState(S,now),hand=S.kp.hand||14;
-  const saved=inside&&(Math.hypot(bx-K.cx,by-K.cy)<17||Math.hypot(bx-K.hx,by-K.hy)<hand||(Math.abs(bx-K.cx)<9&&by>K.cy&&by<GL.bot));
+  let saved=inside&&(Math.hypot(bx-K.cx,by-K.cy)<17||Math.hypot(bx-K.hx,by-K.hy)<hand||(Math.abs(bx-K.cx)<9&&by>K.cy&&by<GL.bot));
+  if(S.turn===1&&inside&&S.gkSave!=null)saved=S.gkSave;const slip=S.turn===1&&inside&&S.gkSave===false;
   const goal=inside&&!saved,s=S.turn;
   S.res={goal,saved,post,t0:now};S.n[s]++;if(goal)S.g[s]++;S.log[s].push(goal);
   if(goal){S.ripple={x:bx,y:by,t0:now};S.shake=now}
-  const me=s===0;S.msg={tx:goal?(me?'GOAL!':'決められた…'):saved?(me?'止められた！':'SAVE!'):post?'ポスト！':(me?'枠外…':'外れた！'),t0:now,col:goal===me?'#ffd23a':'#ff6a6a',big:1};
+  const me=s===0;S.msg={tx:goal?(me?'GOAL!':slip?'指先をすり抜けた…':'決められた…'):saved?(me?'止められた！':'SAVE!'):post?'ポスト！':(me?'枠外…':'外れた！'),t0:now,col:goal===me?'#ffd23a':'#ff6a6a',big:1};
   if(S.oibNow&&s===1){const gik=Math.random()<GIKKURI_P;setTimeout(()=>{if(PKG.s!==S)return;
     if(gik){S.msg={tx:'ぎっくり腰！',t0:performance.now(),col:'#ff6a6a',sub:`${S.gk.n}はもう出られない。控えGKに交代`};G.pk.gikkuri=S.gk.n;S.gk={n:'控えGK',st:{spd:58,tec:58,sho:58,pas:50,phy:60,def:56},cond:2}}
     else S.msg={tx:'「あいたたた…腰が…」',t0:performance.now(),col:'#ffd0a0'}},700)}
@@ -6130,7 +6134,7 @@ function rulesHtml(){
   ${sec('スペシャルマッチ',`
     <p class="note"><b>フリックPK対戦</b></p>${ul([
       'ボールから上へ指をはじいて蹴る。向き＝コース、速さ＝高さ（速すぎるとバーの上）、指を曲げるとボールも曲がる',
-      '守るときは、相手が蹴る前に「左・真ん中・右」から跳ぶ方向を選ぶ。読みが当たると、キーパーの能力の範囲でボールに飛びつく（高いコースは届かないこともある）',
+      '守るときは、相手が蹴る前に「左・真ん中・右」から跳ぶ方向を選ぶ。跳んだ方向にボールが来れば止められる（ごくたまに指先をすり抜けて入る）',
       '蹴る順番はスカッドから自由に並べ替えられる。選手ごと・GKにもコンディションがある',
       '5人ずつ蹴って、決まらなければサドンデス。'+PK_LV.map(L=>`${L.n}：勝ち${L.rw[0]}・負け${L.rw[1]}`).join('、')+'コイン'])}
     <p class="note"><b>ワールドカップ</b></p>${ul([
