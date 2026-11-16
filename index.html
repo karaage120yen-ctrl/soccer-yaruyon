@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-012152';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-013150';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1081,6 +1081,38 @@ function faPoly(P,pts,col){pts=pts.map(p=>[p[0]*FA_S,p[1]*FA_S]);const xs=pts.ma
     const px=x+.5,py=y+.5;let ins=false;for(let i=0,j=pts.length-1;i<pts.length;j=i++){const [xi,yi]=pts[i],[xj,yj]=pts[j];if(((yi>py)!==(yj>py))&&px<(xj-xi)*(py-yi)/(yj-yi)+xi)ins=!ins}
     if(!ins)continue;const nx=(px-cx)/(w/2||1),ny=(py-cy)/(h/2||1),l=nx*LIGHT[0]+ny*LIGHT[1],e=Math.min(1,Math.hypot(nx,ny));P.setB(x,y,faShade(col,e,l))}}
 const lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+/* 関節の描き込み */
+const nrm=(v)=>{const L=Math.hypot(v[0],v[1])||1;return [v[0]/L,v[1]/L]};
+// 曲がっている外側（ひざ・ひじの出っぱる側）
+function convex(a,j,b,fb){const m=[(a[0]+b[0])/2,(a[1]+b[1])/2],v=[j[0]-m[0],j[1]-m[1]];return Math.hypot(v[0],v[1])<.6?fb:nrm(v)}
+function faLine(P,a,b,col,step){for(let t=0;t<=1;t+=step||.04)P.set(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,col)}
+function legDetail(P,pt,kn,an,sk,SO,fdir,isFar){
+  const n=convex(pt,kn,an,[fdir,0]),m=c=>isFar?shd(c,.78):c,d1=m(shd(sk,.8)),hi=m(lit(sk,.3));
+  // ひざのお皿：光と影、ひざ裏のしわ
+  faCircle(P,kn[0]+n[0]*1.5,kn[1]+n[1]*1.5,1.7,m(lit(sk,.08)));P.set(kn[0]+n[0]*2-n[1]*.6,kn[1]+n[1]*2+n[0]*.6,hi);
+  faLine(P,[kn[0]+n[0]*.4+n[1]*1.4,kn[1]+n[1]*.4-n[0]*1.4],[kn[0]+n[0]*1.6+n[1]*2,kn[1]+n[1]*1.6-n[0]*2],d1);
+  faLine(P,[kn[0]-n[0]*2.6,kn[1]-n[1]*2.6],[kn[0]-n[0]*1.8+(an[0]-kn[0])*.08,kn[1]-n[1]*1.8+(an[1]-kn[1])*.08],m(shd(sk,.62)));
+  // 太もも：大腿四頭筋の線
+  const q0=lerp(pt,kn,.5),q1=lerp(pt,kn,.88);faLine(P,[q0[0]+n[0]*1.2,q0[1]+n[1]*1.2],[q1[0]+n[0]*1.9,q1[1]+n[1]*1.9],d1);
+  faLine(P,[q0[0]-n[0]*.6,q0[1]-n[1]*.6],[q1[0]-n[0]*.2,q1[1]-n[1]*.2],m(lit(sk,.12)));
+  // すね：ストッキングの上からすねの光、ふくらはぎの割れ
+  const s0=lerp(kn,an,.38),s1=lerp(kn,an,.85);faLine(P,[s0[0]+n[0]*1.6,s0[1]+n[1]*1.6],[s1[0]+n[0]*1.1,s1[1]+n[1]*1.1],m(lit(SO,.35)));
+  faLine(P,[s0[0]-n[0]*1.2,s0[1]-n[1]*1.2],[lerp(kn,an,.6)[0]-n[0]*.6,lerp(kn,an,.6)[1]-n[1]*.6],m(shd(SO,.75)));
+}
+function armDetail(P,sh,el,ha,sk,isFar,open){
+  const n=convex(sh,el,ha,[0,1]),m=c=>isFar?shd(c,.78):c;
+  // ひじの骨と、内側のしわ
+  P.set(el[0]+n[0]*2,el[1]+n[1]*2,m(lit(sk,.3)));P.set(el[0]+n[0]*1.6,el[1]+n[1]*1.6+.5,m(shd(sk,.7)));
+  faLine(P,[el[0]-n[0]*1.6,el[1]-n[1]*1.6],[el[0]-n[0]*.8+(ha[0]-el[0])*.12,el[1]-n[1]*.8+(ha[1]-el[1])*.12],m(shd(sk,.62)));
+  // 力こぶ・前腕の筋
+  const b0=lerp(sh,el,.5),b1=lerp(sh,el,.85);faLine(P,[b0[0]-n[0]*.9,b0[1]-n[1]*.9],[b1[0]-n[0]*.7,b1[1]-n[1]*.7],m(shd(sk,.82)));
+  const f0=lerp(el,ha,.15),f1=lerp(el,ha,.6);faLine(P,[f0[0]+n[0]*.8,f0[1]+n[1]*.8],[f1[0]+n[0]*.5,f1[1]+n[1]*.5],m(lit(sk,.18)));
+  // 手：指を1本ずつ（開いた手）／こぶし
+  const dir=nrm([ha[0]-el[0],ha[1]-el[1]]),pp=[-dir[1],dir[0]];
+  if(open){[-1.5,-.5,.5,1.5].forEach((o,i)=>{const b=[ha[0]+dir[0]*1.2+pp[0]*o*.9,ha[1]+dir[1]*1.2+pp[1]*o*.9];faCap(P,b,[b[0]+dir[0]*(2.6-Math.abs(o)*.4)+pp[0]*o*.5,b[1]+dir[1]*(2.6-Math.abs(o)*.4)+pp[1]*o*.5],.55,.42,m(sk))});
+    faCap(P,[ha[0]-pp[0]*1.5,ha[1]-pp[1]*1.5],[ha[0]-pp[0]*2.8+dir[0]*1,ha[1]-pp[1]*2.8+dir[1]*1],.6,.45,m(sk))}
+  else{faCircle(P,ha[0]+dir[0]*.6,ha[1]+dir[1]*.6,2.3,m(sk));for(let i=-1;i<=1;i++)P.set(ha[0]+dir[0]*2.2+pp[0]*i*.9,ha[1]+dir[1]*2.2+pp[1]*i*.9,m(shd(sk,.72)))}
+}
 /* 人の全身。k: 関節、o: 見た目 */
 const ext=(a,b,f)=>[a[0]+(a[0]-b[0])*f,a[1]+(a[1]-b[1])*f];
 function faPerson(P,k,o){
@@ -1096,10 +1128,13 @@ function faPerson(P,k,o){
     faCap(P,lerp(an,to,.1),to,1.3,1,m(shd(BO,.45)),{t0:.0});
     // スパイクのポイント
     const dx=to[0]-an[0],dy=to[1]-an[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L;[.25,.55,.85].forEach(t=>P.set(an[0]+dx*t+nx*2.6,an[1]+dy*t+ny*2.6,'#d9d9d9'));
-    faCap(P,pt,kn,5.3,4.6,m(S),{t1:.48});faCap(P,pt,kn,5.35,4.65,m(T),{t0:.42,t1:.48})};
+    legDetail(P,pt,kn,an,sk,SO,f,isFar);
+    faCap(P,pt,kn,5.3,4.6,m(S),{t1:.48});faCap(P,pt,kn,5.35,4.65,m(T),{t0:.42,t1:.48});
+    // パンツのすそのはためき
+    if(o.mv){const e=lerp(pt,kn,.48);faCap(P,e,[e[0]-o.mv[0]*2.6,e[1]-o.mv[1]*2.6+1],2.2,.6,m(S))}};
   const arm=(sh,el,ha,isFar,open)=>{const m=c=>isFar?far(c):c;
     faCap(P,sh,el,2.9,2.3,m(sk),{bulge:[.2,.1,.8]});faCap(P,el,ha,2.3,1.8,m(sk),{bulge:[.14,.0,.5]});
-    faCircle(P,ha[0],ha[1],2.2,m(sk));if(open){const dx=ha[0]-el[0],dy=ha[1]-el[1],L=Math.hypot(dx,dy)||1;for(let i=-1;i<=1;i++)faCap(P,ha,[ha[0]+dx/L*3.2+(-dy/L)*i*1.3,ha[1]+dy/L*3.2+(dx/L)*i*1.3],.7,.55,m(sk))}
+    faCircle(P,ha[0],ha[1],1.9,m(sk));armDetail(P,sh,el,ha,sk,isFar,open);
     if(!o.sleeveless){faCircle(P,sh[0],sh[1],3.6,m(J));faCap(P,sh,el,3.5,3.1,m(J),{t1:.46});faCap(P,sh,el,3.55,3.15,m(T),{t0:.4,t1:.46})}};
   if(o.behind)o.behind(P,k);
   arm(sF,k.eF,k.hF,1,o.openF);leg(k.pF,k.kF,k.aF,k.tF,1);
@@ -1107,6 +1142,9 @@ function faPerson(P,k,o){
   const wN=lerp(sN,k.pN,.62),wF=lerp(sF,k.pF,.62),cx=(k.n[0]+k.p[0])/2;
   wN[0]+=(cx-wN[0])*.18;wF[0]+=(cx-wF[0])*.18;
   faPoly(P,[[sN[0],sN[1]-1],[k.n[0],k.n[1]-.5],[sF[0],sF[1]-1],[wF[0],wF[1]],[k.pF[0]-1.5*f,k.pF[1]+1],[k.pN[0]+1.5*f,k.pN[1]+1],[wN[0],wN[1]]],J);
+  // ユニフォームのすそが動きと反対にはためく
+  if(o.mv){const tr=[-o.mv[0],-o.mv[1]],w0=lerp(wF,k.pF,.5),w1=lerp(wN,k.pN,.5);
+    faPoly(P,[[w0[0],w0[1]],[w1[0],w1[1]],[w1[0]+tr[0]*3+1,w1[1]+tr[1]*3+2],[(w0[0]+w1[0])/2+tr[0]*5,(w0[1]+w1[1])/2+tr[1]*5+1],[w0[0]+tr[0]*4,w0[1]+tr[1]*4+2]],J)}
   // ユニフォームのしわ・胸の影
   const fold=shd(J,.74),hl=lit(J,.22);
   [[.25,.55],[.35,.7],[.5,.8]].forEach(([a,b])=>faCap(P,lerp(sF,k.pN,a),lerp(sF,k.pN,b),.45,.3,fold));
@@ -1121,6 +1159,7 @@ function faPerson(P,k,o){
   leg(k.pN,k.kN,k.aN,k.tN,0);
   // 首（僧帽筋）
   faCap(P,k.n,k.h,2.9,2.4,sk);faCap(P,[k.n[0]-3,k.n[1]+.5],[k.n[0]+3,k.n[1]+.5],1.2,1.2,shd(sk,.85));
+  faLine(P,[k.h[0]-f*1.4,k.h[1]+3.5],[k.n[0]+f*1.2,k.n[1]+1],shd(sk,.72));faLine(P,[k.h[0]+f*1.8,k.h[1]+4],[k.n[0]+f*2.2,k.n[1]+.5],lit(sk,.2));
   const [hx,hy]=k.h,hr=o.headR||5.4;
   if(o.hs==='afro')faCircle(P,hx-f*.5,hy-1.6,hr+2.8,o.hair);
   if(o.hs==='long')[-1,0,1].forEach(i=>faCap(P,[hx-f*2,hy-2+i],[hx-f*(6+i),hy+7+i*1.5],2.2,1,i?shd(o.hair,.85):o.hair));
@@ -1141,7 +1180,7 @@ function faHair(P,hx,hy,hr,o,f){
   const top=(x,y)=>y<hy-1+(hs==='bangs'?2.2:0)-((x-hx)*f>2.2?1.3:0);
   faCircle(P,hx,hy-.4,hr+.7,h,top);
   if(hs==='buzz')return;
-  const tuft=(a,b,r0)=>{faCap(P,a,b,r0,.3,h);faCap(P,a,lerp(a,b,.7),r0*.35,.2,hl)};
+  const mv=o.mv||[0,0],tuft=(a,b0,r0)=>{const b=[b0[0]-mv[0]*2.2,b0[1]-mv[1]*2.2];faCap(P,a,b,r0,.3,h);faCap(P,a,lerp(a,b,.7),r0*.35,.2,hl)};
   if(hs==='spiky')[[-4,-5,-6,-10],[-1,-6,-2,-11.5],[2,-6,3,-11],[4,-5,7,-8.5],[-5,-3,-9,-6]].forEach(([a,b,c,d])=>tuft([hx+a*f,hy+b],[hx+c*f,hy+d],1.9));
   if(hs==='short'||hs==='side'){[[-4,-3,-7,-4],[-1,-5,-5,-7],[2,-5,-1,-7.5],[4,-4,2,-6.5]].forEach(([a,b,c,d])=>tuft([hx+a*f,hy+b],[hx+c*f,hy+d],1.5));if(hs==='side')faCap(P,[hx+f*1,hy-hr],[hx+f*1.5,hy-2.5],.35,.3,hd)}
   if(hs==='bangs')[[0,-3,2,1],[2,-3,4,0.5],[-2,-3,-1,1]].forEach(([a,b,c,d])=>tuft([hx+a*f,hy+b],[hx+c*f,hy+d],1.4));
@@ -1189,7 +1228,7 @@ function faBg(g,o,seed){
 /* ポーズと見た目（関節の座標は 80×100 のマス目） */
 const J=(h,n,sN,sF,eN,hN,eF,hF,p,pN,pF,kN,aN,tN,kF,aF,tF)=>({h,n,sN,sF,eN,hN,eF,hF,p,pN,pF,kN,aN,tN,kF,aF,tF});
 const POSE={
-  volley:J([46,22],[45,29],[49,32],[39,31],[56,39],[61,46],[28,26],[17,21],[42,52],[45,53],[39,51],[57,62],[66,73],[73,69],[34,70],[28,87],[35,90]),
+  volley:J([44,22],[44,29],[48,32],[39,31],[56,38],[57,47],[27,24],[14,16],[42,52],[45,53],[39,51],[57,61],[67,69],[74,63],[34,70],[28,87],[35,90]),
   bicycle:J([24,64],[29,59],[32,56],[28,55],[24,66],[18,74],[19,50],[11,56],[44,43],[46,45],[42,41],[50,27],[52,13],[58,9],[57,50],[67,43],[72,46]),
   slide:J([22,55],[27,60],[30,63],[26,61],[30,72],[25,80],[18,51],[12,44],[42,75],[44,77],[40,74],[56,80],[68,84],[75,82],[44,86],[35,89],[39,92]),
   dribble:J([52,24],[49,30],[52,34],[45,32],[43,42],[36,47],[56,37],[62,43],[41,54],[43,55],[39,53],[53,64],[49,79],[56,81],[34,70],[22,78],[17,84]),
@@ -1204,18 +1243,18 @@ const POSE={
   header:J([52,26],[47,31],[50,35],[43,33],[42,44],[36,50],[58,40],[66,38],[38,54],[40,55],[36,53],[49,64],[46,79],[52,82],[30,68],[20,74],[15,79]),
 };
 const FA={
- ichikawa:{pose:'volley',swoosh:[[48,70],[58,74],[66,73],[72,68]],impact:1,o:{skin:'#e9b48a',hair:'#141414',hs:'spiky',jersey:'#d8281c',trim:'#ffffff',shorts:'#ffffff',socks:'#d8281c',boots:'#f2c400',num:10,arm:'#ffd23a',angry:1,open:1,openF:1},ball:[73,61,'r'],bg:{strokes:[['#d8281c',0,50,40,20,80,10,5],['#ffd23a',0,72,30,60,80,40,3.5],['#141414',10,98,40,70,80,62,2]],groundY:90}},
- shanchi:{pose:'slide',impact:1,o:{skin:'#f0c49a',hair:'#0e0e0e',hs:'long',jersey:'#4b1f6f',trim:'#e8c15a',shorts:'#2a0f42',socks:'#4b1f6f',boots:'#e8c15a',num:4,band:'#d4302a',face:1},ball:[76,77,'r'],bg:{strokes:[['#4b1f6f',0,30,40,60,80,40,6],['#e8c15a',0,48,40,30,80,58,3],['#d4302a',0,64,50,40,80,20,2.5]],groundY:91},spray:[[8,40,88]]},
- mao:{pose:'bicycle',swoosh:[[62,30],[60,18],[57,10]],impact:1,o:{skin:'#f0c49a',hair:'#ffd24a',hs:'spiky',jersey:'#e0a419',trim:'#ffffff',shorts:'#ffffff',socks:'#e0a419',boots:'#ffd700',num:9,face:-1},ball:[61,6,'u'],bg:{strokes:[['#1a1a1a',0,90,30,20,80,6,6],['#c8102e',0,70,40,46,80,30,2.5],['#ffd24a',10,100,60,40,80,26,2]],groundY:92,paper:'#efede6'}},
- inkansu:{pose:'dribble',o:{skin:'#e6c3a0',hair:'#1d2b3a',hs:'bangs',jersey:'#111821',trim:'#38e0c8',shorts:'#111821',socks:'#38e0c8',boots:'#38e0c8',num:7},ball:[63,86,'r'],bg:{strokes:[['#38e0c8',0,30,40,50,80,30,4],['#111821',0,56,40,40,80,60,5],['#38e0c8',0,70,50,62,80,78,2]],groundY:90}},
- lg_leon:{pose:'sprint',o:{skin:'#f0c49a',hair:'#e6eef5',hs:'spiky',jersey:'#1b7fd1',trim:'#ffffff',shorts:'#ffffff',socks:'#1b7fd1',boots:'#9ff0ff',num:11,stripes:1},ball:[72,80,'r'],bg:{strokes:[['#9ff0ff',0,20,40,30,80,18,3],['#1b7fd1',0,42,40,46,80,40,5],['#9ff0ff',0,62,40,58,80,64,2.5]],groundY:88},speed:1},
- lg_fabio:{pose:'rainbow',swoosh:[[24,64],[18,54],[20,42],[30,22]],o:{skin:'#e9b48a',hair:'#3a2414',hs:'short',jersey:'#5b2a8a',trim:'#ffd23a',shorts:'#3a1660',socks:'#5b2a8a',boots:'#ffd23a',num:8},ball:[38,9,'arc'],bg:{strokes:[['#5b2a8a',0,40,40,10,80,40,5],['#ffd23a',0,56,40,26,80,56,2.5],['#3fb7a0',0,70,40,48,80,72,2]],groundY:90}},
- lg_gabriel:{pose:'cannon',swoosh:[[46,76],[56,84],[66,83]],o:{skin:'#9c623a',hair:'#1a120c',hs:'afro',jersey:'#b3201a',trim:'#ffffff',shorts:'#1a1a1a',socks:'#b3201a',boots:'#ff6a00',num:9,angry:1,open:1},ball:[74,79,'big'],bg:{strokes:[['#b3201a',0,64,40,50,80,70,6],['#ff6a00',0,50,40,40,80,60,3],['#1a1a1a',0,80,40,70,80,86,2]],groundY:90}},
- lg_andrea:{pose:'conduct',o:{skin:'#f0c49a',hair:'#2a2a2a',hs:'short',jersey:'#f2f2f2',trim:'#111111',shorts:'#111111',socks:'#f2f2f2',boots:'#c9a24a',num:6},ball:[67,86,'r'],bg:{strokes:[['#c9a24a',0,60,40,10,80,20,3],['#111111',0,40,40,30,80,50,4],['#c9a24a',10,90,50,60,80,70,2]],groundY:91}},
+ ichikawa:{pose:'volley',swoosh:[[46,74],[58,76],[67,72],[73,64]],impact:1,mvp:[1,-.3],wind:{kN:[48,68],aN:[40,80],tN:[34,82]},sweat:1,o:{skin:'#e9b48a',hair:'#141414',hs:'spiky',jersey:'#d8281c',trim:'#ffffff',shorts:'#ffffff',socks:'#d8281c',boots:'#f2c400',num:10,arm:'#ffd23a',angry:1,open:1,openF:1},ball:[75,57,'r'],bg:{strokes:[['#d8281c',0,50,40,20,80,10,5],['#ffd23a',0,72,30,60,80,40,3.5],['#141414',10,98,40,70,80,62,2]],groundY:90}},
+ shanchi:{pose:'slide',mvp:[1,0],shift:[-7,-1],impact:1,o:{skin:'#f0c49a',hair:'#0e0e0e',hs:'long',jersey:'#4b1f6f',trim:'#e8c15a',shorts:'#2a0f42',socks:'#4b1f6f',boots:'#e8c15a',num:4,band:'#d4302a',face:1},ball:[76,77,'r'],bg:{strokes:[['#4b1f6f',0,30,40,60,80,40,6],['#e8c15a',0,48,40,30,80,58,3],['#d4302a',0,64,50,40,80,20,2.5]],groundY:91},spray:[[8,40,88]]},
+ mao:{pose:'bicycle',mvp:[.3,-1],wind:{kN:[52,44],aN:[60,54],tN:[64,58]},swoosh:[[62,30],[60,18],[57,10]],impact:1,o:{skin:'#f0c49a',hair:'#ffd24a',hs:'spiky',jersey:'#e0a419',trim:'#ffffff',shorts:'#ffffff',socks:'#e0a419',boots:'#ffd700',num:9,face:-1},ball:[61,6,'u'],bg:{strokes:[['#1a1a1a',0,90,30,20,80,6,6],['#c8102e',0,70,40,46,80,30,2.5],['#ffd24a',10,100,60,40,80,26,2]],groundY:92,paper:'#efede6'}},
+ inkansu:{pose:'dribble',mvp:[1,0],shift:[-6,0],sweat:1,o:{skin:'#e6c3a0',hair:'#1d2b3a',hs:'bangs',jersey:'#111821',trim:'#38e0c8',shorts:'#111821',socks:'#38e0c8',boots:'#38e0c8',num:7},ball:[63,86,'r'],bg:{strokes:[['#38e0c8',0,30,40,50,80,30,4],['#111821',0,56,40,40,80,60,5],['#38e0c8',0,70,50,62,80,78,2]],groundY:90}},
+ lg_leon:{pose:'sprint',mvp:[1,0],shift:[-8,0],o:{skin:'#f0c49a',hair:'#e6eef5',hs:'spiky',jersey:'#1b7fd1',trim:'#ffffff',shorts:'#ffffff',socks:'#1b7fd1',boots:'#9ff0ff',num:11,stripes:1},ball:[72,80,'r'],bg:{strokes:[['#9ff0ff',0,20,40,30,80,18,3],['#1b7fd1',0,42,40,46,80,40,5],['#9ff0ff',0,62,40,58,80,64,2.5]],groundY:88},speed:1},
+ lg_fabio:{pose:'rainbow',mvp:[0,-.6],wind:{kF:[34,70],aF:[32,84],tF:[36,88]},swoosh:[[24,64],[18,54],[20,42],[30,22]],o:{skin:'#e9b48a',hair:'#3a2414',hs:'short',jersey:'#5b2a8a',trim:'#ffd23a',shorts:'#3a1660',socks:'#5b2a8a',boots:'#ffd23a',num:8},ball:[38,9,'arc'],bg:{strokes:[['#5b2a8a',0,40,40,10,80,40,5],['#ffd23a',0,56,40,26,80,56,2.5],['#3fb7a0',0,70,40,48,80,72,2]],groundY:90}},
+ lg_gabriel:{pose:'cannon',mvp:[1,0],wind:{kN:[40,66],aN:[30,74],tN:[25,70]},sweat:1,swoosh:[[46,76],[56,84],[66,83]],o:{skin:'#9c623a',hair:'#1a120c',hs:'afro',jersey:'#b3201a',trim:'#ffffff',shorts:'#1a1a1a',socks:'#b3201a',boots:'#ff6a00',num:9,angry:1,open:1},ball:[74,79,'big'],bg:{strokes:[['#b3201a',0,64,40,50,80,70,6],['#ff6a00',0,50,40,40,80,60,3],['#1a1a1a',0,80,40,70,80,86,2]],groundY:90}},
+ lg_andrea:{pose:'conduct',mvp:[.6,0],wind:{kN:[44,70],aN:[40,84],tN:[44,88]},o:{skin:'#f0c49a',hair:'#2a2a2a',hs:'short',jersey:'#f2f2f2',trim:'#111111',shorts:'#111111',socks:'#f2f2f2',boots:'#c9a24a',num:6},ball:[67,86,'r'],bg:{strokes:[['#c9a24a',0,60,40,10,80,20,3],['#111111',0,40,40,30,80,50,4],['#c9a24a',10,90,50,60,80,70,2]],groundY:91}},
  lg_boris:{pose:'flex',o:{skin:'#e3b08a',hair:'#8a8a8a',hs:'bald',jersey:'#5f6b75',trim:'#d9d9d9',shorts:'#3b444b',socks:'#5f6b75',boots:'#222222',num:5,sleeveless:1},ball:[40,87,'r'],bg:{strokes:[['#5f6b75',0,20,40,50,80,20,6],['#c45a4a',0,36,40,60,80,36,2.5],['#9aa7b3',0,60,40,40,80,64,3]],groundY:91}},
  lg_marcus:{pose:'block',o:{skin:'#e9b48a',hair:'#3a2a1a',hs:'helmet',jersey:'#2a3a5a',trim:'#c9d1d9',shorts:'#1a2336',socks:'#2a3a5a',boots:'#9aa7b3',num:3,head:(P,k,hx,hy,hr)=>{faCircle(P,hx,hy-1,hr+1.4,'#9aa7b3',(x,y)=>y<hy+1.5);for(let x=-5;x<=5;x++)P.set(hx+x,hy-.5,'#56616b');P.set(hx+2.5,hy-.5,'#1b120c')}},ball:null,bg:{strokes:[['#9aa7b3',0,30,40,30,80,30,7],['#2a3a5a',0,50,40,50,80,50,4],['#c9d1d9',0,66,40,66,80,66,2]],groundY:91}},
  lg_kyuko:{pose:'yawn',o:{skin:'#f2cfab',hair:'#4a3a2a',hs:'short',jersey:'#9cc3e6',trim:'#ffffff',shorts:'#6a8fb0',socks:'#ffffff',boots:'#5aa0e6',num:1,stripes:1,head:(P,k,hx,hy,hr)=>{faCap(P,[hx-5,hy-3],[hx+1,hy-9],3.2,1.8,'#3f7fd0');faCircle(P,hx+2,hy-10,1.6,'#ffffff');P.set(hx+2.5,hy-.5,'#1b120c');P.set(hx+3.5,hy-.5,'#1b120c')}},ball:[58,88,'r'],bg:{strokes:[['#9cc3e6',0,24,40,40,80,24,5],['#3f7fd0',0,46,40,30,80,46,2.5],['#ffffff',0,60,40,70,80,58,3]],groundY:90,paper:'#e6edf2'},zzz:1},
- lg_yahho:{pose:'jump',o:{skin:'#e9b48a',hair:'#2a1a10',hs:'short',jersey:'#f08a24',trim:'#ffffff',shorts:'#ffffff',socks:'#f08a24',boots:'#e2462b',num:7,mouth:'#7a1f1f',open:1,openN:1,openF:1,head:(P,k,hx,hy,hr)=>{faCircle(P,hx,hy-2,hr+.4,'#e2462b',(x,y)=>y<hy-1.5);for(let x=-7;x<=-3;x++)P.set(hx+x,hy-2,'#a8231b');P.set(hx+2.5,hy+3,'#7a1f1f');P.set(hx+3.5,hy+3,'#7a1f1f');P.set(hx+3,hy+2,'#ffffff')}},ball:[66,70,'r'],bg:{strokes:[['#f08a24',0,50,40,10,80,50,6],['#e2462b',0,70,40,30,80,70,3],['#ffd23a',0,30,40,60,80,30,2]],groundY:92,groundTilt:0}},
+ lg_yahho:{pose:'jump',mvp:[0,-1],shift:[0,6],o:{skin:'#e9b48a',hair:'#2a1a10',hs:'short',jersey:'#f08a24',trim:'#ffffff',shorts:'#ffffff',socks:'#f08a24',boots:'#e2462b',num:7,mouth:'#7a1f1f',open:1,openN:1,openF:1,head:(P,k,hx,hy,hr)=>{faCircle(P,hx,hy-2,hr+.4,'#e2462b',(x,y)=>y<hy-1.5);for(let x=-7;x<=-3;x++)P.set(hx+x,hy-2,'#a8231b');P.set(hx+2.5,hy+3,'#7a1f1f');P.set(hx+3.5,hy+3,'#7a1f1f');P.set(hx+3,hy+2,'#ffffff')}},ball:[66,70,'r'],bg:{strokes:[['#f08a24',0,50,40,10,80,50,6],['#e2462b',0,70,40,30,80,70,3],['#ffd23a',0,30,40,60,80,30,2]],groundY:92,groundTilt:0}},
  lg_mameo:{custom:'mameo',bg:{strokes:[['#7a4a24',0,40,40,20,80,40,6],['#d98a6a',0,60,40,40,80,60,3]],groundY:90,paper:'#f2e9dc'}},
  lg_inu:{custom:'inu',bg:{strokes:[['#e2462b',0,30,40,10,80,30,5],['#a0622d',0,50,40,30,80,50,3]],groundY:90}},
  lg_kame:{pose:'flex',o:{skin:'#5fae4a',hair:'#5fae4a',hs:'bald',jersey:'#7a5a2c',trim:'#e6c98a',shorts:'#d4302a',socks:'#5fae4a',boots:'#d4302a',num:null,sleeveless:1,band:'#d4302a',behind:(P,k)=>{faCircle(P,40,42,15,'#7a5a2c');for(let a=0;a<6;a++){const t=a/6*Math.PI*2;faCircle(P,40+Math.cos(t)*8,42+Math.sin(t)*8,3,'#5a3f1a')}faCircle(P,40,42,3.5,'#5a3f1a')},front:(P,k)=>{faCircle(P,40,44,7,'#e6c98a',(x,y)=>y>38)}},ball:[40,87,'r'],bg:{strokes:[['#5fae4a',0,30,40,50,80,30,6],['#d4302a',0,50,40,36,80,50,2.5]],groundY:91}},
@@ -1253,11 +1292,19 @@ function fullArtURL(id){
   faRays(g,(K?K.p[0]:40)*FA_S,(K?K.p[1]:50)*FA_S,st?st[0]:'#ffffff');
   // 周辺を少し暗く
   {const gr=g.createRadialGradient(FA_W/2,FA_H*.45,FA_W*.35,FA_W/2,FA_H*.5,FA_W*.85);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.28)');g.fillStyle=gr;g.fillRect(0,0,FA_W,FA_H)}
+  // 残像：少し前の体勢を薄く重ねる
+  if(K&&(d.wind||d.shift)){[[.3,.2],[.65,.34]].forEach(([t,al])=>{
+      const G=faBuf(),k2={};Object.keys(K).forEach(j=>{let v=K[j];if(d.wind&&d.wind[j])v=lerp(d.wind[j],K[j],t);if(d.shift)v=[v[0]+d.shift[0]*(1-t)*1.6,v[1]+d.shift[1]*(1-t)*1.6];k2[j]=v});
+      faPerson(G,k2,Object.assign({},d.o,{mv:d.mvp}));
+      const c2=document.createElement('canvas');c2.width=FA_W;c2.height=FA_H;const g2=c2.getContext('2d'),im2=g2.createImageData(FA_W,FA_H);
+      for(let i=0;i<G.B.length;i++){const c=G.B[i];if(!c)continue;const [r,gg,b]=hx(lit(c,.25));im2.data[i*4]=r;im2.data[i*4+1]=gg;im2.data[i*4+2]=b;im2.data[i*4+3]=255}
+      g2.putImageData(im2,0,0);g.save();g.globalAlpha=al;g.drawImage(c2,0,0);g.restore()})}
   const P=faBuf();FA_RIM=rimC;
   if(d.spray)d.spray.forEach(([x0,x1,y])=>{const r=rng(hashS(id+'s'));for(let i=0;i<120;i++)faCircle(P,x0+r()*(x1-x0),y-r()*12,.25+r()*.35,r()<.6?'#4fb04a':'#8a6a3a')});
   if(d.custom)faCustom(P,d.custom);
-  else{faPerson(P,K,d.o);if(d.ball)faBall(P,d.ball[0],d.ball[1],d.ball[2]==='big'?4.8:4.2)}
+  else{faPerson(P,K,Object.assign({},d.o,{mv:d.mvp}));if(d.ball)faBall(P,d.ball[0],d.ball[1],d.ball[2]==='big'?4.8:4.2)}
   FA_RIM=null;
+  if(d.sweat&&K){const [hx2,hy2]=K.h,mv=d.mvp||[1,0];[[-7,-3],[-9,1],[-6,-7]].forEach(([dx,dy],i)=>{const x=hx2+dx*(mv[0]>=0?1:-1),y=hy2+dy;faCircle(P,x,y,.75-i*.12,'#bfe6ff');P.set(x-.4,y-.6,'#ffffff');faCircle(P,x+.2,y-1.2,.35,'#bfe6ff')})}
   if(d.zzz)[[60,8],[64,4],[68,0]].forEach(([x,y],i)=>{for(let k=0;k<3+i;k+=.5){P.set(x+k,y,'#3f7fd0');P.set(x+k,y+2+i,'#3f7fd0');P.set(x+2+i-k,y+1+k*(1+i)/(2+i),'#3f7fd0')}});
   faOutline(P,'#16100c');
   {const add=[];for(let y=0;y<FA_H;y++)for(let x=0;x<FA_W;x++){if(P.getB(x,y))continue;if([[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>P.getB(x+a,y+b)==='#16100c'))add.push([x,y])}add.forEach(([x,y])=>P.setB(x,y,'#fbfaf5'))}
