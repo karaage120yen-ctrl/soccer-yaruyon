@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-172255';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-172540';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5626,23 +5626,26 @@ const LGD_EPI=['神速の','鉄壁の','黄金の','嵐の','氷の','炎の','�
 
 /* ---------- 伝説降臨：全員が3つ以上95以上 ---------- */
 const LGD_TRY=3,LGD_FIRST=5000,LGD_AGAIN=500;
-function lgdState(){const d=todayKey();M.lgd=M.lgd||{day:'',tries:0,won:false,ever:false};if(M.lgd.day!==d){M.lgd.day=d;M.lgd.tries=0;M.lgd.won=false}return M.lgd}
+// 1日3回まで挑戦できる。その日の1勝目は5000コイン、2勝目からは500コイン
+function lgdState(){const d=todayKey();M.lgd=M.lgd||{day:'',tries:0,won:false,ever:false,wins:0};if(M.lgd.day!==d){M.lgd.day=d;M.lgd.tries=0;M.lgd.won=false;M.lgd.wins=0}
+  if(M.lgdReset!=='r1'){M.lgdReset='r1';M.lgd.tries=0;M.lgd.won=false;M.lgd.wins=0}
+  if(M.lgd.wins==null)M.lgd.wins=M.lgd.won?1:0;return M.lgd}
 function lgdTeam(){
   const r=rng(hashS('lgd|'+todayKey())),names=shuf(LGD_NAMES,r),epi=shuf(LGD_EPI,r);
   const pl=ROLES433.map((role,i)=>{const n=3+(r()<.35?1:0),hi=shuf(TOPK[role],r).slice(0,n),st={};
     KEYS.forEach(k=>st[k]=hi.includes(k)?95+Math.floor(r()*5):80+Math.floor(r()*13));return {n:epi[i%epi.length]+names[i],role,st}});
   const T=makeSnap('伝説降臨',pl,95,pickR(r,['bal','atk','pos','prs']));T.lgd=1;return T;
 }
-function lgdCan(){const L=lgdState();return !L.won&&L.tries<LGD_TRY}
+function lgdCan(){const L=lgdState();return L.tries<LGD_TRY}
 function lgdHtml(){
   const L=lgdState(),T=lgdTeam(),me=teamCalc(),left=LGD_TRY-L.tries;
   return `<div class="kick">伝説降臨<span class="r">今日のチーム・総合${T.tot}</span></div>
-  <article class="front gban lgdban"><div><div class="dateline"><span>1日${LGD_TRY}回まで</span><span>勝つとその日は終了</span></div>
+  <article class="front gban lgdban"><div><div class="dateline"><span>1日${LGD_TRY}回まで</span><span>勝っても続けて挑戦できる</span></div>
    <p class="deck">全員が3つ以上の能力で95超え</p>
-   <p class="lede">初めて勝つと<b class="gold">${LGD_FIRST.toLocaleString('ja-JP')}コイン</b>、2回目以降は${LGD_AGAIN}コイン。引き分けはPK戦で決着。負けると報酬なし。</p></div>${vhead('伝説','降臨','gold')}</article>
+   <p class="lede">その日の1勝目は<b class="gold">${LGD_FIRST.toLocaleString('ja-JP')}コイン</b>、2勝目からは${LGD_AGAIN}コインずつ。引き分けはPK戦で決着。負けると報酬なし。</p></div>${vhead('伝説','降臨','gold')}</article>
   <div class="bteam"><b>あなた：${esc(me.name)}</b><span class="num">${me.tot}</span><span class="sub">攻${Math.round(me.atk)} 中${Math.round(me.mid)} 守${Math.round(me.def)}</span></div>
   <div class="plist">${T.pl.map(p=>{const Lb=p.role==='GK'?LBL_GK:LBL;return `<div class="prow" style="cursor:default"><span class="po">${p.role}</span><b>${esc(p.n)}</b><span class="sub">${KEYS.map(k=>`${Lb[k]}<b class="${p.st[k]>=95?'hi':''}">${p.st[k]}</b>`).join(' ')}</span><span class="num">${Math.round(p.r)}</span></div>`}).join('')}</div>
-  <p class="note">${L.won?'今日はもう勝った。また明日挑戦できる。':left>0?`今日あと<b>${left}回</b>挑戦できる。${L.ever?'':'まだ一度も勝っていない（初勝利は5,000コイン）。'}`:'今日の挑戦回数を使い切った。また明日。'}</p>
+  <p class="note">${left>0?`今日あと<b>${left}回</b>挑戦できる。${L.wins?`今日は${L.wins}勝（次に勝つと${LGD_AGAIN}コイン）。`:`今日まだ勝っていない（次に勝つと${LGD_FIRST.toLocaleString('ja-JP')}コイン）。`}`:`今日の挑戦回数を使い切った（今日${L.wins||0}勝）。また明日。`}</p>
   <div class="stack"><button class="btn red" data-act="lgdGo" ${lgdCan()?'':'disabled'}>挑戦する（残り${Math.max(0,left)}回）</button><button class="btn ghost" data-act="btMenu">対戦メニューへ</button></div>`;
 }
 /* ---------- 特別試合（自分で操作する試合）を始める・終える ---------- */
@@ -5658,7 +5661,7 @@ function spAutoFinish(X){const L=X.live;if(!L||L.done)return;L.lazy=false;let g=
 function spOutcome(res,side){const me=res.sc[side],op=res.sc[1-side];if(me>op)return 0;if(me<op)return 2;if(res.pk)return res.pk[side]>res.pk[1-side]?0:2;return 1}
 function spFinish(X){
   const res=X.res,o=spOutcome(res,0);let coins=0;postMatch(res,0);
-  if(X.sp==='lgd'){const L=lgdState();if(o===0){coins=L.ever?LGD_AGAIN:LGD_FIRST;L.ever=true;L.won=true}}
+  if(X.sp==='lgd'){const L=lgdState();if(o===0){coins=L.wins?LGD_AGAIN:LGD_FIRST;L.wins=(L.wins||0)+1;L.ever=true;L.won=true}}
   if(X.sp==='wc')wcMyResult(X,res,o);
   M.coins+=coins;M.rec[['w','d','l'][o]]++;
   M.hist.unshift({t:Date.now(),kind:X.sp,opp:X.B.name,gf:res.sc[0],ga:res.sc[1],o,pk:res.pk?res.pk[0]+'-'+res.pk[1]:null});M.hist=M.hist.slice(0,15);
@@ -5820,7 +5823,7 @@ function spMenuHtml(){const L=lgdState(),W=M.wc;
   return `<div class="kick">スペシャルマッチ</div><div class="acts sp">
    <button class="act" data-act="spView" data-v="pk"><b>フリックPK対戦</b><span>指でボールを蹴る・止める</span><em>蹴る順番とコンディション</em></button>
    <button class="act" data-act="spView" data-v="wc"><b>ワールドカップ</b><span>${W&&W.stage!=='done'?'大会の途中':`今日あと${wcLeft()}回`}</span><em>優勝3,000・準優勝2,000・3位1,000</em></button>
-   <button class="act gold" data-act="spView" data-v="lgd"><b>伝説降臨</b><span>${L.won?'今日はクリア済み':`今日あと${LGD_TRY-L.tries}回`}</span><em>初勝利5,000・以降500コイン</em></button>
+   <button class="act gold" data-act="spView" data-v="lgd"><b>伝説降臨</b><span>${L.tries>=LGD_TRY?'今日は終了':`今日あと${LGD_TRY-L.tries}回`}</span><em>その日の1勝目5,000・2勝目から500コイン</em></button>
    <button class="act" data-act="spView" data-v="bet"><b>賭博伝説試合</b><span>伝説の一戦にコインを賭ける</span><em>勝敗・得点者・MVP・ゴール数</em></button></div>`}
 function spView(){const v=G.bt.view;if(v==='lgd')return lgdHtml();if(v==='wc')return wcHtml();if(v==='bet')return betHtml();if(v==='pk')return pkHtml();return null}
 function syncBet(){const e=typeof document!=='undefined'&&document.getElementById('betamt');if(e&&G.bet)G.bet.amt=Math.max(BET_MIN,Math.floor(+e.value||BET_MIN))}
@@ -6188,7 +6191,7 @@ function rulesHtml(){
       '試合の途中で抜けると、残りは自動で進んで結果が決まる'])}
     <p class="note"><b>伝説降臨</b></p>${ul([
       '全員が3つ以上の能力で95を超える最強チームと対戦（チームは日替わり）',
-      `1日${LGD_TRY}回まで挑戦でき、勝ったらその日は終了。初めて勝つと${yen0(LGD_FIRST)}コイン、2回目以降は${LGD_AGAIN}コイン。負けは報酬なし`])}
+      `1日${LGD_TRY}回まで挑戦できる（勝っても続けられる）。その日の1勝目は${yen0(LGD_FIRST)}コイン、2勝目からは${LGD_AGAIN}コインずつ。負けは報酬なし`])}
     <p class="note"><b>賭博伝説試合</b></p>${ul([
       'ガチャのキャラやレジェンドが入った伝説チーム同士の試合にコインを賭ける。特別スキルも発動する',
       '賭けられるもの：どっちが勝つか・合計ゴール数（3点以上か2点以下か）・両チームが点を取るか・ゴールを決める選手・MVP',
