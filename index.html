@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-124015';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-124742';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -675,6 +675,13 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .prow .pf .sprw,.prow .pf svg,.prow .pf img{width:36px!important;height:36px!important;display:block}
 
 .prow.lock{opacity:.55;cursor:not-allowed}
+.fate{margin:4px 0 14px;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#1a1a1f}
+.fate b{display:block;font-family:var(--display);font-size:20px;margin-bottom:4px}
+.fate p{margin:0;line-height:1.7}
+.fate.death{background:#111;border-color:#666;color:#ddd}
+.fate.retire{background:#2a1414;border-color:#a33}
+.fate.acc{background:#2a2410;border-color:#a83}
+.front.mourn{filter:grayscale(.85)}
 
 </style>
 </head>
@@ -897,6 +904,26 @@ EV.push(
  {id:'n_spikes',st:['hs','uni','pro'],t:'新作スパイクの試供品',x:'メーカーの担当者が、発売前のスパイクを置いていった。軽くて、足に吸いつくような感触だ。',ch:[
   {l:'いきなり試合で履く',d:'',pr:()=>.55,ok:{m:'ボールタッチが別人のように柔らかい。いきなり相棒になった。',fx:{tec:2,key:1}},ng:{m:'靴擦れで足の皮がめくれた。',fx:{inj:2,cond:-3}}},
   {l:'練習でじっくり慣らす',d:'',pr:()=>.9,ok:{m:'2週間かけて足になじませた。',fx:{tec:1}},ng:{m:'結局いつものスパイクに戻した。',fx:{}}}]},
+ {id:'n_bankrupt',st:['pro'],mo:ALLM,w:.6,t:'クラブの経営危機',x:'給料の支払いが遅れている。ロッカールームの空気が重い。',ch:[
+  {l:'クラブに残って支える',d:'',pr:()=>.6,ok:{m:'苦しい時期を一緒に乗り越えた。サポーターの信頼を得た。',fx:{pop:4,coach:5,money:-80}},ng:{m:'状況は好転せず、気持ちが沈んだ。',fx:{cond:-6,money:-80}}},
+  {l:'代理人に移籍先を探してもらう',d:'',pr:()=>.5,ok:{m:'複数のクラブから問い合わせが来た。',fx:{scout:12,pop:1}},ng:{m:'「裏切り者」と書かれた横断幕が出た。',fx:{pop:-4,coach:-4}}}]},
+ {id:'n_rival',st:['hs','uni','pro'],mo:ALLM,t:'同じポジションに新加入',x:'同じポジションに、評判の新加入選手がやってきた。',ch:[
+  {l:'練習で真っ向から張り合う',d:'',pr:c=>.4+(c.p.coach-50)/150,ok:{m:'紅白戦で圧倒した。監督の信頼は揺るがない。',fx:{coach:6,key:1}},ng:{m:'紅白戦で完敗。ベンチに回る日が増えそうだ。',fx:{coach:-6,cond:-4}}},
+  {l:'相手のいいところを盗む',d:'',pr:()=>.7,ok:{m:'刺激を受けて、新しい技を身につけた。',fx:{tec:1,key:1}},ng:{m:'うまく取り入れられなかった。',fx:{cond:-1}}}]},
+ {id:'n_wallet',st:['hs','uni','pro'],mo:ALLM,w:.6,t:'財布をなくした',x:'帰りの電車で財布がないことに気づいた。',ch:[
+  {l:'駅に問い合わせる',d:'',pr:()=>.55,ok:{m:'親切な人が届けてくれていた。中身もそのまま。',fx:{cond:4}},ng:{m:'見つからなかった。',fx:{money:-10,cond:-3}}},
+  {l:'あきらめて練習に集中',d:'',pr:()=>1,ok:{m:'気持ちを切り替えた。',fx:{money:-10,cond:-1}},ng:{m:'',fx:{}}}]},
+ {id:'n_viral',st:['hs','uni','pro'],mo:ALLM,w:.7,t:'動画がSNSでバズった',x:'練習中のスーパープレーを撮った動画が、一晩で100万回再生された。',ch:[
+  {l:'積極的に発信する',d:'',pr:()=>.6,ok:{m:'フォロワーが一気に増えた。スポンサーからも連絡が来た。',fx:{pop:8,money:30}},ng:{m:'うっかりした投稿が炎上してしまった。',fx:{pop:-5,cond:-5}}},
+  {l:'騒がれても静かにしておく',d:'',pr:()=>1,ok:{m:'謙虚な姿勢が好感を呼んだ。',fx:{pop:3}},ng:{m:'',fx:{}}}]},
+ {id:'n_hospital',st:['uni','pro'],mo:ALLM,w:.5,t:'病院の子どもたちを訪問',x:'入院している子どもたちから、手紙が届いた。「試合を見に行きたい」',ch:[
+  {l:'お見舞いに行く',d:'',pr:()=>1,ok:{m:'子どもたちと約束をした。「次の試合でゴールを決める」',fx:{pop:4,cond:8}},ng:{m:'',fx:{}}},
+  {l:'サイン入りボールを送る',d:'',pr:()=>1,ok:{m:'お礼のビデオレターが届いた。',fx:{pop:2,cond:3}},ng:{m:'',fx:{}}}]},
+ {id:'n_nearmiss',st:['hs','uni','pro'],mo:ALLM,w:.5,t:'横断歩道でヒヤリ',x:'考えごとをしながら歩いていたら、信号無視の車が目の前をかすめた。',ch:[
+  {l:'これからは気をつける',d:'',pr:()=>1,ok:{m:'心臓がまだドキドキしている。家族に電話をかけた。',fx:{cond:-3,sta:-2}},ng:{m:'',fx:{}}}]},
+ {id:'n_coachchange',st:['pro'],mo:ALLM,w:.6,t:'監督が交代',x:'成績不振で監督が解任された。新しい監督は、まったく違う考え方の人だ。',ch:[
+  {l:'新しい戦術を一から覚える',d:'',pr:c=>.45+(c.p.st.pas-50)/150,ok:{m:'新監督の構想の中心に入った。',fx:{coach:10,pas:1}},ng:{m:'なかなか理解できず、出番が減った。',fx:{coach:-8}}},
+  {l:'自分のプレーを貫く',d:'',pr:c=>.35+(ovrOf(c.p)-60)/100,ok:{m:'結果で黙らせた。',fx:{coach:6,pop:3}},ng:{m:'構想外を言い渡された。',fx:{coach:-12,cond:-5}}}]},
  {id:'n_lottery',st:['hs','uni','pro'],mo:ALLM,t:'宝くじの当選番号',x:'チームメイトに勧められて買った宝くじ。今日が当選発表の日だ。',ch:[
   {l:'すぐに確かめる',d:'当たれば大きい',pr:()=>.12,ok:{m:'まさかの当選。チームに焼き肉をおごっても、まだお釣りが来た。',fx:{money:300,cond:8}},ng:{m:'ひとつも合っていなかった。',fx:{cond:-1}}},
   {l:'気にせず練習に行く',d:'',pr:()=>1,ok:{m:'くじのことは忘れて、いつも通りボールを蹴った。',fx:{cond:2}},ng:{m:'',fx:{}}}]},
@@ -2186,6 +2213,14 @@ lab:{d(g,C,t,L){room(g,'#e8eef4','#e0e8f0','#b8c0c8',72);g.fillStyle='#333';g.fi
   H2(g,68,72,Object.assign({},L,{jersey:'#222'}),{t,pose:'run',rate:3,face:1});g.fillStyle='#3fbf6a';g.fillRect(66,50,2,2);g.fillRect(70,58,2,2);
   g.fillStyle='#111';g.fillRect(110,14,44,30);g.strokeStyle='#3fbf6a';g.beginPath();for(let i=0;i<40;i++){const y=30+Math.sin(i*.8+t*8)*(i%10===0?10:2);i?g.lineTo(112+i,y):g.moveTo(112,y)}g.stroke();g.save();if(TXTF)g.setTransform(1,0,0,1,0,0);g.fillStyle='#3fbf6a';g.font='bold 7px sans-serif';g.textAlign='center';g.fillText(`${150+rv(C,'hr',30)}bpm`,TXTF?28:132,42);g.restore();
   ccap(g,C,['スポーツ科学ラボ','データで鍛える','乳酸値チェック'],86,'#26324a')}},
+/* ---------- 事故 ---------- */
+accident:{nf:1,d(g,C,t,L){g.fillStyle='#0a0c16';g.fillRect(0,0,SCW,SCH);for(let i=0;i<12;i++){g.fillStyle='#1c2036';g.fillRect(i*14,30-(i*7)%14,12,40)}
+  g.fillStyle='#2a2a34';g.fillRect(0,64,SCW,26);g.fillStyle='#ddd';for(let i=0;i<6;i++)g.fillRect(i*30+5,76,14,1);
+  const fl=Math.floor(t*6)%2;g.fillStyle=fl?'rgba(255,40,40,.25)':'rgba(40,80,255,.25)';g.fillRect(0,0,SCW,SCH);
+  g.fillStyle='#f4f4f4';g.fillRect(96,48,44,18);g.fillStyle='#e2462b';g.fillRect(96,56,44,3);g.fillRect(106,50,2,6);g.fillRect(104,52,6,2);g.fillStyle=fl?'#ff3b3b':'#3b6bff';g.fillRect(112,45,8,3);
+  g.fillStyle='#111';[104,132].forEach(x=>{g.beginPath();g.arc(x,66,4,0,Math.PI*2);g.fill()});
+  g.fillStyle='rgba(255,255,220,.12)';g.beginPath();g.moveTo(96,58);g.lineTo(40,50);g.lineTo(40,72);g.fill();
+  txt(g,C.label||'','#ffffff',16,true)}},
 /* ---------- 伝説イベント ---------- */
 messi:{nf:1,d(g,C,t,L){g.fillStyle='#0c0a16';g.fillRect(0,0,SCW,SCH);for(let i=0;i<20;i++){const th=i/20*Math.PI*2+t*.6;g.strokeStyle=`rgba(255,215,90,${.18+.15*Math.sin(t*3+i)})`;g.beginPath();g.moveTo(104,46);g.lineTo(104+Math.cos(th)*140,46+Math.sin(th)*140);g.stroke()}
   g.fillStyle='#2a6a32';g.fillRect(0,72,SCW,18);const ML={jersey:'#7cc8f0',trim:'#ffffff',shorts:'#1a2a4a',socks:'#ffffff',hair:'#5a3a1a',skin:'#f0c8a4',hs:'long'};
@@ -2853,6 +2888,24 @@ function grow(p,mult,f,a){
     p.st[k]=clamp(p.st[k]+d,20,SMAX);
   }
 }
+/* ========== 運命（ごくまれ）：大ケガで引退・亡くなる、交通事故 ==========
+   1ターンごとの確率。1回の育成（約67ターン）で、事故に遭うのは約3%、事故やケガで引退は約1%、亡くなるのは約0.2% */
+const FATE_P={injRetire:.00015,injDeath:.00002,accident:.00045};
+function fateRoll(p,res){
+  if(p.fate)return;const r=Math.random(),pro=p.stage==='pro',gm=pro?1:.5;// プロは試合が多い分ケガの運命も起きやすい
+  let f=null;
+  if(r<FATE_P.injDeath*gm)f={ty:'death',why:'試合中の接触で頭を強く打ち、帰らぬ人となった',head:'訃報'};
+  else if(r<(FATE_P.injDeath+FATE_P.injRetire)*gm)f={ty:'retire',why:'試合中に膝の靭帯を断裂する大ケガ。懸命なリハビリも実らず、現役続行を断念した',head:'大ケガで引退'};
+  else if(r<(FATE_P.injDeath+FATE_P.injRetire)*gm+FATE_P.accident){const x=Math.random();
+    if(x<.05)f={ty:'death',why:'練習帰りに交通事故に遭い、帰らぬ人となった',head:'訃報',acc:1};
+    else if(x<.2)f={ty:'retire',why:'交通事故で大ケガを負い、ピッチに戻ることはできなかった',head:'事故で引退',acc:1};
+    else{const w=ri(4,20);p.inj+=w;S.cur.injW+=w;p.cond=clamp(p.cond-15,0,100);res.notes.push(`交通事故に遭い負傷（全治${w}週間）`);res.fate={ty:'acc',why:`練習帰りに交通事故に遭った。命に別状はないが、全治${w}週間のケガ`,head:'交通事故'};
+      pushNews(`【事故】${p.sei}${p.mei}が交通事故で負傷、全治${w}週間`);if(typeof cutQ==='function')cutQ('accident','交通事故…',`全治${w}週間`,2400);return}}
+  if(!f)return;
+  p.fate=f;res.fate=f;
+  pushNews(f.ty==='death'?`【訃報】${p.sei}${p.mei}さん（${p.age}歳）が死去`:`【引退】${p.sei}${p.mei}、${f.acc?'交通事故':'大ケガ'}のため現役を退く`);
+  if(typeof cutQ==='function')cutQ(f.acc?'accident':'injury',f.ty==='death'?'訃報':'突然の別れ',f.ty==='death'?`${p.sei}${p.mei}（${p.age}歳）`:'ピッチを去ることに',2800);
+}
 function monthStep(a,res,first){
   const p=S.p,m=p.month,cur=S.cur,club=clubOf(p);
   const P=p.fam.partner;
@@ -2909,6 +2962,7 @@ function runMonth(){
   monthStep(a,res,true);
   const end=turnEnd(p.month);while(p.month<end){p.month++;monthStep(a,res,false)}
   dogTurn(p,res);
+  fateRoll(p,res);
   res.m1=p.month;
   const club=clubOf(p);
   res.d=KEYS.map(k=>[k,Math.round(p.st[k]*10-b.st[k]*10)/10]);
@@ -2921,6 +2975,7 @@ function runMonth(){
 }
 function afterMonth(){
   const p=S.p;
+  if(p.fate&&p.fate.ty!=='acc'&&!S.summary){retire();return}
   if(p.month===9){seasonEnd();return}
   if(p.month===11){newSeason(false);return}
   p.month++;if(!TURN_ST.includes(p.month))p.month=TURN_ST.find(x=>x>p.month)||10;startMonth();
@@ -3094,9 +3149,10 @@ function retire(){
   const sum={name:`${p.sei} ${p.mei}`,pos:p.pos,years:`${p.hist[0].y0}–${p.year+1}`,clubs:mainClubs(p).join(' / ')||clubOf(p).n,apps:p.tot.apps,goals:p.tot.goals,ast:p.tot.ast,peak:p.peak,score,grade:g,title,hi:highlights(p),age:p.age,quote:QUOTES[g],pro:p.hist.some(x=>!/高校|大学/.test(x.n))};
   const l=hofList();l.push(sum);l.sort((a,b)=>b.score-a.score);hofSave(l.slice(0,30));
   if(typeof addPlayerCard==='function'){const r=addPlayerCard(p,sum);sum.cardId=r.card.id;sum.coins=r.coins;sum.cardOvr=cardOvr(r.card);if(typeof metaSave==='function')metaSave()}
+  if(p.fate){sum.fate={ty:p.fate.ty,why:p.fate.why};sum.hi=(p.fate.ty==='death'?'志半ばで逝去・':'突然の引退・')+(sum.hi||'')}
   S.summary=sum;S.screen='retired';
-  if(typeof cutQ==='function')cutQ('retire','現役引退',`${p.sei}${p.mei}、長い間お疲れさま`,2800);
-  pushNews(`【引退】${p.sei}${p.mei}が現役引退を発表`);
+  if(!p.fate){if(typeof cutQ==='function')cutQ('retire','現役引退',`${p.sei}${p.mei}、長い間お疲れさま`,2800);
+  pushNews(`【引退】${p.sei}${p.mei}が現役引退を発表`)}
 }
 
 /* ========== ニュース ========== */
@@ -4436,13 +4492,14 @@ H.mres=()=>{
   const p=S.p,R=S.mres,m=R.m;
   const ds=R.d.filter(([,v])=>Math.abs(v)>=.5).map(([k,v],i)=>`<span class="chip pop ${v>0?'up':'down'}${v>=2?' big':''}" style="animation-delay:${300+i*90}ms">${lbl(k,p)} ${v>0?'+':''}<span data-cnt="0>${v}" data-dec="1" data-wait="${300+i*90}">${v.toFixed(1)}</span></span>`).join('');
   const mini=[['体力',R.dsta],['調子',R.dcond]];if(R.dfam!==null)mini.push([p.fam.partner&&p.fam.partner.married?'家族':'愛情',R.dfam]);
-  const m1=R.m1!=null?R.m1:m,next=m1===9?'シーズン総括へ':m1===11?'新シーズンへ':`${MONTHS[m1+1]}–${MONTHS[turnEnd(m1+1)]}月へ`;
+  const m1=R.m1!=null?R.m1:m,next=p.fate&&p.fate.ty!=='acc'?(p.fate.ty==='death'?'お別れの会へ':'引退会見へ'):m1===9?'シーズン総括へ':m1===11?'新シーズンへ':`${MONTHS[m1+1]}–${MONTHS[turnEnd(m1+1)]}月へ`;
   // ハイライト：自分のゴール（GKならセーブ）をドット絵で流す
   if(S._scnKey!=='mres'+R.y+'-'+m){S._scnKey='mres'+R.y+'-'+m;careerScnTeams(p);
     const goals=R.matches.reduce((s,x)=>s+(x.pg||0),0),gk=p.pos==='GK',cs=R.matches.filter(x=>x.min&&x.ga===0).length,q=[];
     const n=Math.min(3,gk?cs:goals);for(let k=0;k<n;k++){const d=Math.floor(Math.random()*3);q.push(gk?{atk:'away',dir:d,dive:d,res:'save'}:{atk:'home',dir:d,dive:(d+1)%3,res:'goal'})}
     if(q.length)scnQueue(q);else scnAmbient()}
-  return `${pcard(p,'compact')}
+  const F=R.fate,fb=F?`<div class="fate ${F.ty}"><b>${F.ty==='death'?'訃報':F.ty==='retire'?F.head:'交通事故'}</b><p>${esc(F.why)}${F.ty==='retire'?'。ここで現役生活が終わる。':'。'}</p></div>`:'';
+  return `${fb}${pcard(p,'compact')}
   <div class="kick">${R.y}年${MONTHS[m]}–${MONTHS[m1]}月の結果<span class="r">${esc(R.act)}</span></div>
   ${R.matches.length?scnHtml():''}
   ${R.ev?`<p class="note">このターンの出来事：${esc(R.ev.t)}（${esc(R.ev.l)}）</p>`:''}
@@ -4537,11 +4594,12 @@ H.retired=()=>{
   const avg=p.tot.rn?(p.tot.rs/p.tot.rn).toFixed(2):'—';
   const famTxt=P&&P.married?`会見場の最前列には、パートナーの${P.n}${p.fam.kids.length?`と子どもの${p.fam.kids.map(k=>k.n).join('、')}`:''}の姿があった。`:'';
   const owned=SHOP.filter(x=>p.items[x.id]&&x.price>=3000).map(x=>x.n);
-  return `<article class="front"><span class="gogai">号外</span><div><div class="dateline"><span>${p.year+1}年夏</span><span>${s.age}歳で引退</span></div>
-   <p class="deck">${esc(p.sei)}${esc(p.mei)}、${s.pro?'現役引退を発表':'プロの夢を胸に、ユニフォームを脱ぐ'}</p>
-   <p class="quote">「${esc(s.quote)}」</p>
+  const F=s.fate,dead=F&&F.ty==='death';
+  return `<article class="front ${dead?'mourn':''}"><span class="gogai">${dead?'訃報':'号外'}</span><div><div class="dateline"><span>${calYear(p)}年${MONTHS[p.month]}月</span><span>${dead?`享年${s.age}`:`${s.age}歳で引退`}</span></div>
+   <p class="deck">${esc(p.sei)}${esc(p.mei)}、${dead?'突然の別れ':F?'無念の現役引退':s.pro?'現役引退を発表':'プロの夢を胸に、ユニフォームを脱ぐ'}</p>
+   ${F?`<p class="lede">${esc(F.why)}。${dead?'スタジアムには花束が並び、背番号は永久欠番になった。':'会見では最後まで前を向き、仲間とファンに感謝を伝えた。'}</p>`:`<p class="quote">「${esc(s.quote)}」</p>`}
    <p class="lede">主な所属は${esc(s.clubs)}。公式戦通算${p.tot.apps}試合${p.pos==='GK'?`、無失点${p.tot.cs}試合`:`${p.tot.goals}得点${p.tot.ast}アシスト`}。${p.natTot.caps?`日本代表では${p.natTot.caps}試合に出場した。`:''}${esc(famTxt)}生涯収入は${yen(p.earnings)}、引退時の資産は${yen(p.money+p.inv)}。</p></div>
-   ${vhead(p.sei,'引退','ink')}</article>
+   ${vhead(p.sei,dead?'追悼':'引退','ink')}</article>
   <div class="kick">通算成績</div>
   <div class="statgrid"><div><b>${p.tot.apps}</b><span>試合</span></div><div><b>${p.pos==='GK'?p.tot.cs:p.tot.goals}</b><span>${p.pos==='GK'?'無失点':'得点'}</span></div><div><b>${p.tot.ast}</b><span>アシスト</span></div><div><b>${p.peak}</b><span>最高総合</span></div></div>
   <table class="st" style="margin-top:8px"><tbody><tr><th>平均評価点</th><td class="n">${avg}</td></tr><tr><th>日本代表</th><td class="n">${p.natTot.caps}試合 ${p.natTot.goals}得点${p.natTot.wc?`・W杯${p.natTot.wc}大会`:''}</td></tr>
