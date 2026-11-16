@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-145356';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-162659';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -716,6 +716,7 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .stk-own{padding:0 12px 6px;font-size:12px;color:var(--soft)}
 .stk-b{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px}
 .stk-b .opt.sm{flex:1 1 30%;padding:6px 4px;font-size:12px;min-height:0}
+.stb .st3i{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;object-fit:contain;pointer-events:none}
 
 </style>
 </head>
@@ -1994,7 +1995,11 @@ function drawStand3(o){
   return P;
 }
 const ST3_CACHE={};
-function stand3Svg(P){let s='';for(let y=0;y<SH3;y++){let x=0;while(x<SW){const c=P.B[y*SW+x];if(!c){x++;continue}let e=x;while(e+1<SW&&P.B[y*SW+e+1]===c)e++;s+=`<rect x="${x}" y="${y}" width="${e-x+1}" height="1" fill="${c}"/>`;x=e+1}}
+function stand3Svg(P){
+  if(typeof document!=='undefined'){try{const cv=document.createElement('canvas');cv.width=SW*2;cv.height=(SH3+2)*2;const g=cv.getContext('2d');g.scale(2,2);g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(32,SH3-3,20,2.6,0,0,Math.PI*2);g.fill();
+    for(let y=0;y<SH3;y++)for(let x=0;x<SW;x++){const c=P.B[y*SW+x];if(c){g.fillStyle=c;g.fillRect(x,y,1,1)}}
+    return `<img class="st3i" src="${cv.toDataURL('image/png')}" alt="" draggable="false">`}catch(e){}}
+  let s='';for(let y=0;y<SH3;y++){let x=0;while(x<SW){const c=P.B[y*SW+x];if(!c){x++;continue}let e=x;while(e+1<SW&&P.B[y*SW+e+1]===c)e++;s+=`<rect x="${x}" y="${y}" width="${e-x+1}" height="1" fill="${c}"/>`;x=e+1}}
   return `<svg viewBox="0 0 ${SW} ${SH3+2}" shape-rendering="crispEdges" aria-hidden="true"><ellipse cx="32" cy="${SH3-3}" rx="20" ry="2.6" fill="rgba(0,0,0,.35)"/>${s}</svg>`}
 function standArt3(c,kind){
   if(kind==='mg'||(c&&c.kind==='mg'))return sprOf(c,'mg');
@@ -2807,7 +2812,7 @@ function monthlyCost(p){
   Object.keys(p.subs).filter(k=>p.subs[k]).forEach(k=>items.push([shopItem(k).n,shopItem(k).price]));
   return items;
 }
-const monthlyIncome=p=>p.stage==='pro'?Math.round(p.salary/12*(1-taxRate(p.salary))):3;
+const monthlyIncome=p=>(p.stage==='pro'?Math.round(p.salary/12*(1-taxRate(p.salary))):3)+(typeof partnerInc==='function'?partnerInc(p):0);
 
 const capLimOf=(p,k)=>p.capLim?p.capLim[k]:SMAX;
 /* イベントでの上げ下げ。上がるときは限界+1までしか伸びない */
@@ -3049,7 +3054,7 @@ function sim(p,{os,base,home,neutral,comp}){
     const P=POS[p.pos],sty=P.styles[p.style],lv=clamp(1+(o-os)/32,.35,2);
     const gKey=p.pos==='FW'?p.st.sho:p.pos==='MF'?p.st.sho*.6+p.st.tec*.4:p.st.phy;
     const aKey=p.st.pas*.6+p.st.tec*.4;
-    const gR=Math.min(1.15,P.g*sty.g*Math.pow(gKey/70,2.2)*lv*(1+p.boost*.03)*(has(p,'goal')?1.15:1)*(has(p,'fk')?1.1:1)*(has(p,'speed')?1.05:1));
+    const gR=Math.min(1.15,P.g*sty.g*Math.pow(gKey/70,2.2)*lv*(1+p.boost*.03)*(has(p,'goal')?1.15:1)*(has(p,'fk')?1.1:1)*(has(p,'speed')?1.05:1)*(typeof hGoal==='function'?hGoal(p):1));
     const aR=Math.min(.8,P.a*sty.a*Math.pow(aKey/70,2)*lv*(has(p,'vision')?1.2:1)*(1+((p.mates==null?50:p.mates)-50)/250));
     pg=poisson(gR*min/90);pa=poisson(aR*min/90);
     gf=Math.max(gf,pg);pa=Math.min(pa,gf-pg);
@@ -3207,6 +3212,7 @@ function confirmAction(){
   const cl=typeof clutchEv==='function'?clutchEv(p):null;
   if(ev!=='sp:fate'){const extra=Math.random()<.35?(Math.random()<.3?2:1):0;for(let k=0;k<extra;k++){const id=pickEvents(p,6).find(x=>!q.includes(x));if(id)q.push(id)}}
   if(cl&&!q.includes(cl))q.push(cl);
+  if(typeof proposeEv==='function'){const pe=proposeEv(p);if(pe&&!q.includes(pe))q.unshift(pe)}
   if(q.length){S.evq=q;S.evi=0;S.evr=null;S.screen='event'}else runMonth();
 }
 const JIT_KEYS=['spd','tec','sho','pas','phy','def','key','all','pop','coach','cond','sta','scout','nat','fam','love','money'];
@@ -3653,9 +3659,10 @@ function addPlayerCard(p,sum){
   const fx=p.legFx||{},end=[];
   if(fx.endDef){st.def=Math.min(99,st.def+fx.endDef);end.push(`カカオ・マメオの教え：守備+${fx.endDef}`)}
   if(fx.inuMarry&&p.fam&&p.fam.partner&&p.fam.partner.married){KEYS.forEach(k=>st[k]=Math.min(99,st[k]+3));end.push('かわいいいぬの教え：結婚していたので全能力+3')}
+  if(p.fam&&p.fam.partner&&p.fam.partner.married){KEYS.forEach(k=>st[k]=Math.min(99,st[k]+1));end.push(`${p.fam.partner.n}と最後まで添い遂げた：全能力+1`)}
   if(sum)sum.legEnd=end;
   const c={id:uidGen('p'),kind:'pl',name:`${p.sei} ${p.mei}`,pos:p.pos,style:POS[p.pos].styles[p.style].n,st,plus:{},enh:0,
-   legend:has(p,'legend'),genius:has(p,'monster'),skills:p.skills.map(k=>SKILLS[k].n),grade:sum.grade,peak:p.peak,from:'育成',t:Date.now()};
+   legend:has(p,'legend'),genius:has(p,'monster'),skills:p.skills.map(k=>SKILLS[k].n),grade:sum.grade,peak:p.peak,from:'育成',t:Date.now(),height:p.height||null,title:p.title||null,nation:p.nation||null};
   M.roster.unshift(c);
   const coins=CAREER_COINS;
   M.coins+=coins;
@@ -4379,9 +4386,10 @@ function makeMgr(d){
   for(const k of MKEYS){const f=sty.f.includes(k);
     cap[k]=legend?ri(95,99):famous?ri(85,91):clamp(Math.round(79+gauss()*4+(f?4:-1)),66,88);
     st[k]=legend?ri(62,70)+(f?3:0):famous?ri(56,66)+(f?3:0):ri(37,48)+(f?5:0);}
-  return {sei:d.sei,mei:d.mei,style:d.style,famous,legend,st,cap};
+  const m={sei:d.sei,mei:d.mei,style:d.style,famous,legend,st,cap};
+  return typeof c5Mgr==='function'?c5Mgr(m,d):m;
 }
-function newMgrDraft(prev){const d={sei:pick(SEI),mei:pick(MEI),style:ri(0,2),n:(prev&&prev.n||0)+1,inh:prev&&prev.inh?prev.inh.slice():[],iseed:inhSeed(prev)};d.prev=makeMgr(d);return d}
+function newMgrDraft(prev){const d={nation:prev&&prev.nation||'jp',natTab:prev&&prev.natTab,sei:pick(SEI),mei:pick(MEI),style:ri(0,2),n:(prev&&prev.n||0)+1,inh:prev&&prev.inh?prev.inh.slice():[],iseed:inhSeed(prev)};d.prev=makeMgr(d);return d}
 const mgPot=m=>{const a=MKEYS.reduce((s,k)=>s+m.cap[k],0)/5;return a>=92?'SS':a>=86?'S':a>=82?'A':a>=78?'B':a>=74?'C':'D'};
 const mgHas=k=>!!(MC&&MC.m.traits||[]).includes(k);
 const mgLeague=()=>MC.lg||CLUBS[MC.club].lg;
@@ -4395,7 +4403,7 @@ function mgStr(){
 }
 function mgStart(){
   const d=G.mdraft,m=d.prev;m.sei=d.sei;m.mei=d.mei;m.traits=inhRoll(d,'mg').map(r=>r.k);
-  const pool=CLUBS.filter(c=>m.famous?(c.lg==='J2'||c.lg==='J1'&&c.rep<65):(c.lg==='J3'||c.lg==='J2'&&c.rep<53));
+  const pool=(typeof mgPool==='function'&&mgPool(m))||CLUBS.filter(c=>m.famous?(c.lg==='J2'||c.lg==='J1'&&c.rep<65):(c.lg==='J3'||c.lg==='J2'&&c.rep<53));
   MC={m,season:0,year:2035,age:41,club:null,lg:null,boost:0,pts:7,mine:[],rep:m.famous?45:30,titles:{league:0,cup:0,promo:0},hist:[],
     offers:shuffle(pool.slice()).slice(0,3).map(c=>c.id),screen:'moffer',first:true,seen:{}};
   G.mdraft=null;mgSave();
@@ -4470,6 +4478,7 @@ function mgMatch(my,opp,P){
   return [poisson(1.3*Math.exp((a-b)/13)*P.f*late*(mgHas('atk')?1.08:1)),poisson(1.3*Math.exp((b-a)/13)*P.a*(mgHas('dfn')?.9:1))];
 }
 function mgRunPhase(){
+  typeof mgActApply==='function'&&mgActApply();
   const c=MC.cur,P=MPLAN[c.plan],ph=c.phase,n=c.sched[ph],S0=mgStr();
   const my=S0.tot+c.mod+c.nextMod+P.s;
   const out={ph,plan:c.plan,games:[],cup:[],w:0,d:0,l:0};
@@ -4567,6 +4576,7 @@ H.mgCreate=()=>{
   ${mgCard(m,'41歳・就任先未定')}
   <div class="label">名前</div><div class="field"><input id="msei" aria-label="姓" value="${esc(d.sei)}" maxlength="6"><input id="mmei" aria-label="名" value="${esc(d.mei)}" maxlength="6"><button class="opt" data-act="mgRandName">おまかせ</button></div>
   <div class="label">チームづくりの方針</div><div class="seg c3">${MSTYLE.map((s,i)=>`<button class="opt" aria-pressed="${d.style===i}" data-act="mgStyle" data-v="${i}">${s.n}<span class="d">${s.d}</span></button>`).join('')}</div>
+  ${typeof mgNatHtml==='function'?mgNatHtml(d):''}
   ${inhBlock(d,'mg','mgInh')}
   <div class="stack" style="margin-top:18px"><button class="btn red" data-act="mgStart">この監督で始める</button><button class="btn ghost" data-act="mgReroll">別の候補を探す</button><button class="btn ghost" data-act="mgBack">戻る</button></div>`;
 };
@@ -4614,6 +4624,7 @@ H.phase=()=>{
   <div class="kick">${PHN[c.phase]}<span class="r">${L.n} ${n}試合${cupR.length?`・${esc(c.cup.name)} ${cupR.map(r=>r.nm).join('→')}`:''}</span></div>
   ${c.phase>0?mgTable():`<p class="note">開幕前の予想順位は${c.exp}位。これより上で終われば評価が上がる。</p>`}
   <div class="statgrid" style="margin-top:12px"><div><b>${s.tot}</b><span>チーム力</span></div><div><b>${sgn(Math.round((c.mod)*10)/10)}</b><span>出来事の影響</span></div><div><b>${c.exp}位</b><span>予想順位</span></div><div><b>${MC.m.st.ana}</b><span>分析</span></div></div>
+  ${typeof mgActHtml==='function'?mgActHtml():''}
   <div class="kick">この期間の戦い方<span class="r">ひとつ選ぶ</span></div>
   <div class="acts">${Object.entries(MPLAN).map(([k,P])=>`<button class="act" aria-pressed="${c.plan===k}" data-act="mgPlan" data-v="${k}"><b>${P.n}</b><span>${P.d}</span></button>`).join('')}</div>
   <div class="stack" style="margin-top:16px"><button class="btn red" data-act="mgRun">${PHN[c.phase]}を戦う</button></div>`;
@@ -4621,7 +4632,7 @@ H.phase=()=>{
 H.pres=()=>{
   const c=MC.cur,R=c.res[c.res.length-1];
   const row=(g,i)=>`<li class="mt"><span class="md num">${g.nm?esc(g.nm):`第${i+1+(R.ph>0?c.sched.slice(0,R.ph).reduce((s,x)=>s+x,0):0)}節`}</span><span class="mo">vs ${esc(g.opp)}${g.pk?`<small>${g.pk}</small>`:''}</span><span class="ms ${g.res}"><i>${{w:'○',d:'△',l:'●'}[g.res]}</i>${g.gf}-${g.ga}</span><span class="mr"></span></li>`;
-  return `${mgHead()}<div class="kick">${PHN[R.ph]}の結果<span class="r">${MPLAN[R.plan].n}・${R.w}勝${R.d}分${R.l}敗</span></div>
+  return `${mgHead()}<div class="kick">${PHN[R.ph]}の結果<span class="r">${MPLAN[R.plan].n}・${R.w}勝${R.d}分${R.l}敗</span></div>${c.actRes?`<p class="note">自分磨き「${esc(c.actRes.n)}」：${c.actRes.fx.filter(x=>x[1]>0).map(x=>esc(x[0])+'+'+x[1]).join(' ')||'能力の変化なし'}</p>`:''}
   <ul class="mlist">${R.games.map(row).join('')}</ul>
   ${R.cup.length?`<div class="kick">${esc(c.cup.name)}</div><ul class="mlist">${R.cup.map(row).join('')}</ul>`:''}
   <div class="kick">順位表<span class="r">${R.rank}位</span></div>${mgTable()}
@@ -4695,14 +4706,14 @@ function pcard(p,mode='full'){
   const pre=mode==='preview',c=pre?null:clubOf(p),o=ovrOf(p),st=POS[p.pos].styles[p.style];
   const where=pre?`${p.age}歳・${esc(p.school)}（3年）`:`${p.age}歳・${esc(c.n)}${p.stage==='pro'?'・'+LG[c.lg].n:p.stage==='uni'?'・'+p.uniYear+'年':'・3年'}`;
   const pot=p.flags.potShown?`伸びしろ ${p.flags.potEst}`:`スカウト評価 ${p.flags.potEst}`;
-  const tags=[st.n,GROWTH[p.growth].n,FEET[p.foot].n].map(t=>`<span>${esc(t)}</span>`).join('')+`<span class="pot">${pot}</span>`+p.skills.map(k=>`<span class="sk" title="${esc(SKILLS[k].d)}">${esc(SKILLS[k].n)}</span>`).join('');
+  const tags=(p.title?`<span class="sk">${esc(p.title)}</span>`:'')+[st.n,GROWTH[p.growth].n,FEET[p.foot].n].map(t=>`<span>${esc(t)}</span>`).join('')+`<span class="pot">${pot}</span>`+p.skills.map(k=>`<span class="sk" title="${esc(SKILLS[k].d)}">${esc(SKILLS[k].n)}</span>`).join('');
   const [fl,fv]=famMeter(p);
   const meters=pre?'':mode==='compact'
     ?`<div class="meters"><div><span>体力</span><b class="${p.sta<30?'bad':''}">${Math.round(p.sta)}</b></div><div><span>調子</span><b>${Math.round(p.cond)}</b></div><div><span>${fl}</span><b>${fv}</b></div><div><span>所持金</span><b class="${p.money<0?'bad':''}">${yen(p.money)}</b></div></div>`
     :`<div class="meters"><div><span>人気</span><b>${Math.round(p.pop)}</b></div><div><span>監督評価</span><b>${Math.round(p.coach)}</b></div><div><span>体力</span><b class="${p.sta<30?'bad':''}">${Math.round(p.sta)}</b></div><div><span>調子</span><b>${Math.round(p.cond)}</b></div></div><div class="wallet"><span>所持金 <b class="${p.money<0?'bad':''}">${yen(p.money)}</b></span><span>年俸 <b>${p.salary?yen(p.salary):'—'}</b></span></div>`;
   return `<section class="pcard ${has(p,'legend')||o>=93?'legendary':''}" aria-label="選手情報">
    <div class="pc-top wf"><div class="pc-ovr"><span class="n">${o}</span><span class="pos">${p.pos}</span><span class="tier">${tierOf(o)}</span></div>
-   <div class="pc-id"><div class="name">${esc(p.sei)}<b>${esc(p.mei)}</b></div><div class="sub">${where}${!pre&&p.inj>0?` ・<em class="bad">負傷中 残り${Math.ceil(p.inj)}週</em>`:''}</div><div class="tags">${tags}</div></div><div class="pc-face">${standArt3({sei:p.sei,mei:p.mei,pos:p.pos,skills:p.skills})}</div></div>
+   <div class="pc-id"><div class="name">${esc(p.sei)}<b>${esc(p.mei)}</b></div><div class="sub">${where}${p.height?`・${p.height}cm`:''}${!pre&&p.inj>0?` ・<em class="bad">負傷中 残り${Math.ceil(p.inj)}週</em>`:''}</div><div class="tags">${tags}</div></div><div class="pc-face">${standArt3({sei:p.sei,mei:p.mei,pos:p.pos,skills:p.skills})}</div></div>
    ${mode==='compact'?mini(p):radar(p)}${meters}
   </section>`;
 }
@@ -5026,17 +5037,18 @@ H.life=()=>{
     ${p.fam.kids.length?`<p class="sub" style="margin:8px 0 0">子ども：${p.fam.kids.map(k=>`${esc(k.n)}（${calYear(p)-k.y}歳）`).join('、')}</p>`:''}
     ${isAbroad(p)&&P.married?`<p class="sub" style="margin:4px 0 0">${p.fam.abroad?'家族と一緒に海外で暮らしている':'家族は日本に残っている'}</p>`:''}`:'<p class="note" style="margin:0">今は恋人がいない。出会いは突然やってくる。</p>';
   const cat=S.shopCat;
-  return `${S.shopMsg?`<div class="toast"><b>${esc(S.shopMsg.n)}</b>を手に入れた${S.shopMsg.fx.length?`<div class="chips">${chipsOf(S.shopMsg.fx)}</div>`:''}</div>`:''}
-  <div class="kick">資産</div>
+  const shopToast=S.shopMsg?`<div class="toast"><b>${esc(S.shopMsg.n)}</b>を手に入れた${S.shopMsg.fx.length?`<div class="chips">${chipsOf(S.shopMsg.fx)}</div>`:''}</div>`:'';
+  return `<div class="kick">資産</div>
   <div class="money"><div><span class="sub">所持金</span><b class="num ${p.money<0?'bad':''}">${yen(p.money)}</b></div><div><span class="sub">運用中</span><b class="num">${yen(p.inv)}</b></div></div>
   <table class="st"><tbody><tr><th>年俸（額面）</th><td class="n">${p.salary?yen(p.salary):'—'}</td></tr><tr><th>毎月の手取り</th><td class="n">${yen(inc)}</td></tr>${costs.map(([n,v])=>`<tr><th>${esc(n)}</th><td class="n">-${yen(v)}</td></tr>`).join('')}<tr><th>毎月の収支</th><td class="n ${inc-cost<0?'bad':''}">${inc-cost>=0?'+':''}${yen(inc-cost)}</td></tr></tbody></table>
   <div class="seg c2" style="margin-top:10px"><button class="opt" data-act="invest" ${p.money>=1000?'':'disabled'}>1,000万円を運用に回す</button><button class="opt" data-act="withdraw" ${p.inv>0?'':'disabled'}>運用資金を引き出す</button></div>
   <p class="note" style="margin-top:8px">運用の結果は毎シーズンの開幕時に出る。平均は年+5%前後だが、大きく減る年もある。</p>
   ${typeof stockHtml==='function'?stockHtml(p):''}
-  <div class="kick">家族</div>${fam}${p.dog?`<div style="margin-top:8px">${dogBar(p)}</div>`:''}
+  <div class="kick">家族</div>${fam}${typeof proposeHtml==='function'?proposeHtml(p):''}${p.dog?`<div style="margin-top:8px">${dogBar(p)}</div>`:''}
   <p class="sub" style="margin-top:10px">住まい：${homeN}${p.car?`・クルマ：${esc(shopItem(p.car).n)}`:''}</p>
   <div class="kick">買い物</div>
   <div class="cats">${SHOPCAT.map(([k,n])=>`<button class="opt" aria-pressed="${cat===k}" data-act="shopCat" data-v="${k}">${n}</button>`).join('')}</div>
+  ${shopToast}
   <div class="items">${shopList(p,cat).map(it=>shopCard(it,p)).join('')}</div>
   ${cat==='self'&&!Object.keys(p.legends||{}).length?'<p class="note" style="margin-top:10px">レジェンドに出会うと、その選手の特別指導がここに並ぶ。</p>':''}`;
 };
@@ -5136,7 +5148,7 @@ const ACT={
  askRetire:()=>{S.modal='retire'},
  doRetire:()=>{S.modal=null;retire();toTop()},
  shopCat:v=>{S.shopCat=v;S.shopMsg=null},
- buy:v=>{buy(v);toTop()},
+ buy:v=>{buy(v)},
  hideInApp:()=>{G.hideInApp=true},
  dogBuy:v=>{buy(v)},
  dogRand:()=>{const d=S.p&&S.p.dog;if(d)d._sug=pick(DOGN)},
@@ -5172,7 +5184,7 @@ function cardMini(c){
 function cardTile(c,opts={}){
   const mg=isMgr(c),o=mg?mgrOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
   const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:c.special==='renkei'?`<span class="sk">${RENKEI_SKILL.n}</span>`:c.special==='oibore'?`<span class="sk">${OIBORE_SKILL.n}</span>`:c.special==='uhho'?`<span class="sk">${UHHO_SKILL.n}</span>`:c.special==='tabako'?`<span class="sk">${TABAKO_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
-  return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${standArt3(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span></div></div>${tag||c.gikkuri>0?`<div class="tags">${tag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
+  return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${standArt3(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${c.title?`<b style="color:var(--gold)">${esc(c.title)}</b>・`:''}${c.height?c.height+'cm・':''}${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span></div></div>${tag||c.gikkuri>0?`<div class="tags">${tag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
 }
 
 /* ---------- ガチャ ---------- */
@@ -5231,7 +5243,7 @@ function slotLabel(i){const F=FORMS[M.squad.form];return F.s[i][0]}
 function pitchHtml(T){
   const F=FORMS[M.squad.form];
   return `<div class="pitch" role="group" aria-label="${F.n}の布陣">${F.s.map(([role,x,y],i)=>{const p=T.pl[i],sel=G.sq.slot===i;
-    return `<button class="slot ${p.filler?'empty':''} ${p.cap?'cap':''} ${p.emp||p.mao||p.starter?'emp':''} ${p.legend?'leg':''}" style="left:${x}%;top:${y}%" aria-pressed="${sel}" data-act="sqSlot" data-v="${i}"><span class="sr">${role}</span><b class="num">${Math.round(p.r)}</b><span class="sn">${esc(p.filler?'空き':p.n.split(' ').pop())}</span></button>`}).join('')}</div>`;
+    return `<button class="slot ${p.filler?'empty':''} ${p.cap?'cap':''} ${p.emp||p.mao||p.starter?'emp':''} ${p.legend?'leg':''}" style="left:${x}%;top:${y}%" aria-pressed="${sel}" data-act="sqSlot" data-v="${i}"><span class="sr">${role}</span><b class="num">${Math.round(p.r)}</b><span class="sn">${esc(p.filler?'空き':p.n.split(' ').pop().replace(/^・/,''))}</span></button>`}).join('')}</div>`;
 }
 function pickerHtml(){
   const i=G.sq.slot;
@@ -5261,7 +5273,7 @@ H.squad=()=>{
   <div class="label">戦術<span class="r">試合の最初の戦術（CPU戦は試合中に変えられる）</span></div><div class="seg c3">${Object.entries(TACS).map(([k,t])=>`<button class="opt" aria-pressed="${(M.squad.tac||'bal')===k}" data-act="sqTac" data-v="${k}">${t.n}<span class="d">${t.d}</span></button>`).join('')}</div>
   ${pitchHtml(T)}
   <div class="label">ベンチ（交代要員・5人まで）</div>
-  <div class="bench">${M.squad.bench.map((id,i)=>{const c=cardById(id);return `<button class="bslot ${c?'':'empty'} ${c&&c.special?'emp':''}" aria-pressed="${G.sq.slot==='b'+i}" data-act="sqSlot" data-v="b${i}"><span class="sr">${c?c.pos:'空き'}</span><b class="num">${c?cardOvr(c):'—'}</b><span class="sn">${c?esc(c.name.split(' ').pop()):'ベンチ'}</span></button>`}).join('')}</div>
+  <div class="bench">${M.squad.bench.map((id,i)=>{const c=cardById(id);return `<button class="bslot ${c?'':'empty'} ${c&&c.special?'emp':''}" aria-pressed="${G.sq.slot==='b'+i}" data-act="sqSlot" data-v="b${i}"><span class="sr">${c?c.pos:'空き'}</span><b class="num">${c?cardOvr(c):'—'}</b><span class="sn">${c?esc(c.name.split(' ').pop().replace(/^・/,'')):'ベンチ'}</span></button>`}).join('')}</div>
   <button class="mgslot" aria-pressed="${G.sq.slot==='mgr'}" data-act="sqSlot" data-v="mgr"><span class="sr">監督</span><b>${mg?esc(mg.n):'未設定（代行監督）'}</b>${mg?`<span class="sub">${MKEYS.map(k=>MLBL[k]+mg.st[k]).join(' ')}</span>`:''}</button>
   ${T.hasMao?`<div class="toast"><b>${MAO_SKILL.n}</b>：試合中1回の決定機でシュート＋25、発動の瞬間に本人の全能力−10。<div class="seg c2" style="margin-top:8px"><button class="opt" aria-pressed="${M.squad.maoSub!==false}" data-act="sqMaoSub" data-v="1">発動後ベンチに下げる<span class="d">交代：${esc(T.sub?T.sub.n:'控え')}（${T.sub?Math.round(T.sub.r):'—'}）・チーム全能力＋2</span></button><button class="opt" aria-pressed="${M.squad.maoSub===false}" data-act="sqMaoSub" data-v="0">出し続ける<span class="d">全能力−10のまま最後まで</span></button></div></div>`:''}
   ${T.hasEmp?`<div class="toast"><b>${EMP_SKILL.n}あり。</b>試合の後半、味方全員の守備＋6。</div>`:''}
@@ -5517,7 +5529,7 @@ Object.assign(ACT,{
  mgResume:()=>{G.mgTop=false},
  mgBack:()=>{G.mdraft=null},
  mgInh:v=>{syncInputs();inhToggle(G.mdraft,v)},
- mgRandName:()=>{syncInputs();G.mdraft.sei=pick(SEI);G.mdraft.mei=pick(MEI)},
+ mgRandName:()=>{syncInputs();const x=nameOf(G.mdraft.nation||'jp');G.mdraft.sei=x.sei;G.mdraft.mei=x.mei},
  mgStyle:v=>{syncInputs();G.mdraft.style=+v;G.mdraft.prev=makeMgr(G.mdraft)},
  mgReroll:()=>{syncInputs();const d=G.mdraft;G.mdraft=newMgrDraft(d);G.mdraft.style=d.style;G.mdraft.prev=makeMgr(G.mdraft);G.mdraft.sei=d.sei===G.mdraft.sei?d.sei:G.mdraft.sei},
  mgStart:()=>{syncInputs();mgStart();toTop()},
@@ -6211,7 +6223,7 @@ function tradeHtml(){
     <button class="linkbtn center" data-act="trCancel">やめる（あげない）</button></div>`:''}
   <div class="label">あげるキャラを選ぶ（${list.length}人）</div>
   ${list.length?`<div class="plist">${list.map(c=>{const sel=T.sel===c.id,inSq=inSquad(c.id);
-    return `<button class="prow ${sel?'on':''} ${inSq?'lock':''}" data-act="trSel" data-v="${c.id}" ${inSq?'disabled aria-disabled="true"':''}><span class="pf">${sprOf(c,c.kind==='mg'?'mg':undefined)}</span><span class="po">${c.kind==='mg'?'監督':c.pos}</span><b>${esc(c.name)}</b><span class="sub">${inSq?'🔒 スカッドで使用中（外すと交換できる）':`${c.enh?`強化+${c.enh}（引き継ぐ）・`:''}${c.grade?`評価${c.grade}`:''}${c.giftFrom?`・${esc(c.giftFrom)}からもらった`:''}`}</span><span class="num">${c.kind==='mg'?'':cardOvr(c)}</span></button>
+    return `<button class="prow wf ${sel?'on':''} ${inSq?'lock':''}" data-act="trSel" data-v="${c.id}" ${inSq?'disabled aria-disabled="true"':''}><span class="pf">${sprOf(c,c.kind==='mg'?'mg':undefined)}</span><span class="po">${c.kind==='mg'?'監督':c.pos}</span><b>${esc(c.name)}</b><span class="sub">${inSq?'🔒 スカッドで使用中（外すと交換できる）':`${c.enh?`強化+${c.enh}（引き継ぐ）・`:''}${c.grade?`評価${c.grade}`:''}${c.giftFrom?`・${esc(c.giftFrom)}からもらった`:''}`}</span><span class="num">${c.kind==='mg'?'':cardOvr(c)}</span></button>
       ${sel&&!inSq&&!P?`<div class="trconf"><p>${esc(c.name)}をあげる？</p><div class="seg c2"><button class="opt" data-act="trMake" data-v="${c.id}">あげるコードを作る</button><button class="opt" data-act="trSel" data-v="">やめる</button></div></div>`:''}`}).join('')}</div>`:'<p class="note">育成した選手・監督がまだいない。ガチャで出たキャラはあげられない。</p>'}
   <div class="label">もらったキャラを受け取る</div>
   <div class="stack"><button class="btn red" data-act="trPaste">コピーしたコードを貼って受け取る</button></div>
@@ -6355,13 +6367,14 @@ function c2Make(pl,d){
   pl.mates=50;pl.fat=8;pl.oldInj=0;
   const key=POS[pl.pos].key;pl.alloc={[key]:2,[key==='phy'?'spd':'phy']:1};
   pl.rv=mkRival(pl,k);
+  typeof c5Make==='function'&&c5Make(pl,d);
   return pl;
 }
 /* ----- 練習・体 ----- */
 const ALLOC_K=['sho','pas','spd','tec','phy','def'],ALLOC_N=4;
 const restOf=p=>Math.max(0,ALLOC_N-ALLOC_K.reduce((s,k)=>s+((p.alloc&&p.alloc[k])||0),0));
 const REST_FX=[{g:1,inj:1.6,f:7,t:'休みなし：ケガのリスク大・疲労がたまる'},{g:1,inj:1,f:2,t:'休み1：標準'},{g:.88,inj:.8,f:-3,t:'休み2：回復しやすいが成長やや控えめ'},{g:.72,inj:.65,f:-6,t:'休み3：成長が鈍る'},{g:.55,inj:.5,f:-9,t:'休み4：ほとんど伸びない'}];
-function bodyInj(p){return (1+(p.fat||0)/110)*(1+.15*(p.oldInj||0))*(p.alloc?REST_FX[restOf(p)].inj:1)*(p.vet?.9:1)*(typeof c4Inj==='function'?c4Inj(p):1)}
+function bodyInj(p){return (1+(p.fat||0)/110)*(1+.15*(p.oldInj||0))*(p.alloc?REST_FX[restOf(p)].inj:1)*(p.vet?.9:1)*(typeof c4Inj==='function'?c4Inj(p):1)*(typeof hInj==='function'?hInj(p):1)}
 function growMul(p){return (1-(p.fat||0)/280)*(p.alloc?REST_FX[restOf(p)].g:1)}
 function c2Start(p,club){
   let r=0;
@@ -6394,6 +6407,7 @@ function c2Month(p,a,res,m,first){
     if(p.hope<=0&&!p.fate){p.fate={ty:'dream',why:N.war?'故郷の情勢と家族の暮らしを前に、プロの夢をあきらめた':'家族を支えるため、プロの夢をあきらめた'};res.notes.push('夢の灯が消えた…')}
   }
   typeof c4Month==='function'&&c4Month(p,a,res,m,first);
+  typeof c5Month==='function'&&c5Month(p,res);
 }
 function c2Season(p,cur,club,first){
   const N=NATN(p),L=LG[club.lg];
@@ -6440,6 +6454,7 @@ function rivalSeason(p){
 }
 function c2SeasonEnd(p,R,cur){
   R.rival=rivalSeason(p);
+  typeof c5SeasonEnd==='function'&&c5SeasonEnd(p,R);
   if(p.rv&&p.rv.nat===natOf(p)&&p.rv.pos===p.pos&&p.stage==='pro'&&p.age>=19)R.notes.push(`代表の${p.pos}の座を${p.rv.n}と争った`);
   R.rel={coach:Math.round(p.coach),mates:Math.round(p.mates==null?50:p.mates),posR:p.posR?{...p.posR}:null};
   if(p.hope!=null)R.hope=Math.round(p.hope);
@@ -6458,7 +6473,7 @@ function clutchEv(p){
   if(!cand.length)return null;
   cand.sort((a,b)=>b.pri-a.pri);p._cc=cand[0];return 'sp:clutch';
 }
-function clutchRate(p,ty){const s=p.st,b=(p.subs&&p.subs.analyst?.05:0)+(has(p,'big')?.08:0)+(has(p,'kaminoko')?.08:0)+((p.cond||60)-60)/400-(p.fat||0)/400;
+function clutchRate(p,ty){const s=p.st,b=(typeof hClutch==='function'?hClutch(p,ty):0)+(p.subs&&p.subs.analyst?.05:0)+(has(p,'big')?.08:0)+(has(p,'kaminoko')?.08:0)+((p.cond||60)-60)/400-(p.fat||0)/400;
   const v={sho:s.sho,dri:(s.tec+s.spd)/2,pas:s.pas,def:s.def,hed:(s.phy+s.sho)/2,save:(s.spd+s.def)/2}[ty]||60;
   const lv=p.stage==='pro'?clubOf(p).rep:clubOf(p).rep+4;
   return clamp(.32+(v-lv)/55+b,.08,.85)}
@@ -6497,6 +6512,7 @@ function clutchHook(p,info,r,res){
 
 /* ----- 出来事：特別 ----- */
 function c2Roll(p){
+  const c5=typeof c5Roll==='function'?c5Roll(p):null;if(c5)return c5;
   const m=p.month,off=OFF(m);
   if(p.age>=30&&!p.flags.vetAsk&&Math.random()<.4){p.flags.vetAsk=1;return 'sp:vet'}
   if(p.coach<30&&!off&&Math.random()<.3)return 'sp:coach';
@@ -6506,6 +6522,7 @@ function c2Roll(p){
   return null;
 }
 function spEv2(id,p){
+  const e5=typeof c5Ev==='function'?c5Ev(id,p):null;if(e5)return e5;
   const e3=typeof c3Ev==='function'?c3Ev(id,p):null;if(e3)return e3;
   if(id==='sp:clutch')return c2Clutch(p);
   if(id==='sp:vet')return {id,t:'30代の分岐点',x:`${p.age}歳。トップスピードが少しずつ落ちてきたのが自分でもわかる。走り方を変えるか、このまま走り続けるか。`,ch:[
@@ -6855,7 +6872,8 @@ function natPick(d){
 function natInfo(d){
   const N=NATIONS[d.nation||'jp'],b=Object.entries(N.bias).map(([k,v])=>`${lbl(k)}${v>0?'+':''}${v}`).join(' ');
   const ex=[N.arch&&typeof ARCH_N!=='undefined'?ARCH_N[N.arch]:'',N.sport?`人気スポーツ：${N.sport}`:'',N.nofifa?'FIFA未加盟':''].filter(Boolean).join('・');
-  return `<p class="note">出身：<b>${N.fl} ${esc(N.n)}</b>（${esc(N.conf)}）　${esc(N.d)}${b?`<br><small>地域の特色：${ex?esc(ex)+'／':''}${b}</small>`:''}${N.poor>=.3?'<br><b style="color:var(--down)">この地域では、プロになれないまま夢をあきらめることもある。</b>':''}</p>`;
+  const H=d.prev&&d.prev.height,ht=H&&typeof hTraits==='function'?hTraits(H,d.pos||d.prev.pos):[];
+  return `${H?`<p class="note" style="margin-bottom:4px">身長 <b>${H}cm</b>${ht.length?'　'+ht.map(esc).join('・'):''}</p>`:''}<p class="note">出身：<b>${N.fl} ${esc(N.n)}</b>（${esc(N.conf)}）　${esc(N.d)}${b?`<br><small>地域の特色：${ex?esc(ex)+'／':''}${b}</small>`:''}${N.poor>=.3?'<br><b style="color:var(--down)">この地域では、プロになれないまま夢をあきらめることもある。</b>':''}</p>`;
 }
 function rules2(sec,ul){
   return sec('育成：人生のドラマ',ul([
@@ -6867,6 +6885,10 @@ function rules2(sec,ul){
    '<b>体</b>：疲労・古傷・年齢による衰えがある。30歳を過ぎると「ベテラン型」へのスタイル転向を選べることも。',
    '<b>移籍交渉</b>：年俸・出場保証・契約年数を要求できる。欲張ると決裂。代理人を雇うと成功しやすい。',
    '<b>進路</b>：高校卒業時に、プロ・大学に加えて「海外挑戦（入団テスト）」も選べる。引退後は監督・解説者・実業家・サッカー学校からエピローグを選ぶ。',
+   '<b>身長</b>：選手ごとにランダム（国・ポジションで傾向あり）。高いと空中戦・ヘディングやGKの守備範囲に強く、低いとドリブル・小回りに強い。大きすぎるとケガと疲労に注意。10代は背が伸びることも。',
+   '<b>国の伝説</b>：どの国でも、その国の伝説のストライカーが必ず一度現れる。1対1で勝てば継承成功、称号「〇〇のストライカー」がつく。',
+   '<b>結婚</b>：恋人にはさまざまな職業があり、結婚すると相手の月収（50万円〜3億円）が家計に加わる。「暮らし」からプロポーズを予約すると次のターンに申し込める。最後まで添い遂げると引退時に全能力+1。',
+   '<b>監督</b>：国籍を選べて、お国柄で能力が少し変わる。各期間に「自分磨き」を選ぶと監督自身も育つ。',
    '<b>買い物と株</b>：「暮らし・買い物」に趣味・ぜいたく品など約70品。買ったものに応じた出来事が起きやすくなる。株は12銘柄。毎月値動きがあり、大ニュースで急騰・急落、毎年7月に配当。',
    '<b>ライバル年代記</b>：同い年のライバルが毎年ニュースになり、直接対決や代表争い、引退試合での再会がある。']));
 }
@@ -7370,7 +7392,7 @@ function applyFx3(p,k,v){
   if(k==='stkAll'){const M=mkt(p);STOCKS.forEach(s=>{M[s.c].pr=Math.max(.2,M[s.c].pr*v)});return ['株式市場',v>=1?'全面高':'全面安',v>=1?1:-1]}
   if(k==='sellItem'){if(p.items[v]){delete p.items[v];return [shopItem(v).n,'手放した',0]}return null}
   if(k==='artSale'){const g=Math.round(5000*v);p.money+=g;p.earnings+=Math.max(0,g-5000);delete p.items.art;return ['絵画の売却',`+${yen(g)}`,1]}
-  return null;
+  return typeof applyFx5==='function'?applyFx5(p,k,v):null;
 }
 
 /* ----- 買ったものの出来事 ----- */
@@ -7513,6 +7535,145 @@ const IEV=[
   C4('アプリを消して練習に集中','',1,'株は長い目で見るものだ。',{coach:3,cond:2}),C4('毎日チェックする','',.5,'値上がりして気分がいい。',{cond:3},'値下がりに一喜一憂して、集中を欠いた。',{coach:-4,cond:-4})],
 ];
 IEV.forEach(([k,st,when,t,x,a,b])=>{const e={id:'i4_'+k,st,mo:ALLM,w:2.5,when,t,x,ch:[a,b]};EV.push(e);EVM[e.id]=e});
+
+/* ========== 身長・パートナーの職業とプロポーズ・国の伝説・監督の育成 ========== */
+/* ----- 身長 ----- */
+const H_POS={GK:188,DF:183,MF:176,FW:179};
+const H_ARCH={nordic:4,east:2,power:2,pacific:2,afr:1,balkan:3,grit:0,cat:0,tech:-1,tiki:-2,pace:1,asiaE:-4,sasia:-4,asiaW:-1,gulf:-2,afrN:-1,andes:-3,carib:0,micro:0};
+const H_NAT={nl:5,me:5,ba:4,rs:4,dk:3,is:3,de:2,jp:-2,kr:-1,id:-5,ph:-4,vn:-5,mx:-3,pe:-3,bo:-3,gt:-4};
+function rollHeight(pos,nat){const N=NATIONS[nat]||{};return Math.round(clamp((H_POS[pos]||180)+(H_ARCH[N.arch]||0)+(H_NAT[nat]||0)+gauss()*6.5,157,204))}
+function hTraits(h,pos){
+  const t=[];if(!h)return t;
+  if(h>=190)t.push('空中戦の王様');else if(h>=184)t.push('空中戦に強い');
+  if(h<=168)t.push('重心が低く小回りが利く');else if(h<=173)t.push('ドリブルがしやすい');
+  if(pos==='GK'&&h>=190)t.push('守備範囲が広い');if(pos==='GK'&&h<=178)t.push('ハイボールが苦手');
+  if(h>=194)t.push('体が大きくケガ・疲労に注意');
+  if(h<=168)t.push('当たりには弱い');
+  return t;
+}
+function heightApply(pl){
+  const dh=pl.height-180,adj={};
+  if(dh>0){adj.phy=dh*.22;adj.spd=-dh*.1;adj.tec=-dh*.08;if(pl.pos==='DF'||pl.pos==='GK')adj.def=dh*.15;if(pl.pos==='FW')adj.sho=dh*.05}
+  else{const s=-dh;adj.tec=s*.16;adj.spd=s*.12;adj.phy=-s*.16;if(pl.pos==='GK')adj.def=-s*.12}
+  for(const [k,v] of Object.entries(adj)){const c=v*.6;pl.cap[k]=clamp(pl.cap[k]+c,30,SMAX);if(pl.capLim)pl.capLim[k]=Math.max(pl.capLim[k]||0,Math.round(pl.cap[k]));pl.st[k]=clamp(pl.st[k]+v,20,Math.min(85,pl.cap[k]-2))}
+}
+function c5Make(pl,d){
+  pl.height=d.height||rollHeight(pl.pos,pl.nation||'jp');heightApply(pl);
+  const N=NATIONS[pl.nation||'jp'];
+  pl.flags.nlg={age:pl.age+ri(1,8),m:ri(0,11)};
+  return pl;
+}
+const hGoal=p=>p.height?(1+clamp((p.height-182)/120,-.06,.12)*(p.pos==='FW'||p.pos==='DF'?1:.4)):1;
+const hInj=p=>!p.height?1:p.height>=193?1.12:p.height<=168?.92:1;
+const hClutch=(p,ty)=>!p.height?0:ty==='hed'?(p.height-180)/150:ty==='dri'?-(p.height-178)/200:ty==='save'?(p.height-186)/150:0;
+
+/* ----- 国の伝説の選手（各国ひとり・必ず現れる） ----- */
+const NLG_EPI=['{c}の怪物','黄金の左足','{n}の矢','永遠の10番','雷鳴のストライカー','{c}の王様','黒豹','鉄人','魔術師','爆撃機','皇帝','貴公子','韋駄天','狙撃手','砂漠の鷹','{c}の英雄'];
+function natLegend(k){
+  const N=NATIONS[k]||NATIONS.jp,h=HASH('lg'+k);
+  let n;if(N.gn&&N.sn)n=N.gn[h%N.gn.length]+'・'+N.sn[(h>>4)%N.sn.length];else n=SEI[h%SEI.length]+' '+MEI[(h>>4)%MEI.length];
+  const nick=NLG_EPI[(h>>8)%NLG_EPI.length].replace('{c}',N.c1||N.n).replace('{n}',N.n);
+  return {n,nick,g:30+(h>>12)%90,caps:60+(h>>16)%110};
+}
+const nlgNow=p=>{const f=p.flags&&p.flags.nlg;return !!(f&&!f.done&&(p.age>f.age||(p.age===f.age&&p.month>=f.m)))};
+function nlgRate(p){return clamp(.22+(p.st.sho-60)/150+(p.pos==='FW'?.05:0),.12,.5)}
+function c5Ev(id,p){
+  if(id==='sp:nlg'){const N=NATN(p),L=natLegend(natOf(p)),r=nlgRate(p);
+    return {id,t:`伝説降臨：${L.n}`,x:`${N.n}の誰もが知る伝説のストライカー、「${L.nick}」${L.n}が練習場にふらりと現れた。代表${L.caps}試合${L.g}ゴール。国じゅうの子どもが一度はそのフォームをまねた男だ。「少しボールを貸してみな」`,ch:[
+      {l:'1対1で勝負を挑む（継承に挑戦）',d:`成功：称号「${N.n}のストライカー」＋シュート+4・スピード+2・テクニック+2（限界も上がる）。成功率${Math.round(r*100)}%`,fixed:1,pr:()=>r,
+        ok:{m:`最後の一本、伝説の守る壁を抜いてゴールを決めた。${L.n}は笑って肩を叩いた。「今日からお前が${N.n}のストライカーだ」`,fx:{nlg:1,pop:10}},ng:{m:'何度挑んでも止められた。それでも、伝説の足さばきは目に焼きついた。',fx:{sho:1,cond:8}}},
+      {l:'シュートのコツを聞く',d:'',pr:()=>1,ok:{m:'「最後は、目をつぶっても入る場所に蹴れ」。不思議な言葉だった。',fx:{sho:2,cond:4}},ng:{m:'',fx:{}}}]}}
+  if(id==='sp:propose'){const P=p.fam.partner,r=proposeRate(p);
+    return {id,t:`${P.n}へのプロポーズ`,x:`前のターンに決めていた。今日、${P.n}に結婚を申し込む。${p.items.ring?'ポケットには婚約指輪が入っている。':'指輪はないけれど、気持ちは本物だ。'}`,ch:[
+      {l:'まっすぐ気持ちを伝える',d:`成功率${Math.round(r*100)}%`,fixed:1,pr:()=>r,ok:{m:`${P.n}は涙ぐみながら、何度もうなずいた。`,fx:{marry:1,cond:12}},ng:{m:`${P.n}は「もう少しだけ時間がほしい」と言った。`,fx:{love:-12,cond:-6}}},
+      {l:'サプライズを仕掛ける',d:`成功率${Math.round(clamp(r+.08,0,.97)*100)}%・失敗すると気まずい`,fixed:1,pr:()=>clamp(r+.08,0,.97),ok:{m:'スタジアムの大型ビジョンに映し出されたメッセージ。観客の拍手の中で、答えは「はい」だった。',fx:{marry:1,pop:5,cond:12}},ng:{m:'大勢の前で、答えは保留になった。気まずい空気が流れた。',fx:{love:-18,pop:-2,cond:-8}}}]}}
+  if(id==='sp:tall')return {id,t:'空中戦の特訓',x:`身長${p.height}cm。コーチが「その高さを使わない手はない」と、クロスを何十本も上げてくれる。`,ch:[
+      {l:'ヘディングを磨く',d:'',pr:()=>.75,ok:{m:'ボールが頭に吸いつくようになった。',fx:{sho:1,phy:1}},ng:{m:'首を痛めた。',fx:{inj:1}}},
+      {l:'足元も鍛えたいと伝える',d:'',pr:()=>.6,ok:{m:'大きくて上手い選手は、相手にとって悪夢だ。',fx:{tec:2}},ng:{m:'「まずは長所を伸ばせ」と言われた。',fx:{coach:-2}}}]};
+  if(id==='sp:short')return {id,t:'「小さいから無理だ」',x:`身長${p.height}cm。相手チームの選手に「チビ」とからかわれた。`,ch:[
+      {l:'ドリブルで黙らせる',d:'',pr:c=>.45+(c.p.st.tec-60)/90,ok:{m:'股下を抜いてゴール。相手は何も言えなくなった。',fx:{tec:1,pop:4}},ng:{m:'体をぶつけられて吹っ飛ばされた。',fx:{cond:-4}}},
+      {l:'低い重心を生かす練習をする',d:'',pr:()=>.8,ok:{m:'低い姿勢からの加速は、誰にも止められない。',fx:{spd:2}},ng:{m:'',fx:{spd:1}}}]};
+  return null;
+}
+function c5Roll(p){
+  if(nlgNow(p)){p.flags.nlg.done=1;return 'sp:nlg'}
+  if(p.height&&!p.seen['sp:tall']&&p.height>=188&&Math.random()<.06)return 'sp:tall';
+  if(p.height&&!p.seen['sp:short']&&p.height<=170&&Math.random()<.06)return 'sp:short';
+  return null;
+}
+function applyFx5(p,k,v){
+  if(k==='nlg'){const N=NATN(p);p.title=`${N.n}のストライカー`;[['sho',4],['spd',2],['tec',2]].forEach(([s,x])=>{p.cap[s]=Math.min(SMAX,p.cap[s]+3);if(p.capLim)p.capLim[s]=Math.max(p.capLim[s]||0,p.cap[s]);p.st[s]=Math.min(p.cap[s],p.st[s]+x)});pushNews(`【継承】${p.sei}${p.mei}、「${p.title}」の称号を受け継ぐ`);typeof cutQ==='function'&&cutQ('skill',`称号「${p.title}」`,'伝説を継承した',2600);return ['称号',p.title,1]}
+  return null;
+}
+
+/* ----- パートナーの職業 ----- */
+const JOBS=[['保育士',50,60],['会社員',50,90],['看護師',50,75],['教師',50,80],['公務員',55,85],['美容師',50,110],['薬剤師',60,95],['銀行員',60,130],['ITエンジニア',70,220],['研究者',60,160],['建築士',70,180],['デザイナー',60,220],['料理人',50,300],['アナウンサー',80,400],['弁護士',100,600],['医師',120,500],['パイロット',150,260],['外交官',100,300],['作家',50,2000],['漫画家',50,3000],['歌手',50,4000],['俳優',80,6000],['モデル',60,2500],['動画配信者',50,5000],['プロゲーマー',50,1500],['他競技のプロ選手',100,8000],['起業家',100,20000],['会社社長',300,30000],['投資家',200,30000]];
+function giveJob(P){if(P.job)return;const j=pick(JOBS),inc=Math.round(Math.exp(Math.log(j[1])+Math.random()*(Math.log(j[2])-Math.log(j[1]))));P.job={n:j[0],inc}}
+const partnerInc=p=>{const P=p.fam&&p.fam.partner;return P&&P.married&&P.job?P.job.inc:0};
+function proposeRate(p){const P=p.fam.partner;return clamp(.2+(P.love||0)/130+(p.items.ring?.2:0)+(p.pop||0)/600,.08,.95)}
+function proposeEv(p){const P=p.fam.partner;if(p.flags.propose&&P&&!P.married){p.flags.propose=0;return 'sp:propose'}p.flags.propose=0;return null}
+function proposeHtml(p){
+  const P=p.fam.partner;if(!P)return '';giveJob(P);
+  const job=`<p class="sub" style="margin:6px 0 0">${esc(P.n)}の仕事：<b>${esc(P.job.n)}</b>（月収 ${yen(P.job.inc)}）${P.married?'・家計に加わっている':'・結婚すると家計に加わる'}</p>`;
+  if(P.married)return job+`<p class="sub" style="margin:4px 0 0">最後まで添い遂げると、引退時に全能力+1。</p>`;
+  return job+`<div class="kick" style="margin-top:14px">結婚を申し込む</div>
+   <p class="note" style="margin:0 0 8px">申し込むと、次のターンの最初にプロポーズの場面が来る。成功率は今なら約${Math.round(proposeRate(p)*100)}%（愛情・指輪・人気で上がる）。</p>
+   ${p.flags.propose?'<div class="toast">次のターンにプロポーズする。</div><button class="btn ghost" data-act="proposeCancel">やっぱりやめる</button>':`<button class="btn" data-act="propose">次のターンにプロポーズする</button>`}`;
+}
+
+/* ----- 監督の育成 ----- */
+const MACTS=[
+ {id:'tac',n:'戦術研究',d:'ノートに図を描き続ける',g:{tac:[1,2.5],ana:[0,1]}},
+ {id:'talk',n:'選手と個別面談',d:'全員と1対1で話す。今期の調子も上がる',g:{lea:[1,2.5]},mod:.6},
+ {id:'yth',n:'ユースの練習を視察',d:'若手を見て指導力を磨く。クラブの底力も少し上がる',g:{coa:[1,2.5]},boost:.25},
+ {id:'data',n:'データ分析室にこもる',d:'相手の弱点を洗い出す',g:{ana:[1,2.5],gam:[0,1]}},
+ {id:'abroad',n:'海外の名門クラブを視察',d:'すべてが少しずつ伸びるが、留守の間チームの調子は落ちる',g:{tac:[0,1.2],coa:[0,1.2],lea:[0,1.2],gam:[0,1.2],ana:[0,1.2]},mod:-.5},
+ {id:'rest',n:'家族と休む',d:'伸びないが、今期の出来事に強くなる',g:{},mod:.3,rest:1},
+];
+function mgActApply(){
+  const c=MC.cur,a=MACTS.find(x=>x.id===(c.act||'tac')),m=MC.m,age=MC.age||41,out=[];
+  const ag=age<=50?1:age<=58?.8:.6;
+  for(const [k,[lo,hi]] of Object.entries(a.g)){const room=m.cap[k]-m.st[k];if(room<=0)continue;const g=rnd(lo,hi)*ag*(room<8?.5:1);const nv=Math.min(m.cap[k],m.st[k]+g);out.push([MLBL[k],Math.round((nv-m.st[k])*10)/10]);m.st[k]=Math.round(nv*10)/10}
+  if(a.mod)c.mod=(c.mod||0)+a.mod;if(a.boost)MC.boost=(MC.boost||0)+a.boost;
+  c.actRes={n:a.n,fx:out};
+}
+function mgActHtml(){
+  const c=MC.cur;return `<div class="kick">この期間の自分磨き<span class="r">監督も育つ</span></div>
+  <div class="acts">${MACTS.map(a=>`<button class="act" aria-pressed="${(c.act||'tac')===a.id}" data-act="mgAct" data-v="${a.id}"><b>${a.n}</b><span>${a.d}</span></button>`).join('')}</div>`;
+}
+const MG_BIAS={tiki:{tac:2,ana:1},cat:{ana:2,gam:1},power:{lea:2,tac:1},tech:{coa:2,tac:1},grit:{lea:2,gam:1},afr:{coa:1,lea:1},afrN:{tac:1,coa:1},balkan:{gam:2,coa:1},pace:{lea:1,gam:1},nordic:{lea:1,ana:1},east:{lea:2},asiaE:{ana:2,coa:1},gulf:{gam:1},asiaW:{lea:1,gam:1},sasia:{coa:1},andes:{lea:1},carib:{gam:1},pacific:{lea:1},micro:{coa:1}};
+function c5Mgr(m,d){
+  const k=d.nation&&NATIONS[d.nation]?d.nation:'jp',N=NATIONS[k];m.nation=k;m.height=d.height||rollHeight('MF',k)+ri(-2,2);
+  const b=MG_BIAS[N.arch]||{};for(const [s,v] of Object.entries(b)){m.cap[s]=Math.min(99,m.cap[s]+v);m.st[s]=Math.min(m.cap[s]-1,m.st[s]+v)}
+  return m;
+}
+function mgPool(m){
+  const k=m.nation||'jp';if(k==='jp')return null;const lg=HOME_LG[k];
+  const l=CLUBS.filter(c=>c.lg===lg).sort((a,b)=>a.rep-b.rep);return l.length?(m.famous?l.slice(Math.floor(l.length/3)):l.slice(0,Math.max(3,Math.ceil(l.length/2)))):null;
+}
+function mgNatHtml(d){
+  const N=NATIONS[d.nation||'jp'],tab=d.natTab||N.cf||'A';
+  const list=NAT_KEYS.filter(k=>(NATIONS[k].cf||'X')===tab&&!['war','poor'].includes(k)).sort((a,b)=>NATIONS[b].str-NATIONS[a].str);
+  const b=MG_BIAS[N.arch]||{};
+  return `<div class="label">国籍</div><p class="sub" style="margin:0 0 6px">${N.fl} ${esc(N.n)}・身長${d.prev.height}cm${Object.keys(b).length?`・お国柄：${Object.entries(b).map(([k,v])=>MLBL[k]+'+'+v).join(' ')}`:''}${natOf(d)!=='jp'?'・最初は母国のリーグから':''}</p>
+  <div class="seg c4 ntabs">${NAT_TABS.filter(t=>t[0]!=='X').map(([c,n])=>`<button class="opt" aria-pressed="${tab===c}" data-act="mgNatTab" data-v="${c}">${n}</button>`).join('')}</div>
+  <div class="natgrid">${list.map(k=>{const M2=NATIONS[k];return `<button class="opt" aria-pressed="${(d.nation||'jp')===k}" data-act="mgNat" data-v="${k}"><span class="fl">${M2.fl}</span>${M2.n}</button>`}).join('')}</div>`;
+}
+Object.assign(ACT,{
+ propose:()=>{S.p.flags.propose=1},
+ proposeCancel:()=>{S.p.flags.propose=0},
+ mgAct:v=>{MC.cur.act=v;mgSave()},
+ mgNatTab:v=>{syncInputs();G.mdraft.natTab=v},
+ mgNat:v=>{syncInputs();const d=G.mdraft;d.nation=v;const x=nameOf(v);d.sei=x.sei;d.mei=x.mei;d.prev=makeMgr(d)},
+});
+function c5Month(p,res){
+  if(p.height==null){p.height=rollHeight(p.pos,natOf(p))}
+  if(p.height>=192)p.fat=clamp((p.fat||0)+.6,0,100);
+  const P=p.fam.partner;if(P)giveJob(P);
+}
+function c5SeasonEnd(p,R){
+  if(p.height&&p.age<=19&&Math.random()<.55){const g=ri(1,3);p.height+=g;p.st.phy=stAdd(p,'phy',1);R.notes.push(`成長期で背が${g}cm伸びた（${p.height}cm）`)}
+}
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
