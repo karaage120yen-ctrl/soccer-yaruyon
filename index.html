@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-082602';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-082957';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -581,6 +581,76 @@ details.rule .rb{padding:0 14px 12px}
 details.rule .plan li{margin:6px 0;line-height:1.6}
 .matg{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin:14px 0 4px;padding:12px;border-radius:12px;border:1px solid rgba(212,160,23,.5);background:rgba(212,160,23,.08)}
 .matg>div{display:flex;flex-direction:column;gap:3px}.matg .btn{white-space:nowrap}
+/* ===== ガチャ演出 ===== */
+#gfxl .gfx{position:fixed;inset:0;z-index:96;overflow:hidden;display:grid;place-items:center;cursor:pointer;color:#fff;font-family:var(--display)}
+.gfx>*{grid-area:1/1}
+.gfx-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,#1a2240 0,#05060c 70%);animation:gfxBg 5.2s linear forwards}
+.gfx.miss .gfx-bg{animation:none}
+@keyframes gfxBg{0%,18%{filter:none}24%{filter:brightness(2.2)}30%,100%{filter:brightness(1)}}
+.gfx.hit .gfx-bg{background:radial-gradient(circle at 50% 45%,#3a2a08 0,#0a0602 72%)}
+.gfx.v-rainbow .gfx-bg{background:radial-gradient(circle at 50% 45%,#2a0a3a 0,#05020a 72%)}
+.gfx-rays{position:absolute;width:220vmax;height:220vmax;left:50%;top:45%;margin:-110vmax 0 0 -110vmax;opacity:0;
+ background:repeating-conic-gradient(from 0deg,rgba(255,210,58,.55) 0 6deg,transparent 6deg 18deg);animation:gfxRays 5.2s linear forwards}
+.gfx.v-rainbow .gfx-rays{background:repeating-conic-gradient(from 0deg,#ff3b3b55 0 5deg,transparent 5deg 10deg,#ffd23a55 10deg 15deg,transparent 15deg 20deg,#3fbf6a55 20deg 25deg,transparent 25deg 30deg,#2f9fff55 30deg 35deg,transparent 35deg 40deg,#b05aff55 40deg 45deg,transparent 45deg 50deg)}
+.gfx.miss .gfx-rays{display:none}
+@keyframes gfxRays{0%,26%{opacity:0;transform:rotate(0) scale(.6)}34%{opacity:1}100%{opacity:.85;transform:rotate(80deg) scale(1)}}
+.gfx-ring{width:60vmin;height:60vmin;border-radius:50%;border:3px solid rgba(255,255,255,.0);opacity:0}
+.gfx.hit .gfx-ring{animation:gfxRing 1s 1.25s ease-out forwards;border-color:#ffd23a;box-shadow:0 0 30px #ffd23a}
+.gfx.v-rainbow .gfx-ring{border-color:#fff;box-shadow:0 0 30px #b05aff,0 0 60px #2f9fff inset}
+@keyframes gfxRing{0%{opacity:1;transform:scale(.1)}100%{opacity:0;transform:scale(2.4)}}
+/* ボール：落ちて弾んで回る→光る */
+.gfx-ballw{animation:gfxDrop .9s cubic-bezier(.3,.0,.5,1) both;z-index:2}
+@keyframes gfxDrop{0%{transform:translateY(-70vh)}70%{transform:translateY(0)}82%{transform:translateY(-6vh)}100%{transform:translateY(0)}}
+.gfx-ball{width:110px;height:110px;border-radius:50%}
+.gfx-ball svg{width:100%;height:100%;display:block;animation:gfxSpin .45s linear infinite}
+.gfx.v-rainbow .gfx-ball svg{animation-duration:.25s}
+@keyframes gfxSpin{to{transform:rotate(360deg)}}
+.gfx.miss .gfx-ball{animation:gfxBlue 1.7s forwards}
+@keyframes gfxBlue{0%,50%{filter:none}70%{filter:drop-shadow(0 0 20px #9fd0ff) brightness(1.3)}85%{transform:scale(1.3);opacity:1}100%{transform:scale(2.2);opacity:0}}
+.gfx.hit .gfx-ball{animation:gfxGold 5.2s forwards}
+@keyframes gfxGold{0%,15%{filter:none;transform:scale(1)}17%{transform:scale(1) translateX(-6px)}19%{transform:translateX(6px)}21%{transform:translateX(-6px)}22%{filter:sepia(1) saturate(6) hue-rotate(-10deg) brightness(1.2) drop-shadow(0 0 24px #ffd23a)}26%{transform:scale(1.5)}30%{transform:scale(.2);opacity:0}100%{opacity:0}}
+.gfx.v-rainbow .gfx-ball{animation:gfxRbw 5.2s forwards}
+@keyframes gfxRbw{0%,15%{filter:none}18%{filter:hue-rotate(0) saturate(4) drop-shadow(0 0 24px #b05aff)}22%{filter:hue-rotate(180deg) saturate(4) drop-shadow(0 0 30px #2f9fff)}26%{transform:scale(1.6);filter:hue-rotate(300deg) saturate(4) drop-shadow(0 0 40px #ff3b3b)}30%{transform:scale(.2);opacity:0}100%{opacity:0}}
+/* 稲妻 */
+.gfx-bolt{width:70px;height:60vh;align-self:start;opacity:0;animation:gfxBolt 5.2s forwards;filter:drop-shadow(0 0 12px #ffd23a);z-index:3}
+.gfx-bolt svg{width:100%;height:100%}
+@keyframes gfxBolt{0%,19%{opacity:0}20%{opacity:1}22%{opacity:.2}23%{opacity:1}27%{opacity:0}100%{opacity:0}}
+/* 炎 */
+.gfx-fire{position:absolute;inset:auto 0 0 0;height:60vh;pointer-events:none}
+.gfx-fire b{position:absolute;bottom:-40px;left:var(--x);width:46px;height:120px;border-radius:50% 50% 20% 20%;background:radial-gradient(ellipse at 50% 80%,#fff6b0,#ffb020 45%,rgba(255,80,0,0) 70%);opacity:0;animation:gfxFire 1.3s var(--d) ease-out infinite;animation-delay:calc(1s + var(--d))}
+@keyframes gfxFire{0%{opacity:0;transform:translateY(0) scale(.6)}30%{opacity:.9}100%{opacity:0;transform:translateY(-55vh) scale(1.2)}}
+/* 火花 */
+.gfx-sparks{width:0;height:0;z-index:3}
+.gfx-sparks i{position:absolute;width:4px;height:22px;margin:-11px -2px;border-radius:2px;background:#fff6b0;opacity:0;transform:rotate(var(--a)) translateY(0)}
+.gfx.hit .gfx-sparks i{animation:gfxSpark .8s calc(1.35s + var(--d)) ease-out forwards}
+.gfx.miss .gfx-sparks i{background:#bfe6ff;animation:gfxSpark .6s calc(1s + var(--d)) ease-out forwards}
+.gfx.v-rainbow .gfx-sparks i:nth-child(3n){background:#b05aff}.gfx.v-rainbow .gfx-sparks i:nth-child(3n+1){background:#2f9fff}
+@keyframes gfxSpark{0%{opacity:1;transform:rotate(var(--a)) translateY(0)}100%{opacity:0;transform:rotate(var(--a)) translateY(-40vmin)}}
+.gfx-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:4}
+.gfx.hit .gfx-flash{animation:gfxFlash 5.2s forwards}
+.gfx.miss .gfx-flash{animation:gfxFlashM 1.7s forwards}
+@keyframes gfxFlash{0%,25%{opacity:0}29%{opacity:1}40%{opacity:0}62%{opacity:0}64%{opacity:.8}72%{opacity:0}100%{opacity:0}}
+@keyframes gfxFlashM{0%,60%{opacity:0}68%{opacity:.6}100%{opacity:0}}
+/* 確定スタンプ */
+.gfx-kaku{z-index:5;font-size:min(22vw,120px);font-weight:900;line-height:1;text-align:center;letter-spacing:.05em;opacity:0;
+ color:#ffd23a;-webkit-text-stroke:3px #5a3a00;text-shadow:0 0 24px #ffb020,0 6px 0 #5a3a00;animation:gfxKaku 5.2s forwards}
+.gfx-kaku span{display:block;font-size:.32em;color:#fff;-webkit-text-stroke:2px #5a3a00;letter-spacing:.3em;margin-bottom:6px}
+.gfx.v-rainbow .gfx-kaku{background:linear-gradient(90deg,#ff3b3b,#ffd23a,#3fbf6a,#2f9fff,#b05aff);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:2px #fff;text-shadow:none;filter:drop-shadow(0 0 16px #b05aff)}
+@keyframes gfxKaku{0%,30%{opacity:0;transform:scale(3) rotate(-8deg)}36%{opacity:1;transform:scale(.92) rotate(-4deg)}40%{transform:scale(1.04) rotate(-4deg)}44%,58%{opacity:1;transform:scale(1) rotate(-4deg)}62%{opacity:0;transform:scale(1.4) rotate(-4deg)}100%{opacity:0}}
+/* キャラ登場：シルエット→色がつく */
+.gfx-card{z-index:6;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;animation:gfxCard 5.2s forwards}
+.gfx-art{width:min(70vw,300px)}.gfx-art img,.gfx-art .sprw{width:100%;height:auto;display:block}
+.gfx-art{animation:gfxSil 5.2s forwards;border-radius:10px;box-shadow:0 0 40px rgba(255,210,58,.6)}
+@keyframes gfxCard{0%,60%{opacity:0;transform:translateY(30px) scale(.9)}66%{opacity:1;transform:none}100%{opacity:1;transform:none}}
+@keyframes gfxSil{0%,66%{filter:brightness(0) drop-shadow(0 0 10px #ffd23a)}74%{filter:brightness(2.5)}82%,100%{filter:none}}
+.gfx-name{text-align:center;opacity:0;animation:gfxIn .4s 4.2s forwards}
+.gfx-name small{display:block;font-size:13px;color:#ffd23a;letter-spacing:.2em}
+.gfx-name b{display:block;font-size:26px;text-shadow:0 2px 0 #000,0 0 14px #ffb020}
+.gfx-name span{display:block;font-size:13px;margin-top:2px;color:#fff6b0}
+@keyframes gfxIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.gfx-miss{z-index:5;align-self:end;margin-bottom:22vh;font-size:16px;opacity:0;animation:gfxIn .3s 1.1s forwards;color:#cfe6ff}
+.gfx-skip{position:absolute;bottom:18px;left:0;right:0;text-align:center;font-size:11px;opacity:.6;z-index:7;font-family:var(--body)}
+@media (prefers-reduced-motion:reduce){.gfx *{animation-duration:.01s!important;animation-delay:0s!important}}
 
 </style>
 </head>
@@ -4524,6 +4594,7 @@ function render(){
   else m.innerHTML='';
   // 育成のカットシーン
   if(!CUT&&CUTQ.length&&G.mode==='career'){const c=CUTQ.shift();cutPlay(c[0],c[1],c[2],c[3],c[4])}
+  gfxMount();
   let cl=document.getElementById('cutl');if(!cl){cl=document.createElement('div');cl.id='cutl';document.body.appendChild(cl)}
   if(CUT&&G.mode==='career'){if(cl.dataset.k!==CUT.key){cl.dataset.k=CUT.key;cl.innerHTML=cutHtml()}}else if(cl.dataset.k){cl.dataset.k='';cl.innerHTML='';if(CUT)CUT=null}
   cntUp();
@@ -4911,9 +4982,9 @@ function mainView(){
 }
 Object.assign(ACT,{
  go:v=>{G.mode=v;if(v==='career'&&!['play','life','log'].includes(S.tab))S.tab='play';if(v==='mgr')G.mgTop=false;if(v==='squad'){G.sq.slot=null}if(v==='battle'&&G.bt.view!=='host'&&!(G.bt.view==='match'&&G.bt.play&&!G.bt.play.done))G.bt.view='menu';toTop()},
- gacha:v=>{syncInputs();const r=doGacha(+v,false,G.ga.bk||'ich');if(r){G.ga.res=r;G.ga.n++}},
- gachaMat:()=>{const r=doGacha(1,false,G.ga.bk||'ich',true);if(r){G.ga.res=r;G.ga.n++}},
- gachaFree:()=>{const r=doGacha(10,true,G.ga.bk||'ich');if(r){G.ga.res=r;G.ga.n++}},
+ gacha:v=>{syncInputs();const r=doGacha(+v,false,G.ga.bk||'ich');if(r)gfxStart(r)},
+ gachaMat:()=>{const r=doGacha(1,false,G.ga.bk||'ich',true);if(r)gfxStart(r)},
+ gachaFree:()=>{const r=doGacha(10,true,G.ga.bk||'ich');if(r)gfxStart(r)},
  gBanner:v=>{G.ga.bk=v;G.ga.res=null},
  sqTab:v=>{syncInputs();G.sq.tab=v},
  sqForm:v=>{syncInputs();M.squad.form=v;G.sq.slot=null},
@@ -5567,6 +5638,33 @@ function rulesHtml(){
     'データはこの端末に自動で保存される。別の端末やブラウザ（LINEとChromeなど）に移すときは、下の「バックアップ」でコードを作って、移したい先で貼り付ける'
   ]))}`;
 }
+
+/* ========== ガチャの演出（キャラが出るときは確定演出） ========== */
+const GFX_T={hit:5200,miss:1700};
+function gfxStart(res){
+  const hits=res.filter(x=>x.type==='pu'),top=hits.find(x=>!x.dup)||hits[0]||null,leg=!!(top&&top.id.startsWith('lg_'));
+  const v=top?(leg?'rainbow':pick(['bolt','fire','rainbow'])):'miss';
+  G.ga.res=null;G.ga.anim={res,top,v,leg,key:Date.now()+':'+Math.random(),n:res.length,hits:hits.length};
+  clearTimeout(gfxStart._t);gfxStart._t=setTimeout(gfxEnd,top?GFX_T.hit:GFX_T.miss);
+}
+function gfxEnd(){const A=G.ga.anim;if(!A)return;clearTimeout(gfxStart._t);G.ga.anim=null;G.ga.res=A.res;G.ga.n++;if(typeof render==='function')render()}
+const GFX_BALL=`<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#fff" stroke="#111" stroke-width="3"/><polygon points="50,32 66,44 60,63 40,63 34,44" fill="#111"/><path d="M50 32 L50 8 M66 44 L88 36 M60 63 L74 84 M40 63 L26 84 M34 44 L12 36" stroke="#111" stroke-width="3"/><polygon points="50,4 62,10 50,16 38,10" fill="#111"/><polygon points="92,40 94,54 84,48" fill="#111"/><polygon points="8,40 16,48 6,54" fill="#111"/></svg>`;
+function gfxHtml(){
+  const A=G.ga.anim;if(!A)return '';const c=A.top?puCard(A.top.id):null,art=c?(fullArt(c.id)||sprOf(c)):'';
+  const sparks=Array.from({length:18},(_,i)=>`<i style="--a:${i*20}deg;--d:${(i%5)*60}ms"></i>`).join('');
+  return `<div class="gfx ${A.top?'hit':'miss'} v-${A.v}" data-act="gfxSkip" role="dialog" aria-label="ガチャの演出">
+   <div class="gfx-bg"></div><div class="gfx-rays"></div><div class="gfx-ring"></div>
+   ${A.v==='bolt'?'<div class="gfx-bolt"><svg viewBox="0 0 60 200"><polyline points="34,0 18,80 36,84 12,200" fill="none" stroke="#fff6b0" stroke-width="7" stroke-linejoin="bevel"/><polyline points="34,0 18,80 36,84 12,200" fill="none" stroke="#ffd23a" stroke-width="3"/></svg></div>':''}
+   ${A.v==='fire'?`<div class="gfx-fire">${Array.from({length:14},(_,i)=>`<b style="--x:${(i*7)%100}%;--d:${(i%7)*90}ms"></b>`).join('')}</div>`:''}
+   <div class="gfx-ballw"><div class="gfx-ball">${GFX_BALL}</div></div>
+   <div class="gfx-sparks">${sparks}</div><div class="gfx-flash"></div>
+   ${A.top?`<div class="gfx-kaku"><span>${A.leg?'伝説':'SSR'}</span>確定</div>
+   <div class="gfx-card"><div class="gfx-art">${art}</div><div class="gfx-name"><small>${A.top.dup?'2枚目（全素材×2）':'NEW'}</small><b>${esc(c.name)}</b>${A.hits>1?`<span>ほかにも${A.hits-1}人！</span>`:''}</div></div>`:`<div class="gfx-miss">${A.n}回 ・ 育成素材ゲット</div>`}
+   <small class="gfx-skip">タップでスキップ</small></div>`;
+}
+function gfxMount(){if(typeof document==='undefined')return;let el=document.getElementById('gfxl');if(!el){el=document.createElement('div');el.id='gfxl';document.body.appendChild(el)}
+  const A=G.ga.anim;if(A&&G.mode==='gacha'){if(el.dataset.k!==A.key){el.dataset.k=A.key;el.innerHTML=gfxHtml()}}else if(el.dataset.k){el.dataset.k='';el.innerHTML='';if(A)gfxEnd()}}
+Object.assign(ACT,{gfxSkip:()=>gfxEnd()});
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
