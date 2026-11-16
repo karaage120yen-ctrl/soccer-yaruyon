@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-071421';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-072501';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1088,6 +1088,7 @@ const SPR_SPECIAL={
  kamapoko:()=>drawPerson({skin:'#efc29a',hair:'#2a1a10',hs:'short',jersey:'#1f7a52',trim:'#f4e04a',num:6,crest:'#f4e04a',smile:1}),
  batsumaru:()=>drawPerson({skin:'#e8c09a',hair:'#eeeeee',hs:'bald',jersey:'#3c3c44',trim:'#f2c400',num:1,beard:1,glasses:1,smile:1}),
  lg_mateo:()=>drawPerson({skin:'#f0c8a4',hair:'#6a4422',hs:'bangs',jersey:'#7cc8f0',trim:'#ffffff',num:10,stripes:1,smile:1}),
+ gorimori:()=>drawPerson({skin:'#b8865a',hair:'#1a120c',hs:'buzz',jersey:'#3a2a1a',trim:'#e2a040',num:5,angry:1,beard:1,crest:'#e2a040'}),
  inkansu:()=>drawPerson({skin:'#e6c3a0',hair:'#1d2b3a',hs:'bangs',jersey:'#111821',trim:'#38e0c8',num:7,eye:'#38e0c8',crest:'#38e0c8',front:P=>{for(let y=9;y<=13;y++)for(let x=10;x<=14;x++)if(x-10<=y-8)P.set(x,y,y===13?'#14202c':'#1d2b3a')}}),
  lg_leon:()=>drawPerson({skin:'#f0c49a',hair:'#e6eef5',hs:'spiky',jersey:'#1b7fd1',trim:'#ffffff',num:11,stripes:1,eye:'#2a5aa0',behind:P=>{[[2,6],[1,10],[3,14],[28,7],[29,11],[27,15]].forEach(([x,y])=>{P.set(x,y,'#9ff0ff');P.set(x+1,y,'#d8fbff')})}}),
  lg_fabio:()=>drawPerson({skin:'#ebbb92',hair:'#3a2414',hs:'short',jersey:'#5b2a8a',trim:'#ffd23a',num:8,smile:1,front:P=>{for(let y=0;y<=7;y++){const w=Math.floor(y*1.2);P.rect(16-w,y,16+w,y,y%3===0?'#7a45c0':'#6f3bb0')}P.rect(7,7,25,8,'#ffd23a');P.set(16,3,'#fff6a0');P.set(15,4,'#fff6a0');P.set(17,4,'#fff6a0')}}),
@@ -1110,7 +1111,7 @@ const SPR_SPECIAL={
    P.ell(16,10,7.5,7,(x,y)=>x>=20?'#4a9a3a':'#6fc05a');P.rect(9,6,23,7,'#d4302a');P.rect(11,9,13,11,'#ffffff');P.rect(19,9,21,11,'#ffffff');P.set(13,10,'#111');P.set(19,10,'#111');P.set(12,8,'#1b2a12');P.set(13,8,'#1b2a12');P.set(19,8,'#1b2a12');P.set(20,8,'#1b2a12');
    P.rect(13,14,19,14,'#1b2a12');P.set(12,13,'#1b2a12');P.set(20,13,'#1b2a12');outline(P,'#122010');return P},
 };
-const SPR_BG={ichikawa:['#6a1a12','#160806'],shanchi:['#3a1660','#0e0618'],mao:['#7a5a08','#1a1204'],inkansu:['#0f4a4a','#060c10'],kamapoko:['#0f4a2a','#06100a'],batsumaru:['#4a4a10','#141408']};
+const SPR_BG={ichikawa:['#6a1a12','#160806'],shanchi:['#3a1660','#0e0618'],mao:['#7a5a08','#1a1204'],inkansu:['#0f4a4a','#060c10'],kamapoko:['#0f4a2a','#06100a'],batsumaru:['#4a4a10','#141408'],gorimori:['#2a3a1a','#0a1006']};
 const SPR_CACHE={};
 function sprOf(c,kind){
   const id=c&&c.id,sp=id&&SPR_SPECIAL[id];
@@ -1353,6 +1354,7 @@ const FA={
  kamapoko:{pose:'conduct',mvp:[.6,0],wind:{kN:[44,70],aN:[40,84],tN:[44,88]},o:{skin:'#efc29a',hair:'#2a1a10',hs:'short',jersey:'#1f7a52',trim:'#f4e04a',shorts:'#14402c',socks:'#1f7a52',boots:'#f4e04a',num:6,band:'#f4e04a'},ball:[67,86,'r'],bg:{strokes:[['#1f7a52',0,30,40,50,80,30,6],['#f4e04a',0,52,40,36,80,60,3],['#14402c',0,70,50,62,80,78,2]],groundY:90}},
  batsumaru:{pose:'jump',mvp:[0,-1],shift:[0,6],impact:1,o:{skin:'#e8c09a',hair:'#eeeeee',hs:'bald',jersey:'#3c3c44',trim:'#f2c400',shorts:'#24242a',socks:'#3c3c44',boots:'#f2c400',num:1,open:1,openN:1,openF:1,head:(P,k,hx,hy,hr)=>{faCircle(P,hx-3.6,hy-.5,1.9,'#eeeeee');faCircle(P,hx+3.6,hy-.5,1.9,'#eeeeee');for(let x=-3;x<=3;x++){P.set(hx+x,hy+2.4,'#f6f6f6');if(Math.abs(x)>1)P.set(hx+x,hy+3.2,'#e0e0e0')}for(let x=-3;x<=-1;x++)P.set(hx+x,hy-2.2,'#ffffff');for(let x=1;x<=3;x++)P.set(hx+x,hy-2.2,'#ffffff');P.set(hx-2,hy-3.6,shd('#e8c09a',.8));P.set(hx+2,hy-3.6,shd('#e8c09a',.8))}},ball:[40,7,'r'],bg:{strokes:[['#f2c400',0,20,40,40,80,20,5],['#3c3c44',0,44,40,30,80,50,6],['#eeeeee',0,66,50,60,80,72,2]],groundY:92}},
  lg_mateo:{pose:'dribble',mvp:[1,0],shift:[-6,0],o:{skin:'#f0c8a4',hair:'#6a4422',hs:'bangs',jersey:'#7cc8f0',trim:'#ffffff',shorts:'#1a2a4a',socks:'#ffffff',boots:'#ffd23a',num:10,stripes:1,headR:6},ball:[63,86,'r'],bg:{strokes:[['#7cc8f0',0,30,40,50,80,30,6],['#ffd23a',0,52,40,36,80,60,3],['#ffffff',0,70,50,62,80,78,2]],groundY:90}},
+ gorimori:{pose:'block',impact:1,o:{skin:'#b8865a',hair:'#1a120c',hs:'buzz',jersey:'#3a2a1a',trim:'#e2a040',shorts:'#2a1a10',socks:'#3a2a1a',boots:'#e2a040',num:5,sleeveless:1,angry:1,open:1,headR:6},ball:null,bg:{strokes:[['#3a2a1a',0,30,40,50,80,30,7],['#3d9c4a',0,52,40,36,80,60,4],['#e2a040',0,70,50,62,80,78,2.5]],groundY:91}},
  lg_mameo:{custom:'mameo',bg:{strokes:[['#7a4a24',0,40,40,20,80,40,6],['#d98a6a',0,60,40,40,80,60,3]],groundY:90,paper:'#f2e9dc'}},
  lg_inu:{custom:'inu',bg:{strokes:[['#e2462b',0,30,40,10,80,30,5],['#a0622d',0,50,40,30,80,50,3]],groundY:90}},
  lg_kame:{pose:'flex',o:{skin:'#5fae4a',hair:'#5fae4a',hs:'bald',jersey:'#7a5a2c',trim:'#e6c98a',shorts:'#d4302a',socks:'#5fae4a',boots:'#d4302a',num:null,sleeveless:1,band:'#d4302a',behind:(P,k)=>{faCircle(P,40,42,15,'#7a5a2c');for(let a=0;a<6;a++){const t=a/6*Math.PI*2;faCircle(P,40+Math.cos(t)*8,42+Math.sin(t)*8,3,'#5a3f1a')}faCircle(P,40,42,3.5,'#5a3f1a')},front:(P,k)=>{faCircle(P,40,44,7,'#e6c98a',(x,y)=>y>38)}},ball:[40,87,'r'],bg:{strokes:[['#5fae4a',0,30,40,50,80,30,6],['#d4302a',0,50,40,36,80,50,2.5]],groundY:91}},
@@ -3058,6 +3060,9 @@ const BATSUMARU={id:'batsumaru',kind:'pl',name:'バツ丸尾君',pos:'GK',style:
  st:{spd:77,tec:90,sho:85,pas:40,phy:67,def:80}};
 const OIBORE_SKILL={n:'おいぼれでも経験はあるんじゃよ',q:'おいぼれでも経験はあるんじゃよ',d:'ピンチ（決定機・PK）のとき1回だけ、判断が180になり、ほかの能力−30。終わると元に戻るが腰痛に。5%の確率でぎっくり腰になり、次の1試合に出られない'};
 const GIKKURI_P=.05;
+const GORIMORI={id:'gorimori',kind:'pl',name:'ゴリ森 フィジー',pos:'DF',style:'森の番人',special:'uhho',from:'ガチャ',
+ st:{spd:60,tec:52,sho:43,pas:58,phy:95,def:80}};
+const UHHO_SKILL={n:'1Killウッホね',q:'1Killウッホね',d:'相手のシュートを1回だけ体でブロックして防ぐ。シュートを打った選手は10分間ケガで動けない。相手のフィジカルが自分より高いときは、自分も10分間ケガで動けない（ケガをした選手は交代させるか、10分間待つ）'};
 const MAO_SKILL={n:'俺の邪魔はさせない！！',q:'俺の邪魔はさせない！！',d:'試合中1回だけ、決定機でシュート＋25。発動した瞬間に本人の全能力−10。ベンチに下げると、チームの能力が全部＋2'};
 const EMP_SKILL={n:'シャンチー帝国',q:'ここから先は一歩も通さない。',d:'試合の後半、味方全員の守備＋6'};
 const CAP_SKILL={n:'キャプテンしー',q:'キャプテンとして絶対に俺が守るんだ！アッセンブル！！',d:'スタメンにいると、味方全員の能力＋4'};
@@ -3197,7 +3202,7 @@ function legApply(p,d){
   p.legSup=out;p.legFx=fx;return out;
 }
 /* ガチャの種類（ピックアップ1%、ほかは育成素材） */
-const BANNERS={kama:{pair:[KAMAPOKO,BATSUMARU],card:()=>KAMAPOKO,skill:()=>RENKEI_SKILL,short:'鎌ポコ＆丸尾',head:['老若','連携']},ich:{card:()=>ICHIKAWA,skill:()=>CAP_SKILL,short:'イチカワ',head:['主将','降臨']},shan:{card:()=>SHANCHI,skill:()=>EMP_SKILL,short:'シャン・チー',head:['帝国','開門']},mao:{card:()=>MAO,skill:()=>MAO_SKILL,short:'MAO',head:['黄金の','右足']},ink:{card:()=>INKANSU,skill:()=>STARTER_SKILL,short:'陰関数',head:['超','先発']},leg:{multi:true,card:()=>GLEGS[0],skill:()=>null,short:'レジェンド',head:['伝説','集結']}};
+const BANNERS={gori:{card:()=>GORIMORI,skill:()=>UHHO_SKILL,short:'ゴリ森',head:['森の','番人']},kama:{pair:[KAMAPOKO,BATSUMARU],card:()=>KAMAPOKO,skill:()=>RENKEI_SKILL,short:'鎌ポコ＆丸尾',head:['老若','連携']},ich:{card:()=>ICHIKAWA,skill:()=>CAP_SKILL,short:'イチカワ',head:['主将','降臨']},shan:{card:()=>SHANCHI,skill:()=>EMP_SKILL,short:'シャン・チー',head:['帝国','開門']},mao:{card:()=>MAO,skill:()=>MAO_SKILL,short:'MAO',head:['黄金の','右足']},ink:{card:()=>INKANSU,skill:()=>STARTER_SKILL,short:'陰関数',head:['超','先発']},leg:{multi:true,card:()=>GLEGS[0],skill:()=>null,short:'レジェンド',head:['伝説','集結']}};
 function doGacha(n,free,bk){
   const BN=BANNERS[bk]||BANNERS.ich;let pu=BN.card();
   if(free){if(!freeReady())return null;M.freeDay=todayKey();n=10}
@@ -3246,7 +3251,7 @@ function teamCalc(sq){
     for(const k of KEYS)st[k]=Math.min(99,effSt(c,k)+bonus);
     const tmp={st,pos:c.pos};
     const r=Math.round(cardOvr({st,plus:{},pos:role},role)*fitMul(c.pos,role)*10)/10;
-    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',kama:c.special==='renkei',oib:c.special==='oibore'&&role==='GK',filler:!!c.filler,legend:!!c.legend,id:c.id};
+    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',kama:c.special==='renkei',oib:c.special==='oibore'&&role==='GK',uhho:c.special==='uhho',filler:!!c.filler,legend:!!c.legend,id:c.id};
   });
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
   const mgc=cardById(sq.mgr);const mg=mgc&&isMgr(mgc)?{n:mgc.name,st:Object.fromEntries(MKEYS.map(k=>[k,effSt(mgc,k)])),famous:!!mgc.famous}:null;
@@ -3266,7 +3271,7 @@ function teamSnap(sq){
   const T=teamCalc(sq);
   return {v:1,tac:(sq||M.squad).tac||'bal',name:T.name,form:T.form,tot:T.tot,atk:T.atk,mid:T.mid,def:T.def,hasCap:T.hasCap,hasEmp:!!T.hasEmp,hasMao:!!T.hasMao,maoSub:!!T.maoSub,sub:T.sub,
    mg:T.mg?{n:T.mg.n,st:T.mg.st,famous:T.mg.famous}:null,
-   pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};if(x.kama)o.kama=1;if(x.oib)o.oib=1;
+   pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};if(x.kama)o.kama=1;if(x.oib)o.oib=1;if(x.uhho)o.uhho=1;o.phy=x.st.phy;
      if(x.starter){const st={...x.st};for(const [k,v] of Object.entries(STARTER_D))st[k]=Math.min(99,Math.max(1,st[k]+v));o.st1={r:Math.round(cardOvr({st,plus:{},pos:x.role},x.role)*fitMul(x.pos,x.role)*10)/10,pas:st.pas}}
      return o})};
 }
@@ -3328,18 +3333,32 @@ function mStart(A0,B0,seed,human){
     ev.push({m:0,s:i,ty:'skill',tx:`${k.n}「${RENKEI_SKILL.q}」 味方のパス＋3、シュート・テクニック−1`});return true});X.kamaOn=[false,false];
   // おいぼれでも経験はあるんじゃよ：ピンチで1回だけ
   X.oib=T.map(Y=>{const g=Y.pl.find(p=>p.role==='GK');return !!(g&&g.oib)});X.oibUsed=[false,false];
+  X.uh=T.map(Y=>Y.pl.some(p=>p.uhho));X.uhUsed=[false,false];
   return X;
 }
 const kamaB=(X,i)=>X.kama&&X.kama[i]&&X.sc[i]<X.sc[1-i]?1:0;// 負けているあいだ味方の全能力+1
 const mAtk=(X,i)=>X.T[i].atk+tacOf(X,i).a-(msOf(X.T[1-i],'ana')-50)*.05+kamaB(X,i);
 const mDef=(X,i)=>{const Y=X.T[i];return Y.def+tacOf(X,i).f+(Y.hasEmp&&X.seg>=9?6:0)+kamaB(X,i)};
+/* 1Killウッホね：1回だけシュートをブロック。打った選手は10分ケガ、相手のフィジカルが上なら自分も10分ケガ */
+const phyOf=p=>p.phy!=null?p.phy:Math.round(60+(p.r-60)*.9);
+const injOut=(X,p)=>p.injUntil>X.seg;
+function mInjure(X,t,p,m){if(!p||injOut(X,p))return;const d=-Math.round(p.r*.5*10)/10;p.injUntil=Math.ceil((m+10)/5);p.injD=d;shiftTeam(X.T[t],p.role,d);
+  X.ev.push({m,s:t,ty:'down',tx:`${p.n}はケガで10分間動けない`});if(X.human===t&&!X.pend)X.pend={ty:'inj',m,n:p.n,t}}
+function uhhoBlock(X,d,sh,m){
+  if(!X.uh||!X.uh[d]||X.uhUsed[d])return false;const Y=X.T[d],gp=Y.pl.find(p=>p.uhho&&!injOut(X,p));if(!gp)return false;
+  X.uhUsed[d]=true;const shp=typeof sh==='string'?X.T[1-d].pl.find(p=>p.n===sh):sh,sn=shp?shp.n:sh;
+  X.ev.push({m,s:d,ty:'skill',tx:`${gp.n}「${UHHO_SKILL.q}」 ${sn}のシュートを体ごとブロック！`});
+  const both=shp&&phyOf(shp)>phyOf(gp);
+  if(shp)mInjure(X,1-d,shp,m);if(both){X.ev.push({m,s:d,ty:'down',tx:`${sn}のパワーが上回った…`});mInjure(X,d,gp,m)}
+  return true}
 function oibFire(X,d,m){if(!X.oib||!X.oib[d]||X.oibUsed[d])return false;X.oibUsed[d]=true;const g=(X.T[d].pl.find(p=>p.role==='GK')||{n:'GK'}).n;
   X.ev.push({m,s:d,ty:'skill',tx:`${g}「${OIBORE_SKILL.q}」 判断180！ ほかの能力は−30`});return true}
 function mRun(X){
   while(!X.done&&!X.pend){
     if(X.seg>=18){mEnd(X);break}
     if(X.lazy&&X.si===0&&X.seg*5>=X.until)break;// 画面の時間に合わせて少しずつ進める（途中で戦術を変えられる）
-    if(X.si===0){X.pa=1/(1+Math.exp(-((X.T[0].mid+tacOf(X,0).m+kamaB(X,0))-(X.T[1].mid+tacOf(X,1).m+kamaB(X,1)))/9));X.posA+=X.pa;
+    if(X.si===0){X.T.forEach((Y,t)=>Y.pl.forEach(p=>{if(p.injUntil!=null&&X.seg>=p.injUntil){shiftTeam(Y,p.role,-p.injD);delete p.injUntil;X.ev.push({m:X.seg*5,s:t,ty:'sub',tx:`${p.n}がケガから戻ってきた`})}}));
+      X.pa=1/(1+Math.exp(-((X.T[0].mid+tacOf(X,0).m+kamaB(X,0))-(X.T[1].mid+tacOf(X,1).m+kamaB(X,1)))/9));X.posA+=X.pa;
       if(X.kama)[0,1].forEach(i=>{if(kamaB(X,i)&&!X.kamaOn[i]){X.kamaOn[i]=true;const k=X.T[i].pl.find(p=>p.kama);X.ev.push({m:X.seg*5,s:i,ty:'skill',tx:`${k?k.n:'鎌ポコ'}「まだいけるやん、連携や！」 負けているあいだ味方の全能力＋1`})}})}
     if(X.si<2){const i=X.si;X.si++;mTeam(X,i);continue}
     const seg=X.seg;X.seg++;X.si=0;
@@ -3363,7 +3382,7 @@ function mTeam(X,i){
       const gk=(O.pl.find(p=>p.role==='GK')||{n:'GK'}).n;
       X.ev.push({m,s:i,ty:'skill',tx:`決定機！ ${mao.n}「${MAO_SKILL.q}」 シュート＋25`});
       const pg=clamp(.42+(mAtk(X,i)-odef)*.0075+(mao.sho+25-75)*.004,.3,.88);
-      if(r()<pg){X.sc[i]++;X.gl[i][mao.n]=(X.gl[i][mao.n]||0)+1;X.ev.push({m,s:i,ty:'goal',tx:`${mao.n}の黄金の右足が炸裂！ ネットを突き破るような一撃！`,sc:X.sc.slice()})}
+      if(r()<pg&&!uhhoBlock(X,1-i,mao,m)){X.sc[i]++;X.gl[i][mao.n]=(X.gl[i][mao.n]||0)+1;X.ev.push({m,s:i,ty:'goal',tx:`${mao.n}の黄金の右足が炸裂！ ネットを突き破るような一撃！`,sc:X.sc.slice()})}
       else X.ev.push({m,s:i,ty:'save',tx:`${mao.n}の渾身のシュートを${gk}が奇跡的に止めた！`});
       mao.r-=10;mao.sho-=10;mao.pas-=10;shiftTeam(Y,mao.role,-10);
       X.ev.push({m,s:i,ty:'down',tx:`${mao.n}は力を使い果たした。全能力−10`});
@@ -3379,7 +3398,7 @@ function mTeam(X,i){
   if(r()>=pc)return;
   X.sh[i]++;
   const m=seg*5+1+Math.floor(r()*5);
-  const att=Y.pl.filter(p=>p.role!=='GK');
+  let att=Y.pl.filter(p=>p.role!=='GK'&&!injOut(X,p));if(!att.length)att=Y.pl.filter(p=>p.role!=='GK');
   const sc1=wPick(r,att,p=>({FW:5,MF:2.4,DF:.55}[p.role]||1)*Math.pow(Math.max(30,p.sho)/60,3));
   const pg=clamp(.27+(mAtk(X,i)-odef)*.0075+(sc1.sho-75)*.003,.08,.58);
   const gk=(O.pl.find(p=>p.role==='GK')||{n:'GK'}).n;
@@ -3391,6 +3410,7 @@ function mTeam(X,i){
     mBig(X,info,Math.floor(r()*3),Math.floor(r()*3));return;
   }
   const x=r();
+  if(x<pg&&uhhoBlock(X,1-i,sc1,m))return;
   if(x<pg){
     X.sc[i]++;X.gl[i][sc1.n]=(X.gl[i][sc1.n]||0)+1;
     const mates=att.filter(p=>p!==sc1);let txt;
@@ -3407,7 +3427,9 @@ function mBig(X,info,a,d){
   const {i,m,n,pg,gk}=info,read=a===d;let p=read?pg*.4:Math.min(.85,pg+.28);X.lastBig={i,a,d,read,goal:false};
   X.ev.push({m,s:i,ty:'chance',tx:`決定機！ ${n}が${SHOT_OPT[a]}`});
   const ob=oibFire(X,1-i,m);if(ob)p*=.25;
-  if(X.r()<p){X.lastBig.goal=true;X.sc[i]++;X.gl[i][n]=(X.gl[i][n]||0)+1;X.ev.push({m,s:i,ty:'goal',tx:read?`読まれていたが、${n}が力でねじ込んだ！`:`${gk}の読みの逆を突いた！ ${n}が決めた！`,sc:X.sc.slice()})}
+  const hit=X.r()<p;
+  if(hit&&uhhoBlock(X,1-i,n,m)){X.lastBig.read=true}
+  else if(hit){X.lastBig.goal=true;X.sc[i]++;X.gl[i][n]=(X.gl[i][n]||0)+1;X.ev.push({m,s:i,ty:'goal',tx:read?`読まれていたが、${n}が力でねじ込んだ！`:`${gk}の読みの逆を突いた！ ${n}が決めた！`,sc:X.sc.slice()})}
   else X.ev.push({m,s:i,ty:'save',tx:ob?`${gk}が85年の経験で読み切った！ 神がかりのセーブ！`:read?`${gk}が完全に読み切った！ ${n}のシュートを止めた`:`${n}のシュートはわずかに枠の外…`});
   if(ob)X.ev.push({m,s:1-i,ty:'down',tx:`${gk}「あいたたた…腰が…」 能力は元に戻ったが腰痛に`});
 }
@@ -3456,7 +3478,8 @@ function mDecide(X,v){
   if(P.ty==='shot'){X.pend=null;mBig(X,P,+v,Math.floor(X.r()*3))}
   else if(P.ty==='def'){X.pend=null;mBig(X,P,Math.floor(X.r()*3),+v)}
   else if(P.ty==='pk'){const c=Math.floor(X.r()*3);if(P.role==='kick')mPk(X,+v,c);else mPk(X,c,+v);return}
-  else if(P.ty==='ht'){X.pend=null;if(v&&v.sq)mResub(X,v.sq,v.swaps)}
+  else if(P.ty==='ht'){X.pend=null;if(v&&v.sq){mResub(X,v.sq,v.swaps);X.curSq=v.sq}}
+  else if(P.ty==='inj'){X.pend=null;if(v&&v.sq){X.starters=X.starters.filter(x=>x.i!==X.human);mResub(X,v.sq,[]);X.curSq=v.sq;X.ev.push({m:P.m,s:X.human,ty:'sub',tx:`選手交代：${v.out} → ${v.in}（ケガのため）`})}else X.ev.push({m:P.m,s:X.human,ty:'sub',tx:`${P.n}は交代せず、10分間の回復を待つ`})}
   mRun(X);
 }
 function simBattle(A0,B0,seed){const X=mStart(A0,B0,seed,-1);mRun(X);return X.res}
@@ -3471,7 +3494,7 @@ const CPU_LV=[
 ];
 function cpuTeam(L,seed){
   const r=rng(seed),F=FORMS[pickR(r,Object.keys(FORMS))];
-  const pl=F.s.map(([role])=>{const v=L.lv+(r()-.5)*8;return {n:pickR(r,SEI)+(r()<.5?'':' '+pickR(r,MEI)),role,r:Math.round(v*10)/10,sho:Math.round(POS_CAP[role].sho*v/85),pas:Math.round(POS_CAP[role].pas*v/85),cap:0}});
+  const pl=F.s.map(([role])=>{const v=L.lv+(r()-.5)*8;return {n:pickR(r,SEI)+(r()<.5?'':' '+pickR(r,MEI)),role,r:Math.round(v*10)/10,sho:Math.round(POS_CAP[role].sho*v/85),pas:Math.round(POS_CAP[role].pas*v/85),phy:Math.round(POS_CAP[role].phy*v/85),cap:0}});
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.reduce((s,x)=>s+x.r,0)/l.length};
   const atk=av('FW')*.62+av('MF')*.38,mid=av('MF')*.75+av('FW')*.1+av('DF')*.15,def=av('DF')*.68+av('GK')*.32;
   return {v:1,tac:pickR(r,['bal','bal','atk','def','pos','cnt','prs']),name:L.n,form:F.n,tot:Math.round((atk+mid+def)/3),atk,mid,def,hasCap:false,mg:{n:'CPU監督',st:{tac:L.lv-10,coa:50,lea:L.lv-10,gam:L.lv-10,ana:L.lv-10}},pl};
@@ -4552,7 +4575,7 @@ function cardMini(c){
 }
 function cardTile(c,opts={}){
   const mg=isMgr(c),o=mg?mgrOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
-  const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:c.special==='renkei'?`<span class="sk">${RENKEI_SKILL.n}</span>`:c.special==='oibore'?`<span class="sk">${OIBORE_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
+  const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:c.special==='renkei'?`<span class="sk">${RENKEI_SKILL.n}</span>`:c.special==='oibore'?`<span class="sk">${OIBORE_SKILL.n}</span>`:c.special==='uhho'?`<span class="sk">${UHHO_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
   return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${sprOf(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span></div></div>${tag||c.gikkuri>0?`<div class="tags">${tag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
 }
 
@@ -4565,8 +4588,8 @@ function copyText(val){
   if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(val).then(()=>true).catch(()=>false);
   return Promise.resolve(false);
 }
-const puCard=id=>GLEGS.find(l=>l.id===id)||(id==='shanchi'?SHANCHI:id==='mao'?MAO:id==='inkansu'?INKANSU:id==='kamapoko'?KAMAPOKO:id==='batsumaru'?BATSUMARU:ICHIKAWA);
-const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと：${legText(l)}`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:id==='inkansu'?STARTER_SKILL:id==='kamapoko'?RENKEI_SKILL:id==='batsumaru'?OIBORE_SKILL:CAP_SKILL};
+const puCard=id=>GLEGS.find(l=>l.id===id)||(id==='shanchi'?SHANCHI:id==='mao'?MAO:id==='inkansu'?INKANSU:id==='kamapoko'?KAMAPOKO:id==='batsumaru'?BATSUMARU:id==='gorimori'?GORIMORI:ICHIKAWA);
+const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと：${legText(l)}`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:id==='inkansu'?STARTER_SKILL:id==='kamapoko'?RENKEI_SKILL:id==='batsumaru'?OIBORE_SKILL:id==='gorimori'?UHHO_SKILL:CAP_SKILL};
 function pairArt(BN){
   return `<article class="front gban"><div><div class="dateline"><span>新ガチャ・2人ピックアップ</span><span>各1%</span></div><p class="deck">笹山 鎌ポコ ＆ バツ丸尾君</p>
    <p class="lede">守備的MFと85歳の守護神。どちらも出る確率は1%ずつ。</p></div>${vhead(BN.head[0],BN.head[1],'gold')}</article>
@@ -4718,8 +4741,12 @@ function ixPanel(L,side){
   if(P.ty==='shot')return `<div class="ixp"><b>決定機！</b><p>${esc(P.n)}がゴール前でフリーに。GKの${esc(P.gk)}と1対1。どこを狙う？</p><div class="seg c3">${SHOT_OPT.map((t,i)=>`<button class="opt" data-act="ixPick" data-v="${i}">${t}</button>`).join('')}</div><p class="sub">GKに読まれると入りにくい。読みを外せば入りやすい。</p></div>`;
   if(P.ty==='def')return `<div class="ixp def"><b>ピンチ！</b><p>相手の${esc(P.n)}がシュート体勢。GKの${esc(P.gk)}はどこを読む？</p><div class="seg c3">${DEF_OPT.map((t,i)=>`<button class="opt" data-act="ixPick" data-v="${i}">${t}</button>`).join('')}</div><p class="sub">相手の狙いを当てれば止めやすい。</p></div>`;
   if(P.ty==='pk'){const g=L.pk.g,n=L.pk.n;return `<div class="ixp ${P.role==='kick'?'':'def'}"><b>PK戦 ${g[0]}-${g[1]}</b><span class="sub">（${n[0]}本目まで・${n[1]}本目まで）</span><p>${P.role==='kick'?`キッカーは${esc(P.n)}。どこに蹴る？`:`相手のキッカーは${esc(P.n)}。GKの${esc(P.gk)}はどっちに跳ぶ？`}</p><div class="seg c3">${PK_OPT.map((t,i)=>`<button class="opt" data-act="ixPick" data-v="${i}">${t}</button>`).join('')}</div></div>`}
+  if(P.ty==='inj'){const bs=L.curSq||M.squad,bench=bs.bench.map((id,i)=>[id,i]).filter(([id])=>{const c=cardById(id);return c&&!isMgr(c)&&!isLegSup(c)&&!(c.gikkuri>0)&&!bs.slots.includes(id)});
+    return `<div class="ixp def"><b>ケガ人発生（${P.m}分）</b><p>${esc(P.n)}がケガで10分間動けない。交代させる？ それとも回復を待つ？</p>
+    ${bench.length?`<div class="picks">${bench.map(([id,i])=>{const c=cardById(id);return `<button class="pk" data-act="ixInjSub" data-v="${i}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="num">${cardOvr(c)}</span></button>`}).join('')}</div>`:'<p class="note">ベンチに交代できる選手がいない。</p>'}
+    <div class="stack" style="margin-top:8px"><button class="btn ghost" data-act="ixInjWait">交代せずに10分待つ</button></div></div>`}
   if(P.ty==='ht'){
-    if(!B.ht)B.ht={slots:M.squad.slots.slice(),bench:M.squad.bench.map(id=>{const c=cardById(id);return c&&!isMgr(c)&&!isLegSup(c)&&!M.squad.slots.includes(id)?id:null}),sel:null,swaps:[]};
+    const bs=L.curSq||M.squad;if(!B.ht)B.ht={slots:bs.slots.slice(),bench:bs.bench.map(id=>{const c=cardById(id);return c&&!isMgr(c)&&!isLegSup(c)&&!(c.gikkuri>0)&&!bs.slots.includes(id)?id:null}),sel:null,swaps:[]};
     const h=B.ht,T=teamCalc({...M.squad,slots:h.slots,bench:h.bench}),left=3-h.swaps.length;
     const bench=h.bench.map((id,i)=>[id,i]).filter(([id])=>id);
     return `<div class="ixp ht"><b>ハーフタイム ${L.sc[0]}-${L.sc[1]}</b><p>後半に向けて選手を入れ替えられる（あと${left}人）。下げる選手を選んでから、ベンチの選手を選ぶ。</p>
@@ -4868,6 +4895,10 @@ Object.assign(ACT,{
    const T=teamCalc({...M.squad,slots:h.slots,bench:h.bench}),outN=T.pl[h.sel].n,inN=(cardById(id)||{}).name||'控え';
    h.slots[h.sel]=id;h.bench[b]=outId||null;h.swaps.push([outN,inN]);h.sel=null},
  ixReset:()=>{G.bt.ht=null},
+ ixInjWait:()=>{const B=G.bt,L=B.match&&B.match.live;if(!L||!L.pend||L.pend.ty!=='inj')return;const m=L.pend.m;mDecide(L,null);B.play.pauseUntil=0;B.play.t0=Date.now()-m/90*PLAY_MS;setTimeout(startPlayback,0)},
+ ixInjSub:v=>{const B=G.bt,L=B.match&&B.match.live;if(!L||!L.pend||L.pend.ty!=='inj')return;const P=L.pend,bs=L.curSq||M.squad,T=teamCalc(bs),k=T.pl.findIndex(p=>p.n===P.n),id=bs.bench[+v];
+   if(k<0||!id){ACT.ixInjWait();return}const slots=bs.slots.slice(),bench=bs.bench.slice(),old=slots[k];slots[k]=id;bench[+v]=old||null;
+   mDecide(L,{sq:{...bs,slots,bench},out:P.n,in:(cardById(id)||{}).name||'控え'});B.play.pauseUntil=0;B.play.t0=Date.now()-P.m/90*PLAY_MS;setTimeout(startPlayback,0)},
  ixGo:()=>{const B=G.bt,L=B.match&&B.match.live;if(!L||!L.pend||L.pend.ty!=='ht')return;const h=B.ht;
    mDecide(L,h&&h.swaps.length?{sq:{...M.squad,slots:h.slots.slice(),bench:h.bench.slice()},swaps:h.swaps}:null);B.ht=null;B.play.t0=Date.now()-45/90*PLAY_MS;scnAmbient();setTimeout(startPlayback,0)},
  btMenu:()=>{const X0=G.bt.match;if(X0&&X0.kind==='bet'&&X0.res)betSettle(X0);if(X0&&X0.sp&&!X0.res)spAutoFinish(X0);G.bt.view='menu';G.bt.match=null;G.bt.play=null;G.bt.code='';G.bt.cOut='';toTop()},
@@ -4914,7 +4945,7 @@ function makeSnap(name,players,mgLv,tac,form){
   const hasCap=players.some(x=>x.special==='captain'),rOf=(st,x)=>Math.round(cardOvr({st,plus:{},pos:x.role},x.role)*fitMul(x.pos||x.role,x.role)*10)/10;
   const pl=players.map(x=>{const st={};KEYS.forEach(k=>st[k]=Math.min(99,x.st[k]+(hasCap&&x.special!=='captain'?4:0)));
     const o={n:x.n,role:x.role,r:rOf(st,x),sho:st.sho,pas:st.pas,cap:x.special==='captain'?1:0,emp:x.special==='empire'?1:0,mao:x.special==='mao'?1:0,st,pos:x.pos||x.role,sp:x.special||null};
-    if(x.special==='renkei')o.kama=1;if(x.special==='oibore'&&x.role==='GK')o.oib=1;
+    o.phy=st.phy;if(x.special==='renkei')o.kama=1;if(x.special==='uhho')o.uhho=1;if(x.special==='oibore'&&x.role==='GK')o.oib=1;
     if(x.special==='starter'){const s1={...st};for(const [k,v] of Object.entries(STARTER_D))s1[k]=Math.min(99,Math.max(1,s1[k]+v));o.st1={r:rOf(s1,x),pas:s1.pas}}
     return o});
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
@@ -5056,10 +5087,10 @@ function wcHtml(){
 }
 
 /* ---------- 賭博伝説試合：伝説の選手どうしの試合にコインを賭ける ---------- */
-const SP_SKILL={captain:CAP_SKILL,empire:EMP_SKILL,mao:MAO_SKILL,starter:STARTER_SKILL,renkei:RENKEI_SKILL,oibore:OIBORE_SKILL};
+const SP_SKILL={captain:CAP_SKILL,empire:EMP_SKILL,mao:MAO_SKILL,starter:STARTER_SKILL,renkei:RENKEI_SKILL,oibore:OIBORE_SKILL,uhho:UHHO_SKILL};
 const BET_N=600,BET_EDGE=.9,BET_MIN=10;
 const BET_CLUBS=['ゴッドイレブン','レジェンドユナイテッド','オールスターズFC','ドリームXI','ミソロジーFC','ヘブンズゲート','ゴールデンエイジ','エターナルFC'];
-function betAllStars(){const sp=[ICHIKAWA,SHANCHI,MAO,INKANSU,KAMAPOKO,BATSUMARU].concat(GLEGS);return sp.map(c=>({n:c.name,pos:c.pos,st:{...c.st},special:c.special||null}))}
+function betAllStars(){const sp=[ICHIKAWA,SHANCHI,MAO,INKANSU,KAMAPOKO,BATSUMARU,GORIMORI].concat(GLEGS);return sp.map(c=>({n:c.name,pos:c.pos,st:{...c.st},special:c.special||null}))}
 function betTeams(seed){
   const r=rng(seed),pool=shuf(betAllStars(),r),clubs=shuf(BET_CLUBS,r),names=shuf(LGD_NAMES,r),epi=shuf(LGD_EPI,r);let ni=0;
   const mk=k=>{const lv=80+Math.floor(r()*12),pl=ROLES433.map(role=>{let i=pool.findIndex(c=>c.pos===role);let c;if(i>=0&&r()<.8){c=pool.splice(i,1)[0]}
