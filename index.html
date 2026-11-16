@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-071114';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-071421';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4910,10 +4910,17 @@ if(typeof document!=='undefined'){document.addEventListener('focusin',e=>{const 
 const shuf=(a,r)=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor((r?r():Math.random())*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 // 自由に作ったチームを試合エンジン用のスナップショットにする
 function makeSnap(name,players,mgLv,tac,form){
-  const pl=players.map(x=>({n:x.n,role:x.role,r:Math.round(cardOvr({st:x.st,plus:{},pos:x.role},x.role)*fitMul(x.pos||x.role,x.role)*10)/10,sho:x.st.sho,pas:x.st.pas,cap:0,st:x.st,pos:x.pos||x.role,cid:x.cid||null}));
+  // ガチャのキャラの特別スキルも、自分のスカッドと同じように発動する
+  const hasCap=players.some(x=>x.special==='captain'),rOf=(st,x)=>Math.round(cardOvr({st,plus:{},pos:x.role},x.role)*fitMul(x.pos||x.role,x.role)*10)/10;
+  const pl=players.map(x=>{const st={};KEYS.forEach(k=>st[k]=Math.min(99,x.st[k]+(hasCap&&x.special!=='captain'?4:0)));
+    const o={n:x.n,role:x.role,r:rOf(st,x),sho:st.sho,pas:st.pas,cap:x.special==='captain'?1:0,emp:x.special==='empire'?1:0,mao:x.special==='mao'?1:0,st,pos:x.pos||x.role,sp:x.special||null};
+    if(x.special==='renkei')o.kama=1;if(x.special==='oibore'&&x.role==='GK')o.oib=1;
+    if(x.special==='starter'){const s1={...st};for(const [k,v] of Object.entries(STARTER_D))s1[k]=Math.min(99,Math.max(1,s1[k]+v));o.st1={r:rOf(s1,x),pas:s1.pas}}
+    return o});
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
   const atk=av('FW')*.62+av('MF')*.38,mid=av('MF')*.75+av('FW')*.1+av('DF')*.15,def=av('DF')*.68+av('GK')*.32;
-  return {v:1,tac:tac||'bal',name,form:form||'4-3-3',tot:Math.round((atk+mid+def)/3),atk,mid,def,hasCap:false,mg:{n:'伝説の監督',st:{tac:mgLv,coa:mgLv,lea:mgLv,gam:mgLv,ana:mgLv}},pl};
+  const maoP=pl.find(p=>p.mao),sub=maoP?{n:'控えFW',r:Math.round(mgLv*.9),sho:Math.round(mgLv*.9),pas:Math.round(mgLv*.75)}:null;
+  return {v:1,tac:tac||'bal',name,form:form||'4-3-3',tot:Math.round((atk+mid+def)/3),atk,mid,def,hasCap,hasEmp:pl.some(p=>p.emp),hasMao:!!maoP,maoSub:true,sub,mg:{n:'伝説の監督',st:{tac:mgLv,coa:mgLv,lea:mgLv,gam:mgLv,ana:mgLv}},pl};
 }
 const ROLES433=FORMS['433'].s.map(x=>x[0]);
 const TOPK={FW:['sho','spd','tec','phy'],MF:['pas','tec','spd','phy','def'],DF:['def','phy','spd','pas'],GK:['sho','tec','spd','def']};
@@ -4972,10 +4979,12 @@ async function wcPool(){
 }
 
 /* ---------- ワールドカップ（8チームのトーナメント） ---------- */
-const WC_RW={1:3000,2:2000,3:1000};
+const WC_RW={1:3000,2:2000,3:1000},WC_MAX=3;
+function wcDay(){const d=todayKey();M.wcDay=M.wcDay||{day:'',n:0};if(M.wcDay.day!==d){M.wcDay.day=d;M.wcDay.n=0}return M.wcDay}
+const wcLeft=()=>Math.max(0,WC_MAX-wcDay().n);
 const WC_CPU=['ブラジリア','アルゼンチーノ','ゲルマニア','イスパニア','フランシア','イタリカ','イングランド連合','オランディア','ポルトガリア','ベルギカ','ウルグアイア','クロアチカ','モロッカ','ノルディカ','メヒカーナ','コリアーナ'];
 async function wcEnter(){
-  const B=G.bt;B.wcBusy=true;render();
+  const B=G.bt;if(B.wcBusy||!wcLeft())return;wcDay().n++;metaSave();B.wcBusy=true;render();
   let others=[];try{others=await wcPool()}catch(e){}
   const local=(M.opps||[]).map(o=>({name:o.name,snap:o.snap,src:'friend'}));
   const seen=new Set([teamSnap().name]),pool=[];
@@ -5026,7 +5035,8 @@ function wcHtml(){
   if(!W)return `<div class="kick">ワールドカップ</div><article class="front gban"><div><div class="dateline"><span>8チームのトーナメント</span><span>準々決勝から</span></div><p class="deck">世界一をつかめ</p>
    <p class="lede">自分のスカッドで、ほかのプレイヤーのスカッドやCPUの代表チームと戦う。<b class="gold">優勝3,000</b>・準優勝2,000・3位1,000コイン。引き分けはPK戦。</p></div>${vhead('W','杯','gold')}</article>
    <p class="note">対戦相手：コード対戦・ルーム対戦で戦ったことのある人のスカッド${IS_WEB?'':'や、このページで遊んでいるほかの人のスカッド'}が入る。足りない分はCPUの代表チーム。${M.opps&&M.opps.length?`（いま${M.opps.length}チーム登録）`:''}</p>
-   <div class="stack"><button class="btn red" data-act="wcStart" ${B.wcBusy?'disabled':''}>${B.wcBusy?'組み合わせ中…':'大会に出場する'}</button><button class="btn ghost" data-act="btMenu">対戦メニューへ</button></div>
+   <p class="note">出場できるのは<b>1日${WC_MAX}回まで</b>。今日はあと<b>${wcLeft()}回</b>。</p>
+   <div class="stack"><button class="btn red" data-act="wcStart" ${B.wcBusy||!wcLeft()?'disabled':''}>${B.wcBusy?'組み合わせ中…':wcLeft()?'大会に出場する':'今日はもう出場できない'}</button><button class="btn ghost" data-act="btMenu">対戦メニューへ</button></div>
    ${M.wcRec?`<p class="sub">これまで：出場${M.wcRec.n}回・優勝${M.wcRec.win}回・最高${M.wcRec.best}位</p>`:''}`;
   const stN={qf:'準々決勝',sf:'準決勝',final:'決勝・3位決定戦',done:'大会終了'}[W.stage];
   const mp=wcMyPair(),out=W.stage!=='done'&&!mp;
@@ -5041,19 +5051,20 @@ function wcHtml(){
   <div class="label">決勝</div><ul class="wcl">${W.f?wcLine(W.f,''):W.sf.length?wcPend(wcPairs('final')[0],''):'<li class="wcm"><span>未定</span></li>'}</ul>
   <div class="stack" style="margin-top:12px">${mp?`<button class="btn red" data-act="wcPlay">${W.stage==='final'&&wcPairs('t3')[0].includes(0)?'3位決定戦':W.stage==='final'?'決勝':stN}を戦う（vs ${esc(wcT(mp[0]===0?mp[1]:mp[0]).name)}）</button>`:''}
    ${out?'<button class="btn red" data-act="wcSkip">敗退…残りの試合の結果を見る</button>':''}
-   ${W.stage==='done'?'<button class="btn red" data-act="wcNew">もう一度出場する</button>':`<button class="btn ghost" data-act="wcQuit">大会を棄権する</button>`}
+   ${W.stage==='done'?(wcLeft()?`<button class="btn red" data-act="wcNew">もう一度出場する（今日あと${wcLeft()}回）</button>`:'<p class="note">今日の出場回数（3回）を使い切った。また明日。</p>'):`<button class="btn ghost" data-act="wcQuit">大会を棄権する</button>`}
    <button class="btn ghost" data-act="btMenu">対戦メニューへ</button></div>`;
 }
 
 /* ---------- 賭博伝説試合：伝説の選手どうしの試合にコインを賭ける ---------- */
+const SP_SKILL={captain:CAP_SKILL,empire:EMP_SKILL,mao:MAO_SKILL,starter:STARTER_SKILL,renkei:RENKEI_SKILL,oibore:OIBORE_SKILL};
 const BET_N=600,BET_EDGE=.9,BET_MIN=10;
 const BET_CLUBS=['ゴッドイレブン','レジェンドユナイテッド','オールスターズFC','ドリームXI','ミソロジーFC','ヘブンズゲート','ゴールデンエイジ','エターナルFC'];
-function betAllStars(){const sp=[ICHIKAWA,SHANCHI,MAO,INKANSU,KAMAPOKO,BATSUMARU].concat(GLEGS);return sp.map(c=>({n:c.name,pos:c.pos,st:{...c.st}}))}
+function betAllStars(){const sp=[ICHIKAWA,SHANCHI,MAO,INKANSU,KAMAPOKO,BATSUMARU].concat(GLEGS);return sp.map(c=>({n:c.name,pos:c.pos,st:{...c.st},special:c.special||null}))}
 function betTeams(seed){
   const r=rng(seed),pool=shuf(betAllStars(),r),clubs=shuf(BET_CLUBS,r),names=shuf(LGD_NAMES,r),epi=shuf(LGD_EPI,r);let ni=0;
   const mk=k=>{const lv=80+Math.floor(r()*12),pl=ROLES433.map(role=>{let i=pool.findIndex(c=>c.pos===role);let c;if(i>=0&&r()<.8){c=pool.splice(i,1)[0]}
       else{const st={};KEYS.forEach(s=>st[s]=Math.round(clamp(POS_CAP[role][s]*(lv+(r()-.5)*10)/88,30,99)));c={n:epi[ni%epi.length]+names[ni%names.length],pos:role,st};ni++}
-      return {n:c.n,role,pos:c.pos,st:c.st}});return makeSnap(clubs[k],pl,lv,pickR(r,['bal','atk','def','pos','cnt','prs']))};
+      return {n:c.n,role,pos:c.pos,st:c.st,special:c.special}});return makeSnap(clubs[k],pl,lv,pickR(r,['bal','atk','def','pos','cnt','prs']))};
   return [mk(0),mk(1)];
 }
 function betOdds(A,B,seed){
@@ -5094,7 +5105,7 @@ function betHtml(){
     :`<div class="label">${tab==='sc'?'ゴールを決める選手（1点以上）':'MVPになる選手（いちばん活躍する）'}</div>${[0,1].map(t=>`<div class="sub" style="margin:6px 0 4px">${esc(T[t].name)}</div><div class="bos c2">${plist(tab,t)}</div>`).join('')}`;
   return `<div class="kick">賭博伝説試合<span class="r">${M.betRec?`通算 賭け${M.betRec.in.toLocaleString('ja-JP')}・戻り${M.betRec.out.toLocaleString('ja-JP')}`:'伝説の選手どうしの一戦'}</span></div>
   <div class="board"><div class="bt"><b>${esc(T[0].name)}</b><span class="sub">総合${T[0].tot}・${TACS[T[0].tac].n}</span></div><div class="bs"><span class="num">VS</span></div><div class="bt"><b>${esc(T[1].name)}</b><span class="sub">総合${T[1].tot}・${TACS[T[1].tac].n}</span></div></div>
-  <details class="betteam"><summary>出場メンバーを見る</summary>${[0,1].map(t=>`<div class="label">${esc(T[t].name)}</div><div class="plist">${T[t].pl.map(p=>`<div class="prow" style="cursor:default"><span class="po">${p.role}</span><b>${esc(p.n)}</b><span class="sub">シュート${p.sho}・パス${p.pas}</span><span class="num">${Math.round(p.r)}</span></div>`).join('')}</div>`).join('')}</details>
+  <details class="betteam"><summary>出場メンバーを見る</summary>${[0,1].map(t=>`<div class="label">${esc(T[t].name)}</div><div class="plist">${T[t].pl.map(p=>`<div class="prow" style="cursor:default"><span class="po">${p.role}</span><b>${esc(p.n)}</b><span class="sub">${p.sp&&SP_SKILL[p.sp]?`<b class="gold">${SP_SKILL[p.sp].n}</b>・`:''}シュート${p.sho}・パス${p.pas}</span><span class="num">${Math.round(p.r)}</span></div>`).join('')}</div>`).join('')}<p class="sub">ガチャのキャラの特別スキルは試合中に発動する（倍率にも反映ずみ）。</p></details>
   <div class="label">1回に賭けるコイン</div><div class="field one2"><input id="betamt" type="number" inputmode="numeric" min="${BET_MIN}" step="10" value="${B2.amt}" aria-label="賭けるコイン"><span class="coin">${M.coins.toLocaleString('ja-JP')}<small>コイン</small></span></div>
   <div class="seg c4">${[10,100,500,1000].map(v=>`<button class="opt" data-act="betAmt" data-v="${v}">${v.toLocaleString('ja-JP')}</button>`).join('')}</div>
   <div class="seg c3 subnav" style="margin-top:10px">${[['res','勝敗・ゴール数'],['sc','得点者'],['mvp','MVP']].map(([k,n])=>`<button class="opt" aria-pressed="${tab===k}" data-act="betTab" data-v="${k}">${n}</button>`).join('')}</div>
@@ -5110,7 +5121,7 @@ function betHtml(){
 function spMenuHtml(){const L=lgdState(),W=M.wc;
   return `<div class="kick">スペシャルマッチ</div><div class="acts sp">
    <button class="act" data-act="spView" data-v="pk"><b>フリックPK対戦</b><span>指でボールを蹴る・止める</span><em>蹴る順番とコンディション</em></button>
-   <button class="act" data-act="spView" data-v="wc"><b>ワールドカップ</b><span>${W&&W.stage!=='done'?'大会の途中':'8チームのトーナメント'}</span><em>優勝3,000・準優勝2,000・3位1,000</em></button>
+   <button class="act" data-act="spView" data-v="wc"><b>ワールドカップ</b><span>${W&&W.stage!=='done'?'大会の途中':`今日あと${wcLeft()}回`}</span><em>優勝3,000・準優勝2,000・3位1,000</em></button>
    <button class="act gold" data-act="spView" data-v="lgd"><b>伝説降臨</b><span>${L.won?'今日はクリア済み':`今日あと${LGD_TRY-L.tries}回`}</span><em>初勝利5,000・以降500コイン</em></button>
    <button class="act" data-act="spView" data-v="bet"><b>賭博伝説試合</b><span>伝説の一戦にコインを賭ける</span><em>勝敗・得点者・MVP・ゴール数</em></button></div>`}
 function spView(){const v=G.bt.view;if(v==='lgd')return lgdHtml();if(v==='wc')return wcHtml();if(v==='bet')return betHtml();if(v==='pk')return pkHtml();return null}
@@ -5119,7 +5130,7 @@ Object.assign(ACT,{
  spView:v=>{G.bt.view=v;if(v==='bet'&&!G.bet)betNew();if(v==='pk')pkSetup();toTop()},
  lgdGo:()=>{if(!lgdCan())return;const L=lgdState();L.tries++;metaSave();spMatch(lgdTeam(),'lgd','伝説降臨');toTop();setTimeout(startPlayback,0)},
  wcStart:()=>{wcEnter()},
- wcNew:()=>{M.wc=null;wcEnter()},
+ wcNew:()=>{if(!wcLeft())return;M.wc=null;wcEnter()},
  wcQuit:()=>{if(M.wc&&M.wc.stage!=='done'){M.wc=null;G.toastMsg='大会を棄権した'}},
  wcPlay:()=>{wcPlayMine();toTop();setTimeout(startPlayback,0)},
  wcSkip:()=>{wcSkipRest()},
