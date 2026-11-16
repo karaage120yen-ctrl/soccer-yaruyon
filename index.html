@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-124742';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-125734';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -682,6 +682,13 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .fate.retire{background:#2a1414;border-color:#a33}
 .fate.acc{background:#2a2410;border-color:#a83}
 .front.mourn{filter:grayscale(.85)}
+/* 立ち絵 */
+.stb{position:relative;width:100%;aspect-ratio:64/98;border-radius:10px;background:radial-gradient(ellipse at 50% 40%,#3a4250,#1a1d24 75%);overflow:hidden}
+.stb.rare{background:radial-gradient(ellipse at 50% 40%,#6a5420,#1a1406 75%)}
+.stb svg{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+.pc-top.wf{grid-template-columns:auto 1fr 92px}
+.pc-face{width:92px}
+.ct-face{width:52px}
 
 </style>
 </head>
@@ -1255,6 +1262,133 @@ function sprOf(c,kind){
   return `<div class="sprw" style="background:radial-gradient(circle at 50% 42%,${bg[0]},${bg[1]} 75%)">${SPR_CACHE[key]}${rare?'<i class="spk"></i>':''}</div>`;
 }
 
+/* ========== 立ち絵：頭の大きいドット絵の全身（40×60マス）。顔・髪・ユニフォームを陰影つきで描く ========== */
+const STW=40,STH=60;
+function standOpts(seed,pos,kind){
+  // 顔の色・髪型・ユニフォームは、顔アイコン（genPerson）と同じ乱数の順番で決める＝同じ人に見える
+  const r=rng(hashS(seed)),pk=a=>a[Math.floor(r()*a.length)];
+  const mg=kind==='mg';
+  const hs=mg?pk(['short','side','buzz','bald','side','short','curly']):pk(['short','spiky','long','buzz','mohawk','afro','side','bangs','short','spiky','curly']);
+  const kits=KIT[pos]||KIT.MF,kit=pk(kits);
+  const o={skin:pk(SKIN32),hair:mg&&r()<.4?pk(['#9a9a9a','#cfcfcf','#6b6b6b']):pk(HAIR32),hs,jersey:kit[0],trim:kit[1],num:mg?null:1+Math.floor(r()*29),stripes:!mg&&r()<.2,smile:r()<.4,beard:(mg?r()<.35:r()<.08)};
+  if(o.hs==='afro'&&o.skin===SKIN32[0])o.skin=pk(SKIN32.slice(2));
+  if(mg){o.suit=pk(['#26324a','#2b2b2b','#3a2f2a','#1f3a33']);o.tie=pk(['#b83226','#2f6fd6','#d7b34a','#6b2a8a']);o.glasses=r()<.35}
+  else if(r()<.2)o.band=pk(['#ffffff','#e2462b','#111111','#2f6fd6']);
+  const r2=rng(hashS(seed+'|stand'));o.pose=mg?(r2()<.5?'cross':'hips'):['cross','hips','ball','ball','fist','cross'][Math.floor(r2()*6)];
+  o.boots=['#1a1a1a','#1a1a1a','#f4f4f4','#ffd23a','#ff5a2a','#2f9fff'][Math.floor(r2()*6)];
+  return o;
+}
+function specStandOpts(id){const f=SPR_SPECIAL[id];if(!f)return null;let got=null;const orig=drawPerson;drawPerson=o=>{got=o;return orig(o)};try{f()}catch(e){}finally{drawPerson=orig}
+  if(got){got={...got};const r2=rng(hashS(id+'|stand'));got.pose=got.pose||['cross','hips','ball','fist'][Math.floor(r2()*4)];got.boots=got.boots||(got.crest||'#1a1a1a')}return got}
+function drawStand(o){
+  const G=Array.from({length:STH},()=>Array(STW).fill(null));
+  const set=(x,y,c)=>{x=Math.round(x);y=Math.round(y);if(c&&x>=0&&x<STW&&y>=0&&y<STH)G[y][x]=c};
+  const rect=(x0,y0,x1,y1,c)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)set(x,y,c)};
+  const row=(y,x0,x1,c)=>{for(let x=x0;x<=x1;x++)set(x,y,c)};
+  const mg=!!o.suit,SK=o.skin,SKd=shd(SK,.84),SKdd=shd(SK,.7),SKl=lit(SK,.22),HR=o.hair,HRd=shd(HR,.7),HRl=lit(HR,.28);
+  const J=mg?o.suit:o.jersey,Jd=shd(J,.74),Jl=lit(J,.22),T=mg?'#f4f4f4':o.trim,SH=mg?o.suit:(o.shorts||(lit(J,.0)===J&&J.toLowerCase()==='#f2f2f2'?'#1a3f8f':shd(J,.82))),SHd=shd(SH,.75);
+  const SO=mg?'#1a1a1a':(o.socks||J),BT=mg?'#141414':(o.boots||'#1a1a1a'),pose=o.pose||'cross';
+  /* ---- 脚 ---- */
+  const legL=[13,18],legR=[21,26];
+  const leg=(x0,x1,yTop,yBoot)=>{if(mg){rect(x0,yTop,x1,yBoot-1,SH);row(yTop,x0,x1,SHd);set(x1,yTop+2,SHd);for(let y=yTop;y<yBoot;y++)set(x0+1,y,shd(SH,.9))}
+      else{rect(x0+1,yTop,x1-1,yTop+2,SK);set(x1-1,yTop+1,SKd);set(x0+1,yTop+1,SKl);// ひざ
+        rect(x0,yTop+3,x1,yBoot-1,SO);row(yTop+3,x0,x1,T);row(yTop+5,x0,x1,T);for(let y=yTop+3;y<yBoot;y++){set(x1,y,shd(SO,.75));set(x0,y,lit(SO,.15))}}
+    rect(x0-1,yBoot,x1,yBoot+2,BT);row(yBoot,x0,x1,lit(BT,.25));set(x1,yBoot+2,shd(BT,.6));row(yBoot+2,x0-1,x1,shd(BT,.7))};
+  const ballX=29,ballY=50;
+  if(pose==='ball'){leg(legL[0],legL[1],44,55);// 右足はボールの上
+    rect(22,44,25,46,SK);set(25,45,SKd);rect(22,47,27,49,SO);row(47,22,27,T);rect(26,49,31,50,BT);row(49,26,31,lit(BT,.25));}
+  else{leg(legL[0],legL[1],44,55);leg(legR[0],legR[1],44,55)}
+  // ボール
+  if(!mg&&(pose==='ball'||pose==='hips'||pose==='fist')){const bx=pose==='ball'?ballX:31,by=pose==='ball'?ballY+1:51;
+    for(let y=0;y<8;y++)for(let x=0;x<8;x++){const dx=x-3.5,dy=y-3.5;if(dx*dx+dy*dy<=15.5)set(bx-4+x,by+y,dx+dy>2?'#c8ccd4':'#ffffff')}
+    [[0,0],[1,0],[0,1],[-1,1],[1,1]].forEach(([a,b])=>set(bx+a,by+3+b,'#1a1a24'));set(bx-3,by+2,'#1a1a24');set(bx+3,by+5,'#1a1a24');set(bx-2,by+6,'#1a1a24');set(bx-2,by+1,'#ffffff')}
+  /* ---- パンツ ---- */
+  rect(12,37,27,43,SH);row(37,12,27,shd(SH,.8));for(let y=40;y<=43;y++){set(19,y,SHd);set(20,y,SHd)}
+  for(let y=37;y<=43;y++){set(27,y,SHd);set(12,y,lit(SH,.12))}
+  if(!mg){for(let y=38;y<=43;y++){set(13,y,T);set(26,y,T)}}
+  /* ---- 胴 ---- */
+  rect(11,24,28,36,J);rect(10,25,29,30,J);
+  for(let y=24;y<=36;y++){set(27,y,Jd);set(28,y,Jd);set(12,y,Jl)}row(36,11,28,Jd);
+  if(o.stripes&&!mg)for(let x=13;x<=26;x+=3)for(let y=24;y<=36;y++)set(x,y,T);
+  if(mg){// シャツとネクタイ
+    for(let y=24;y<=31;y++){const w=Math.max(0,3-Math.floor((y-24)/2));row(y,20-w,19+w,'#f4f4f4')}rect(19,25,20,32,o.tie||'#b83226');set(19,25,shd(o.tie||'#b83226',.7));
+    for(let y=24;y<=29;y++){set(17-(y>26?1:0),y,shd(J,.6));set(22+(y>26?1:0),y,shd(J,.6))}}
+  else{row(24,17,22,T);set(18,25,T);set(21,25,T);set(19,26,shd(J,.7));set(20,26,shd(J,.7));// えり
+    if(o.crest)rect(23,27,24,28,o.crest);else set(23,27,T);
+    if(o.num&&pose!=='cross'){const n=String(o.num%10),D={'0':'111101101101111','1':'010110010010111','2':'111001111100111','3':'111001111001111','4':'101101111001001','5':'111100111001111','6':'111100111101111','7':'111001001001001','8':'111101111101111','9':'111101111001111'}[n];for(let i=0;i<15;i++)if(D[i]==='1')set(18+i%3,29+Math.floor(i/3),T)}}
+  /* ---- 腕 ---- */
+  const sleeve=(x0,x1,y0,y1)=>{rect(x0,y0,x1,y1,J);row(y1,x0,x1,mg?shd(J,.85):T)};
+  if(pose==='cross'){
+    sleeve(7,10,25,29);sleeve(29,32,25,29);rect(7,30,10,32,SK);rect(29,30,32,32,SK);set(7,31,SKl);set(32,31,SKd);
+    rect(9,30,27,32,SK);row(32,9,27,SKd);row(30,9,27,SKl);// 左の前腕
+    rect(12,32,31,34,SK);row(34,12,31,SKdd);row(32,12,31,lit(SK,.12));// 右の前腕（手前）
+    rect(26,29,29,31,SK);set(29,30,SKd);rect(10,32,13,34,SK);set(10,33,SKd);// 手
+    if(mg){row(29,9,10,'#f4f4f4');row(29,29,30,'#f4f4f4')}}
+  else if(pose==='hips'){
+    sleeve(6,10,25,29);sleeve(29,33,25,29);
+    for(let y=30;y<=33;y++){rect(6+(y-30),y,8+(y-30),y,SK);rect(31-(y-30),y,33-(y-30),y,SK)}
+    rect(9,33,12,35,SK);rect(27,33,30,35,SK);set(9,34,SKd);set(30,34,SKd)}
+  else if(pose==='fist'){
+    sleeve(6,10,25,29);rect(6,30,9,35,SK);set(6,32,SKl);set(9,33,SKd);rect(6,35,9,37,SK);row(37,6,9,SKd);
+    rect(29,21,32,26,J);row(21,29,32,T);rect(30,13,33,20,SK);set(33,16,SKd);rect(29,9,34,13,SK);row(9,29,34,SKl);set(34,11,SKd);row(11,30,33,SKd)}
+  else{// ball：片手は腰、片手は下
+    sleeve(6,10,25,29);rect(6,30,9,36,SK);set(9,33,SKd);rect(6,36,9,38,SK);
+    sleeve(29,33,25,29);for(let y=30;y<=33;y++)rect(31-(y-30),y,33-(y-30),y,SK);rect(27,33,30,35,SK)}
+  /* ---- 首と頭 ---- */
+  rect(17,21,22,24,SK);row(23,17,22,SKd);row(24,18,21,SKdd);
+  const HX0=11,HX1=28,HY0=5,HY1=22;
+  // 顔の形（角を丸く）
+  for(let y=HY0+3;y<=HY1;y++){const inset=y>HY1-3?(y-(HY1-3)):0;row(y,HX0+inset,HX1-inset,SK)}
+  for(let y=HY0+3;y<=HY1;y++){const inset=y>HY1-3?(y-(HY1-3)):0;set(HX1-inset,y,SKd);set(HX1-inset-1,y,y>12?SKd:SK);set(HX0+inset,y,lit(SK,.1))}
+  row(HY1,15,24,SKd);row(HY1+1,16,23,SKdd);
+  set(HX0-1,14,SK);set(HX0-1,15,SKd);set(HX0-1,16,SK);set(HX1+1,14,SKd);set(HX1+1,15,SKdd);set(HX1+1,16,SKd);// 耳
+  // ほほの赤み・ハイライト
+  set(14,19,lit(shd(SK,.95),.0));set(13,17,SKl);set(14,16,SKl);
+  // 眉と目
+  const angry=!!o.angry,ec=o.eye||'#2a1a10';
+  row(13,14,17,HRd);row(13,22,25,HRd);if(angry){set(17,14,HRd);set(22,14,HRd)}else{set(14,12,HRd);set(25,12,HRd)}
+  [[14,17],[22,25]].forEach(([a,b])=>{row(14,a,b,'#1a1014');row(15,a,b,'#ffffff');row(16,a,b,'#ffffff');set(a+1,15,ec);set(a+2,15,ec);set(a+1,16,ec);set(a+2,16,shd(ec,.6));set(a+1,15,lit(ec,.5));row(17,a,b,SKd)});
+  // 鼻
+  set(19,17,SKd);set(20,18,SKdd);set(19,18,SKd);set(18,18,SKl);
+  // 口
+  if(o.smile){row(20,17,22,'#7a2a24');set(16,19,'#7a2a24');set(23,19,'#7a2a24');row(21,18,21,'#f4f4f4')}else if(angry){row(20,17,22,'#5a1a18');set(17,21,'#5a1a18');set(22,21,'#5a1a18')}else{row(20,18,21,'#8a3a30');row(21,18,21,SKd)}
+  if(o.beard){for(let y=19;y<=23;y++){const w=y<21?7:y<23?6:4;for(let x=20-w;x<=19+w;x++){if(y===20&&x>=17&&x<=22)continue;if(G[y][x]&&(x+y)%3)set(x,y,y>21?HRd:HR)}}}
+  if(o.glasses){[[13,18],[21,26]].forEach(([a,b])=>{row(13,a,b,'#1a1a1a');row(17,a,b,'#1a1a1a');set(a,14,'#1a1a1a');set(a,15,'#1a1a1a');set(a,16,'#1a1a1a');set(b,14,'#1a1a1a');set(b,15,'#1a1a1a');set(b,16,'#1a1a1a')});row(14,19,20,'#1a1a1a')}
+  /* ---- 髪 ---- */
+  const hs=o.hs,cap=(y0,y1,inset)=>{for(let y=y0;y<=y1;y++){const i=y===y0?inset+2:y===y0+1?inset:Math.max(0,inset-1);row(y,HX0-1+i,HX1+1-i,HR)}};
+  const shadeHair=(y0,y1)=>{for(let y=y0;y<=y1;y++)for(let x=0;x<STW;x++){if(G[y][x]!==HR)continue;if(x>=HX1-2)set(x,y,HRd);else if(x<=HX0+3&&y<=y0+3)set(x,y,HRl)}};
+  if(hs==='afro'){for(let y=0;y<=16;y++)for(let x=6;x<=33;x++){const dx=(x-19.5)/14,dy=(y-8.5)/9.5;if(dx*dx+dy*dy<=1&&(y<12||x<12||x>27))set(x,y,(x*7+y*3)%5===0?HRd:(x+y)%4===0?HRl:HR)}}
+  else if(hs==='bald'){set(15,6,lit(SK,.5));set(16,6,lit(SK,.5));set(15,7,SKl);rect(HX0,5,HX1,7,SK);row(5,14,25,SK);set(15,6,lit(SK,.55));set(16,6,lit(SK,.55));rect(HX0-1,10,HX0,14,HRd);rect(HX1,10,HX1+1,14,HRd)}
+  else if(hs==='buzz'){cap(4,9,1);for(let y=4;y<=9;y++)for(let x=0;x<STW;x++)if(G[y][x]===HR)set(x,y,(x+y)%2?shd(HR,.85):lit(HR,.08));row(10,HX0,HX1,shd(HR,.9))}
+  else if(hs==='mohawk'){cap(5,9,1);for(let y=5;y<=9;y++)for(let x=0;x<STW;x++)if(G[y][x]===HR)set(x,y,shd(HR,.55));rect(17,0,22,9,HR);row(0,18,21,HRl);for(let y=0;y<=9;y++){set(22,y,HRd);set(17,y,HRl)}}
+  else{
+    cap(3,10,1);
+    if(hs==='spiky'){[[11,1],[14,0],[18,-1],[22,0],[26,1],[29,3]].forEach(([x,y])=>{set(x,y+1,HR);set(x+1,y+1,HR);set(x,y+2,HR);set(x+1,y+2,HR);set(x+1,y,HR);set(x-1,y+3,HR)});rect(HX0-1,9,HX0+1,13,HR);rect(HX1-1,9,HX1+1,12,HR)}
+    if(hs==='short'||hs==='curly'){for(let x=HX0+1;x<=HX1-1;x+=2)set(x,11,HR);rect(HX0-1,9,HX0+1,14,HR);rect(HX1-1,9,HX1+1,14,HR)}
+    if(hs==='bangs'){for(let x=HX0+1;x<=HX1-1;x++)set(x,11+((x%3)?1:0),HR);for(let x=HX0+1;x<=HX1-1;x++)set(x,11,HR);rect(HX0-1,9,HX0+1,16,HR);rect(HX1-1,9,HX1+1,16,HR)}
+    if(hs==='side'){row(11,HX0+5,HX1,HR);row(12,HX0+9,HX1,HR);rect(HX1-1,9,HX1+1,15,HR);rect(HX0-1,9,HX0,13,HR);for(let y=3;y<=10;y++)set(15,y,HRl)}
+    if(hs==='long'){rect(HX0-2,9,HX0+1,26,HR);rect(HX1-1,9,HX1+2,26,HR);row(11,HX0+1,HX1-1,HR);for(let x=HX0+2;x<=HX1-2;x+=3)set(x,12,HR)}
+    if(hs==='curly'){for(let y=3;y<=11;y++)for(let x=0;x<STW;x++)if(G[y][x]===HR&&(x+y*2)%4===0)set(x,y,HRl)}
+    shadeHair(0,26);
+  }
+  if(o.band){row(10,HX0,HX1,o.band);row(11,HX0,HX1,shd(o.band,.8))}
+  /* ---- 輪郭線と影 ---- */
+  const OL='#16121c',out=G.map(r=>r.slice());
+  for(let y=0;y<STH;y++)for(let x=0;x<STW;x++){if(G[y][x])continue;const n=(G[y-1]&&G[y-1][x])||(G[y+1]&&G[y+1][x])||G[y][x-1]||G[y][x+1];if(n)out[y][x]=OL}
+  for(let x=8;x<=33;x++){const d=Math.abs(x-20.5)/12.5;if(d<1&&!out[58][x])out[58][x]='rgba(0,0,0,.35)';if(d<.7&&!out[59][x])out[59][x]='rgba(0,0,0,.2)'}
+  return out;
+}
+function standSvg(G){let s='';for(let y=0;y<STH;y++){let x=0;while(x<STW){const c=G[y][x];if(!c){x++;continue}let e=x;while(e+1<STW&&G[y][e+1]===c)e++;s+=`<rect x="${x}" y="${y}" width="${e-x+1}" height="1" fill="${c}"/>`;x=e+1}}
+  return `<svg viewBox="0 0 ${STW} ${STH}" shape-rendering="crispEdges" aria-hidden="true">${s}</svg>`}
+const STAND_CACHE={};
+function standOf(c,kind){
+  const id=c&&c.id,sp=id&&SPR_SPECIAL[id];let key,o,rare;
+  if(sp){key='s:'+id;o=specStandOpts(id);rare=true}
+  else{const k=kind||(c&&c.kind)||'pl',seed=(c&&(c.name||((c.sei||'')+(c.mei||''))))||'x';key=k+':'+seed+'|'+(c&&c.pos||'');o=null;rare=!!(c&&(c.legend||c.genius||c.famous||c.mlegend||(c.skills&&(c.skills.includes&&c.skills.includes('legend')))))}
+  if(!STAND_CACHE[key]){if(!o){const k=kind||(c&&c.kind)||'pl';o=standOpts(key,(c&&c.pos)||'MF',k);}STAND_CACHE[key]=standSvg(drawStand(o))}
+  return `<div class="stw ${rare?'rare':''}">${STAND_CACHE[key]}${rare?'<i class="spk"></i>':''}</div>`;
+}
+
 /* ========== ガチャキャラの全身ドット絵（80×100）。骨格（関節の位置）からポーズを描く ========== */
 // 座標は 80×100 のマス目で書き、実際は 2 倍（160×200）の細かいドットで描く
 let FA_S=2;const FA_W=160,FA_H=200;
@@ -1646,6 +1780,165 @@ function interviewHtml(X,res){
   return `<section class="iview"><div class="kick">ヒーローインタビュー<span class="r">${d.mine?'自分のチーム':'相手チーム'}</span></div>
   <div class="ivbox">${art?`<div class="ivart"><img src="${art}" alt=""><div class="ivname"><b>${esc(d.name)}</b><span>${esc(d.team)}・${d.role}${d.stats.length?'・'+d.stats.join('・'):''}</span></div></div>`:''}
   <div class="ivqa">${d.QA.map(([q,a])=>`<p class="q">― ${esc(q)}</p><p class="a">「${esc(a)}」</p>`).join('')}</div></div></section>`;
+}
+
+/* ========== 立ち絵（細かいドット）：全身・正面の顔。育成した選手とガチャのキャラ ========== */
+// 座標は 62×78 のマス（2.55倍で描く）。頭を大きめにして、かっこよく見せる
+const STP={
+  cross:J([31,13],[31,21.5],[37,24],[25,24],[38.5,33],[25.5,31.2],[23.5,33],[36.5,30],[31,45],[34.5,45],[27.5,45],[36.5,58],[38,70],[41,72],[25.5,58],[24,70],[21,72]),
+  hips:J([31,13],[31,21.5],[37,24],[25,24],[42,32],[36.5,42],[20,32],[25.5,42],[31,45],[34.5,45],[27.5,45],[36.5,58],[38,70],[41,72],[25.5,58],[24,70],[21,72]),
+  ball:J([30,13],[30,21.5],[36,24],[24,24],[39,33],[40,42],[19.5,32],[24.5,42],[30,45],[33.5,45],[26.5,45],[38,55.5],[42.5,63],[45.5,62.5],[26.5,58],[26,70],[23,72]),
+  fist:J([31,13],[31,21.5],[37,24],[25,24],[41.5,17],[40,8],[22.5,33],[22,42],[31,45],[34.5,45],[27.5,45],[36.5,58],[38,70],[41,72],[25.5,58],[24,70],[21,72])
+};
+const ST_S=2.55,STB_CACHE={};
+function standLook(c,kind){
+  const id=c&&c.id;
+  if(id&&SPR_SPECIAL[id]){const o=specStandOpts(id)||{};return {key:'s:'+id,rare:true,o:{skin:o.skin,hair:o.hair,hs:IV_HS[o.hs]||o.hs||'short',jersey:o.jersey,trim:o.trim||'#ffffff',num:o.num,band:o.band,arm:o.arm,angry:o.angry,smile:o.smile},pose:o.pose}}
+  const name=(c&&(c.name||((c.sei||'')+' '+(c.mei||''))))||'x',pos=(c&&c.pos)||'MF',L=ivLook(name.replace(/\s+/g,' '),pos);
+  const r=rng(hashS(name+'|stand'));
+  return {key:'p:'+name+'|'+pos,rare:!!(c&&(c.legend||c.genius||(c.skills&&c.skills.includes&&c.skills.includes('legend')))),o:{...L,smile:r()<.5},pose:['cross','hips','ball','ball','fist','cross'][Math.floor(r()*6)],boots:['#1a1a1a','#1a1a1a','#f4f4f4','#ffd23a','#ff5a2a','#2f9fff'][Math.floor(r()*6)]};
+}
+function standArtURL(c,kind){
+  if(typeof document==='undefined')return '';
+  const S=standLook(c,kind);if(STB_CACHE[S.key])return STB_CACHE[S.key];
+  const cv=document.createElement('canvas');cv.width=FA_W;cv.height=FA_H;const g=cv.getContext('2d');
+  const K=STP[S.pose]||STP.cross,S0=FA_S;FA_S=ST_S;
+  // 足もとの影
+  g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(31*ST_S,73.5*ST_S,17*ST_S,2.4*ST_S,0,0,Math.PI*2);g.fill();
+  const P=faBuf(),L=S.o,J0=L.jersey||'#e2462b';
+  const o=Object.assign({shorts:J0==='#f2f2f2'||J0==='#ffffff'?'#1a3f8f':shd(J0,.86),socks:J0,boots:S.boots||'#1a1a1a'},L,{face:1,frontal:1,headR:7.2,open:0,openN:0,smile:L.smile});
+  FA_RIM=lit(J0,.55);
+  faPerson(P,K,o);
+  if(S.pose==='ball')faBall(P,44.5,68.8,4.6);else if(S.pose==='hips'||S.pose==='fist')faBall(P,46,69.5,4.4);
+  FA_RIM=null;faOutline(P,'#16100c');FA_S=S0;
+  const im=g.getImageData(0,0,FA_W,FA_H);
+  for(let i=0;i<P.B.length;i++){const col=P.B[i];if(!col)continue;const [rr,gg,b]=hx(col);im.data[i*4]=rr;im.data[i*4+1]=gg;im.data[i*4+2]=b;im.data[i*4+3]=255}
+  g.putImageData(im,0,0);
+  return STB_CACHE[S.key]=cv.toDataURL('image/png');
+}
+// 立ち絵（描けない環境では顔アイコン）
+function standArt(c,kind){
+  if(kind==='mg'||(c&&c.kind==='mg'))return sprOf(c,'mg');
+  const u=standArtURL(c,kind);if(!u)return sprOf(c,kind);
+  const rare=standLook(c,kind).rare;
+  return `<div class="stb ${rare?'rare':''}"><img src="${u}" alt="" width="${FA_W}" height="${FA_H}">${rare?'<i class="spk"></i>':''}</div>`;
+}
+
+/* ========== 立ち絵（高解像度ドット 64×96）。球・円柱の陰影で立体的に、顔は正面で細かく ========== */
+const SW=64,SH3=96,SLT=[-.55,-.62,.56];// 光は左上手前から
+function sbuf(){const B=new Array(SW*SH3).fill(null);return {B,set(x,y,c){x=Math.round(x);y=Math.round(y);if(c&&x>=0&&x<SW&&y>=0&&y<SH3)B[y*SW+x]=c},get(x,y){return x>=0&&x<SW&&y>=0&&y<SH3?B[y*SW+x]:null}}}
+// 明るさ e（-1〜1）から5段階の色。境目はディザで混ぜる
+function stone(col,e,x,y){const r=[shd(col,.58),shd(col,.78),col,lit(col,.18),lit(col,.38)],t=[-.35,-.05,.35,.7];
+  let i=0;while(i<4&&e>t[i])i++;const lo=i>0?t[i-1]:-2,hi=i<4?t[i]:2;
+  if(i<4&&hi-e<.03&&(x+y)%2)i++;else if(i>0&&e-lo<.03&&(x+y)%2)i--;return r[i]}
+function sdot(n){return n[0]*SLT[0]+n[1]*SLT[1]+n[2]*SLT[2]}
+function sEll(P,cx,cy,rx,ry,col,o={}){for(let y=Math.floor(cy-ry);y<=Math.ceil(cy+ry);y++)for(let x=Math.floor(cx-rx);x<=Math.ceil(cx+rx);x++){
+  const dx=(x+.5-cx)/rx,dy=(y+.5-cy)/ry,d=dx*dx+dy*dy;if(d>1)continue;if(o.clip&&!o.clip(x,y))continue;const n=[dx,dy,Math.sqrt(Math.max(0,1-d))];P.set(x,y,o.flat?col:stone(col,sdot(n)+(o.b||0),x,y))}}
+function sCap(P,a,b,r0,r1,col,o={}){const minx=Math.floor(Math.min(a[0],b[0])-Math.max(r0,r1)-1),maxx=Math.ceil(Math.max(a[0],b[0])+Math.max(r0,r1)+1),miny=Math.floor(Math.min(a[1],b[1])-Math.max(r0,r1)-1),maxy=Math.ceil(Math.max(a[1],b[1])+Math.max(r0,r1)+1);
+  const vx=b[0]-a[0],vy=b[1]-a[1],L2=vx*vx+vy*vy||1,L=Math.sqrt(L2),px=-vy/L,py=vx/L;
+  for(let y=miny;y<=maxy;y++)for(let x=minx;x<=maxx;x++){const wx=x+.5-a[0],wy=y+.5-a[1];let t=(wx*vx+wy*vy)/L2;if(o.t0!=null&&t<o.t0)continue;if(o.t1!=null&&t>o.t1)continue;t=Math.max(0,Math.min(1,t));
+    const qx=a[0]+vx*t,qy=a[1]+vy*t,dx=x+.5-qx,dy=y+.5-qy,dd=Math.hypot(dx,dy),r=r0+(r1-r0)*t;if(dd>r)continue;
+    const s=(dx*px+dy*py)/r,n=[px*s,py*s,Math.sqrt(Math.max(0,1-s*s))];P.set(x,y,o.flat?col:stone(col,sdot(n)+(o.b||0),x,y))}}
+// 胴：上が広く下が細い台形を円柱として塗る
+function sTorso(P,cx,y0,y1,w0,w1,col,o={}){for(let y=y0;y<=y1;y++){const t=(y-y0)/Math.max(1,y1-y0),w=w0+(w1-w0)*t;for(let x=Math.floor(cx-w);x<=Math.ceil(cx+w);x++){const s=(x+.5-cx)/w;if(Math.abs(s)>1)continue;
+  const n=[s*.9,-.25+t*.3,Math.sqrt(Math.max(0,1-s*s*.81))];P.set(x,y,stone(col,sdot(n)+(o.b||0),x,y))}}}
+function sBall(P,cx,cy,r){sEll(P,cx,cy,r,r,'#f2f2f4');const pts=[[0,0],[-.62,-.45],[.62,-.45],[-.5,.62],[.5,.62]];pts.forEach(([a,b],i)=>{const x=cx+a*r*.78,y=cy+b*r*.78,rr=i?r*.2:r*.3;sEll(P,x,y,rr,rr,'#1e1e28',{flat:1})});P.set(cx-r*.45,cy-r*.55,'#ffffff');P.set(cx-r*.35,cy-r*.6,'#ffffff')}
+const SPOSE={
+ // 肩N/F・ひじ・手（N＝画面右、F＝画面左）
+ cross:{eN:[48,52],hN:[24,49],eF:[16,52],hF:[42,46]},
+ hips:{eN:[52,50],hN:[44,59],eF:[12,50],hF:[20,59]},
+ fist:{eN:[54,38],hN:[52,26],eF:[13,53],hF:[14,62]},
+ ball:{eN:[51,51],hN:[52,62],eF:[12,50],hF:[20,59],ball:1}
+};
+function drawStand3(o){
+  const P=sbuf(),SK=o.skin,HR=o.hair,J=o.jersey,T=o.trim||'#ffffff',SH=o.shorts||shd(J,.85),SO=o.socks||J,BT=o.boots||'#1c1c22',pose=SPOSE[o.pose]||SPOSE.cross,cx=32;
+  const far=c=>shd(c,.86);
+  /* 脚：太もも→ひざ→すね（ソックス）→スパイク */
+  const leg=(hip,kn,an,to,isFar)=>{const m=c=>isFar?far(c):c;
+    sCap(P,hip,kn,5.2,4.1,m(SK));sCap(P,kn,an,4.0,2.7,m(SK));
+    sCap(P,kn,an,4.2,2.9,m(SO),{t0:.22});sCap(P,kn,an,4.3,3.0,m(T),{t0:.22,t1:.3});sCap(P,kn,an,4.25,2.95,m(T),{t0:.42,t1:.47});
+    sCap(P,an,to,3.1,2.5,m(BT));sCap(P,[an[0]-.5,an[1]+.8],[to[0],to[1]+.6],1.2,1,m(lit(BT,.4)),{flat:1});
+    sCap(P,hip,kn,5.9,5.2,m(SH),{t1:.5});sCap(P,hip,kn,6,5.3,m(T),{t0:.44,t1:.5})};
+  const pN=[cx+5,61],pF=[cx-5,61];
+  if(pose.ball){leg(pF,[cx-6,74],[cx-6.5,87],[cx-10,89],true);leg(pN,[cx+9,72],[cx+15,79],[cx+19,78.5],false);sBall(P,cx+17,84.5,5.6)}
+  else{leg(pF,[cx-7,74],[cx-8.5,87],[cx-12,89],true);leg(pN,[cx+7,74],[cx+8.5,87],[cx+12,89],false);if(o.pose!=='cross')sBall(P,cx+21,85,5.4)}
+  /* パンツ */
+  sTorso(P,cx,54,63,11.5,12.5,SH);for(let y=58;y<=63;y++){P.set(cx,y,shd(SH,.6))}
+  for(let y=54;y<=63;y++){P.set(cx+11+(y-54)*.1,y,T);P.set(cx-11-(y-54)*.1,y,T)}
+  /* 胴（ユニフォーム） */
+  sTorso(P,cx,33,55,16,11.5,J);
+  // 肩
+  sEll(P,cx+14,36,5.5,5,J);sEll(P,cx-14,36,5.5,5,J);
+  if(o.stripes)for(let x=cx-12;x<=cx+12;x+=4)for(let y=34;y<=55;y++){const c=P.get(x,y);if(c)P.set(x,y,y%2?T:lit(T,.0))}
+  // えり（V）と袖
+  for(let i=0;i<5;i++){P.set(cx-3+i*.4,31+i,T);P.set(cx+3-i*.4,31+i,T);P.set(cx-2+i*.4,31+i,shd(J,.55));P.set(cx+2-i*.4,31+i,shd(J,.55))}
+  for(let y=31;y<=35;y++)for(let x=cx-1;x<=cx+1;x++)if(y-31>=Math.abs(x-cx)*2)P.set(x,y,shd(SK,.75));
+  // しわ
+  [[cx-6,44,cx-2,49],[cx+5,46,cx+8,51],[cx-9,50,cx-5,53]].forEach(([a,b,c2,d])=>{for(let t=0;t<=1;t+=.1)P.set(a+(c2-a)*t,b+(d-b)*t,shd(J,.72))});
+  // 番号・エンブレム
+  if(o.crest){sEll(P,cx+7,39,1.8,2,o.crest,{flat:1});P.set(cx+7,38,lit(o.crest,.4))}
+  if(o.num&&o.pose!=='cross'){const s=String(o.num),D={'0':'111101101101111','1':'010110010010111','2':'111001111100111','3':'111001111001111','4':'101101111001001','5':'111100111001111','6':'111100111101111','7':'111001001001001','8':'111101111101111','9':'111101111001111'};
+    const x0=cx-(s.length*4-1)/2;[...s].forEach((ch,j)=>{const d=D[ch];for(let i=0;i<15;i++)if(d[i]==='1'){const x=x0+j*4+i%3,y=42+Math.floor(i/3)*1.4;P.set(x,y,T);P.set(x,y+.7,T)}})}
+  /* 首と頭 */
+  sCap(P,[cx,27],[cx,33],4.2,4.6,SK,{b:-.15});
+  const HY=17,HRX=12.5,HRY=13.5;
+  if(o.hs==='afro')sEll(P,cx-.5,HY-3,HRX+4.5,HRY+3,HR);
+  if(o.hs==='long'){sCap(P,[cx-11,HY-4],[cx-12,HY+15],4,3.5,HR);sCap(P,[cx+11,HY-4],[cx+12,HY+15],4,3.5,HR)}
+  sEll(P,cx-12.6,HY+2.5,2.2,3.4,SK,{b:-.1});sEll(P,cx+12.6,HY+2.5,2.2,3.4,SK,{b:-.2});// 耳
+  // 顔：上は丸く、あごはすっきり
+  sEll(P,cx,HY,HRX,HRY,SK,{clip:(x,y)=>y<HY+4||Math.abs(x+.5-cx)<HRX*(1-(y-HY-4)/(HRY+1.5))+1.2});
+  for(let y=HY+4;y<=HY+HRY;y++){const w=HRX*(1-(y-HY-4)/(HRY+1.5))+1.2;P.set(cx+w,y,shd(SK,.7))}
+  /* 髪 */
+  const capR=(y)=>y<HY-3;
+  if(o.hs!=='bald'){
+    const top=o.hs==='buzz'?HY-5:o.hs==='mohawk'?HY-8:HY-4;
+    sEll(P,cx,HY-1.5,HRX+1.2,HRY+.5,HR,{clip:(x,y)=>y<top+((x+.5<cx-HRX+3||x+.5>cx+HRX-3)?6:0)+(o.hs==='bangs'?6:0)-(o.hs==='mohawk'&&Math.abs(x+.5-cx)>3?5:0)});
+    if(o.hs==='mohawk')sCap(P,[cx,HY-17],[cx,HY-6],3.4,3.4,HR);
+    if(o.hs==='spiky')[[-10,-12,-13,-19],[-5,-14,-6,-21],[0,-14,1,-22],[5,-14,7,-21],[10,-12,13,-18],[12,-9,16,-13]].forEach(([a,b,c2,d])=>sCap(P,[cx+a,HY+b+3],[cx+c2,HY+d+3],3,.6,HR));
+    if(o.hs==='side'){sCap(P,[cx-6,HY-10],[cx+12,HY-5],3.6,2.6,HR);sCap(P,[cx+3,HY-8],[cx+13,HY-1],2.4,1.5,HR)}
+    if(o.hs==='long'||o.hs==='bangs'||o.hs==='short'){for(let x=cx-HRX+2;x<=cx+HRX-2;x+=3)sCap(P,[x,HY-9],[x+1.5,HY-4+((x/3)%2?1:0)],1.8,.6,HR)}
+    if(o.hs==='afro'||o.hs==='curly')for(let y=0;y<HY;y++)for(let x=0;x<SW;x++){const c=P.get(x,y);if(c&&(c===HR||c===lit(HR,.18)||c===shd(HR,.78))&&(x*3+y*5)%7===0)P.set(x,y,lit(HR,.3))}
+    // もみあげ
+    sCap(P,[cx-11.6,HY-2],[cx-11.8,HY+3],1.6,1.2,HR);sCap(P,[cx+11.6,HY-2],[cx+11.8,HY+3],1.6,1.2,HR);
+  }else{P.set(cx-5,HY-10,lit(SK,.6));P.set(cx-4,HY-10,lit(SK,.6));P.set(cx-5,HY-9,lit(SK,.45));sCap(P,[cx-12,HY-3],[cx-12,HY+3],1.6,1.4,HR);sCap(P,[cx+12,HY-3],[cx+12,HY+3],1.6,1.4,HR)}
+  if(o.band){for(let x=cx-HRX;x<=cx+HRX;x++){P.set(x,HY-5,o.band);P.set(x,HY-4,shd(o.band,.8))}}
+  /* 顔のパーツ */
+  const EY=HY+1,dk='#1a1014',ec=o.eye||'#3a2416',SKd=shd(SK,.8),SKdd=shd(SK,.66);
+  // 眉
+  const ang=o.angry?1:0;[[-8,-3],[3,8]].forEach(([a,b],k)=>{for(let x=a;x<=b;x++){const t=(x-a)/(b-a),dy=k===0?(ang?t*1.2:-(t-.5)*(t-.5)*2):(ang?(1-t)*1.2:-(t-.5)*(t-.5)*2);P.set(cx+x,EY-4+dy,shd(HR,.6));if(x!==a&&x!==b)P.set(cx+x,EY-3+dy,shd(HR,.8))}});
+  // 目（白目・黒目・ハイライト・まぶた）
+  [[-8,-3],[3,8]].forEach(([a,b])=>{for(let x=a;x<=b;x++){P.set(cx+x,EY-1,dk);P.set(cx+x,EY,'#f6f2ee');P.set(cx+x,EY+1,'#f2ece6');if(x>a&&x<b)P.set(cx+x,EY+2,'#e6ded6')}
+    const ix=cx+Math.round((a+b)/2);[[-1,0],[0,0],[-1,1],[0,1],[-1,2],[0,2]].forEach(([dx,dy])=>P.set(ix+dx,EY+dy,dy===2?shd(ec,.8):ec));P.set(ix,EY,dk);P.set(ix,EY+1,dk);P.set(ix-1,EY,lit(ec,.7));P.set(cx+a-1,EY-1,dk);P.set(cx+b+1,EY-1,dk);P.set(cx+b+1,EY,SKd);
+    for(let x=a;x<=b;x++)P.set(cx+x,EY+3,SKd)});
+  // 鼻：影の線と鼻先
+  for(let y=EY+1;y<=EY+6;y++)P.set(cx+1,y,SKd);P.set(cx+2,EY+6,SKdd);P.set(cx-1,EY+7,SKdd);P.set(cx,EY+7,SKd);P.set(cx+1,EY+7,SKdd);P.set(cx-1,EY+5,lit(SK,.3));P.set(cx-1,EY+4,lit(SK,.2));
+  // ほお骨の影
+  for(let y=EY+4;y<=EY+8;y++){P.set(cx+9-(y-EY-4)*.3,y,SKd)}
+  // 口
+  const MY=EY+10;
+  if(o.smile){for(let x=-4;x<=4;x++)P.set(cx+x,MY,x===-4||x===4?'#6a2420':'#7a2a24');for(let x=-3;x<=3;x++)P.set(cx+x,MY+1,'#f6f2ee');P.set(cx-4,MY-1,'#6a2420');P.set(cx+4,MY-1,'#6a2420');for(let x=-2;x<=2;x++)P.set(cx+x,MY+2,shd(SK,.75))}
+  else if(o.angry){for(let x=-4;x<=4;x++)P.set(cx+x,MY,'#5a1a18');P.set(cx-4,MY+1,'#5a1a18');P.set(cx+4,MY+1,'#5a1a18')}
+  else{for(let x=-3;x<=3;x++)P.set(cx+x,MY,'#8a3a30');for(let x=-2;x<=2;x++)P.set(cx+x,MY+1,lit('#b85a4a',.1));for(let x=-2;x<=2;x++)P.set(cx+x,MY+2,SKd)}
+  if(o.beard)for(let y=MY-2;y<=HY+HRY;y++)for(let x=0;x<SW;x++){const c=P.get(x,y);if(!c||Math.abs(x+.5-cx)>10)continue;if(y>=MY-1&&y<=MY+1&&Math.abs(x+.5-cx)<5)continue;if((x+y)%3)P.set(x,y,(x+y)%2?shd(HR,.9):HR)}
+  if(o.glasses){[[-9,-2],[2,9]].forEach(([a,b])=>{for(let x=a;x<=b;x++){P.set(cx+x,EY-2,'#1a1a1a');P.set(cx+x,EY+3,'#1a1a1a')}for(let y=EY-2;y<=EY+3;y++){P.set(cx+a,y,'#1a1a1a');P.set(cx+b,y,'#1a1a1a')}});P.set(cx,EY-1,'#1a1a1a');P.set(cx+1,EY-1,'#1a1a1a')}
+  /* 腕 */
+  const sN=[cx+15,36],sF=[cx-15,36];
+  const arm=(s,e,h,isFar,front)=>{const m=c=>isFar?far(c):c;sCap(P,s,e,4.6,3.8,m(SK));sCap(P,e,h,3.8,3.1,m(SK));sCap(P,s,e,5.2,4.6,m(J),{t1:.55});sCap(P,s,e,5.3,4.7,m(T),{t0:.5,t1:.56});sEll(P,h[0],h[1],3.6,3.6,m(SK),{b:.05})};
+  if(o.pose==='cross'){arm(sF,pose.eF,pose.hF,true);arm(sN,pose.eN,pose.hN,false)}
+  else{arm(sF,pose.eF,pose.hF,true);arm(sN,pose.eN,pose.hN,false)}
+  if(o.arm){sCap(P,[sN[0]+1,sN[1]+4],[sN[0]+1.5,sN[1]+7],5.2,4.8,o.arm,{flat:1})}
+  /* 輪郭 */
+  const add=[];for(let y=0;y<SH3;y++)for(let x=0;x<SW;x++){if(P.get(x,y))continue;if([[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>P.get(x+a,y+b)))add.push([x,y])}add.forEach(([x,y])=>P.set(x,y,'#14101a'));
+  return P;
+}
+const ST3_CACHE={};
+function stand3Svg(P){let s='';for(let y=0;y<SH3;y++){let x=0;while(x<SW){const c=P.B[y*SW+x];if(!c){x++;continue}let e=x;while(e+1<SW&&P.B[y*SW+e+1]===c)e++;s+=`<rect x="${x}" y="${y}" width="${e-x+1}" height="1" fill="${c}"/>`;x=e+1}}
+  return `<svg viewBox="0 0 ${SW} ${SH3+2}" shape-rendering="crispEdges" aria-hidden="true"><ellipse cx="32" cy="${SH3-3}" rx="20" ry="2.6" fill="rgba(0,0,0,.35)"/>${s}</svg>`}
+function standArt3(c,kind){
+  if(kind==='mg'||(c&&c.kind==='mg'))return sprOf(c,'mg');
+  const S=standLook(c,kind);
+  if(!ST3_CACHE[S.key]){const L=S.o,J0=L.jersey||'#e2462b';const o=Object.assign({shorts:J0==='#f2f2f2'||J0==='#ffffff'?'#1a3f8f':shd(J0,.86),socks:J0,boots:S.boots||'#1c1c22',pose:S.pose||'cross'},L);if(o.hs==='curly')o.hs='curly';ST3_CACHE[S.key]=stand3Svg(drawStand3(o))}
+  return `<div class="stb ${S.rare?'rare':''}">${ST3_CACHE[S.key]}${S.rare?'<i class="spk"></i>':''}</div>`;
 }
 
 /* ========== 試合シーン（ドット絵アニメ）。#scn というcanvasがあれば描く ========== */
@@ -4329,7 +4622,7 @@ function pcard(p,mode='full'){
     :`<div class="meters"><div><span>人気</span><b>${Math.round(p.pop)}</b></div><div><span>監督評価</span><b>${Math.round(p.coach)}</b></div><div><span>体力</span><b class="${p.sta<30?'bad':''}">${Math.round(p.sta)}</b></div><div><span>調子</span><b>${Math.round(p.cond)}</b></div></div><div class="wallet"><span>所持金 <b class="${p.money<0?'bad':''}">${yen(p.money)}</b></span><span>年俸 <b>${p.salary?yen(p.salary):'—'}</b></span></div>`;
   return `<section class="pcard ${has(p,'legend')||o>=93?'legendary':''}" aria-label="選手情報">
    <div class="pc-top wf"><div class="pc-ovr"><span class="n">${o}</span><span class="pos">${p.pos}</span><span class="tier">${tierOf(o)}</span></div>
-   <div class="pc-id"><div class="name">${esc(p.sei)}<b>${esc(p.mei)}</b></div><div class="sub">${where}${!pre&&p.inj>0?` ・<em class="bad">負傷中 残り${Math.ceil(p.inj)}週</em>`:''}</div><div class="tags">${tags}</div></div><div class="pc-face">${sprOf({name:p.sei+' '+p.mei,pos:p.pos,kind:'pl',legend:has(p,'legend'),genius:has(p,'monster')})}</div></div>
+   <div class="pc-id"><div class="name">${esc(p.sei)}<b>${esc(p.mei)}</b></div><div class="sub">${where}${!pre&&p.inj>0?` ・<em class="bad">負傷中 残り${Math.ceil(p.inj)}週</em>`:''}</div><div class="tags">${tags}</div></div><div class="pc-face">${standArt3({sei:p.sei,mei:p.mei,pos:p.pos,skills:p.skills})}</div></div>
    ${mode==='compact'?mini(p):radar(p)}${meters}
   </section>`;
 }
@@ -4790,7 +5083,7 @@ function cardMini(c){
 function cardTile(c,opts={}){
   const mg=isMgr(c),o=mg?mgrOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
   const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:c.special==='renkei'?`<span class="sk">${RENKEI_SKILL.n}</span>`:c.special==='oibore'?`<span class="sk">${OIBORE_SKILL.n}</span>`:c.special==='uhho'?`<span class="sk">${UHHO_SKILL.n}</span>`:c.special==='tabako'?`<span class="sk">${TABAKO_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
-  return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${sprOf(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span></div></div>${tag||c.gikkuri>0?`<div class="tags">${tag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
+  return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${standArt3(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span></div></div>${tag||c.gikkuri>0?`<div class="tags">${tag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
 }
 
 /* ---------- ガチャ ---------- */
