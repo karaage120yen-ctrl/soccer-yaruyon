@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-172540';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-181545';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3651,13 +3651,15 @@ const GIFTS=[
  {id:'g100c',coins:GACHA_COST*100,n:'100連分',until:'2026-11-15T18:25:00Z'},
  {id:'g100d',coins:GACHA_COST*100,n:'100連分（30分限定）',until:'2026-11-16T11:49:00Z'},
  {id:'tkS1',ticket:'spS',n:'育成S以上確定チケット1枚',until:'2026-11-16T11:24:00Z'},
- {id:'g100e',coins:GACHA_COST*100,n:'100連分（30分限定）',until:'2026-11-16T17:46:00Z'}];
+ {id:'g100e',coins:GACHA_COST*100,n:'100連分（30分限定）',until:'2026-11-16T17:46:00Z'},
+ {id:'mat100a',mats:100,n:'育成素材 全種類100個ずつ（30分限定）',until:'2026-11-16T18:46:00Z'}];
 const giftOpen=g=>!g.until||Date.now()<Date.parse(g.until);
 const GIFT_OPEN=GIFTS.some(giftOpen);
 function applyGifts(){if(typeof M==='undefined'||!M)return;if(!M.gifts)M.gifts={};const got=[];
  for(const g of GIFTS){if(M.gifts[g.id]||!giftOpen(g))continue;M.gifts[g.id]=Date.now();
   if(g.coins){M.coins+=g.coins;got.push(`${g.n}（${g.coins.toLocaleString('ja-JP')}コイン）`)}
-  if(g.ticket){M.tickets=M.tickets||{};M.tickets[g.ticket]=(M.tickets[g.ticket]||0)+1;got.push(g.n)}}
+  if(g.ticket){M.tickets=M.tickets||{};M.tickets[g.ticket]=(M.tickets[g.ticket]||0)+1;got.push(g.n)}
+  if(g.mats){MATK.forEach(k=>M.mats[k]=(M.mats[k]||0)+g.mats);got.push(g.n)}}
  if(got.length){metaSave();if(typeof G!=='undefined'){G.toastMsg=`🎁 プレゼント！ ${got.join('・')}を受け取った`;try{render()}catch(e){}setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},5000)}}}
 if(typeof window!=='undefined')setTimeout(()=>{try{applyGifts()}catch(e){}setInterval(()=>{try{applyGifts()}catch(e){}},20000)},1500);
 function metaSave(){const s=JSON.stringify(Object.assign({},M,{t:0}));if(s===_metaLast)return;_metaLast=s;M.t=Date.now();try{localStorage.setItem(META_KEY,JSON.stringify(M))}catch(e){}cloudSaveSoon();autoMark('meta',null)}
