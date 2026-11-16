@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-130122';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-141041';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -689,6 +689,18 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .pc-top.wf{grid-template-columns:auto 1fr 92px}
 .pc-face{width:92px}
 .ct-face{width:52px}
+/* 育成の深化 */
+.c2s{display:grid;gap:5px;margin:6px 0 10px}
+.c2m{display:grid;grid-template-columns:84px 1fr 38px;align-items:center;gap:8px;font-size:12px;color:var(--soft)}
+.c2m i{display:block;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.c2m i b{display:block;height:100%;border-radius:3px}
+.c2m em{font-style:normal;font-family:var(--num);font-size:14px;text-align:right;color:var(--text)}
+.c2a{display:grid;gap:6px}
+.c2r{display:grid;grid-template-columns:1fr auto 40px 40px;align-items:center;gap:8px;padding:6px 10px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.c2r>span:first-child{font-size:13px}
+.c2r small{margin-left:6px;color:var(--muted);font-family:var(--num);font-size:13px}
+.c2r .pips{letter-spacing:2px;color:var(--accent);font-size:12px}
+.c2r .opt.sm{padding:4px 0;min-height:0;font-size:16px;line-height:1.4}
 
 </style>
 </head>
@@ -2706,11 +2718,11 @@ const SMAX=99;
 const CAREER_END_AGE=33,FATE_AGE=28;
 const ovrOf=p=>{const w=POS[p.pos].w;let s=0,t=0;for(const k of KEYS){s+=w[k]*p.st[k];t+=w[k]}return Math.round(s/t)};
 function clubOf(p){
-  if(p.stage==='hs')return {id:'hs',n:p.school,lg:'HS',rep:p.schoolRep};
+  if(p.stage==='hs')return {id:'hs',n:p.school,lg:natOf(p)==='jp'?'HS':'HSX',rep:p.schoolRep};
   if(p.stage==='uni'){const u=UNIS[p.uni];return {id:'uni',n:u.n,lg:'UNI',rep:u.rep}}
   return CLUBS[p.club];
 }
-const isAbroad=p=>p.stage==='pro'&&LG[CLUBS[p.club].lg].cty!=='日本';
+const isAbroad=p=>p.stage==='pro'&&LG[CLUBS[p.club].lg].cty!==homeCty(p);
 const calYear=p=>p.month<=4?p.year:p.year+1;
 function ctx(p){const c=clubOf(p);return {p,ovr:ovrOf(p),rep:c.rep,kv:p.st[POS[p.pos].key],abroad:isAbroad(p)}}
 const potGrade=x=>x>=96?'SS':x>=90?'S':x>=84?'A':x>=78?'B':x>=72?'C':'D';
@@ -2751,7 +2763,7 @@ function makePlayer(d){
   // 投資やイベントで広げられる限界の天井（ふつうの選手は+5まで、ポジションの上限は超えない）
   const capLim={};for(const k of KEYS)capLim[k]=legend?PC[k]:Math.min(PC[k],Math.round(cap[k]+(monster?3:5)));
   const school=pick(SCHOOLS);
-  return {sei:d.sei,mei:d.mei,pos:d.pos,foot:d.foot,style:d.style,growth:d.growth,pot,st,cap,
+  const _pl={sei:d.sei,mei:d.mei,pos:d.pos,foot:d.foot,style:d.style,growth:d.growth,pot,st,cap,
    age:17,year:2027,season:0,month:0,stage:'hs',school,schoolRep:ri(46,52),uni:null,uniYear:0,club:null,
    pop:d.foot==='L'?14:10,coach:55,cond:70,sta:85,scout:d.foot==='L'?10:5,boost:0,nat:0,inj:0,absent:0,
    salary:0,earnings:0,money:20,inv:0,invLast:null,
@@ -2760,17 +2772,19 @@ function makePlayer(d){
    log:[],awards:[],titles:{league:0,cup:0,cont:0,wc:0,asia:0,oly:0,hs:0,uni:0},
    tot:{apps:0,goals:0,ast:0,cs:0,rs:0,rn:0},natTot:{caps:0,goals:0,wc:0},
    hist:[{n:school,y0:2027}],legends:{},peak:0,lastRank:null,rankClub:null,shield:0,seen:{},flags:{potEst:tk?potGrade(pot):potGrade(pot+rnd(-3,3))}};
+  return typeof c2Make==='function'?c2Make(_pl,d):_pl;
 }
 function roleOf(o,rep){const r=o-rep;return r>=3?['レギュラー確約','r1']:r>=-1?['主力争い','r2']:r>=-6?['控え','r3']:['ベンチ外濃厚','r4']}
 function stars(rep){const n=clamp(Math.round((rep-35)/12),1,5);return '★'.repeat(n)+'☆'.repeat(5-n)}
 function salaryFor(c,o){const L=LG[c.lg];if(!L.base)return 0;const m=Math.pow(1.12,Math.min(o,c.rep+14)-c.rep)*(1+(c.rep-L.mean)/25);return Math.max(L.base*.2,L.base*m)}
 const taxRate=s=>s<1000?.2:s<4000?.33:.45;
-function injMult(p){return (1.35-Math.min(p.st.phy,100)/150)*(p.age>=31?1.35:1)*(p.subs.nutri?.7:1)*(has(p,'iron')?.6:1)*(p.sta<30?1.6:1)*(p.legFx&&p.legFx.kame?.6:1)}
+function injMult(p){return (1.35-Math.min(p.st.phy,100)/150)*(p.age>=31?1.35:1)*(p.subs.nutri?.7:1)*(has(p,'iron')?.6:1)*(p.sta<30?1.6:1)*(p.legFx&&p.legFx.kame?.6:1)*(typeof bodyInj==='function'?bodyInj(p):1)}
 const prOf=(ch,c)=>{const km=c.p.legFx&&c.p.legFx.kame?.05:0;if(ch.fixed)return Math.min(1,ch.pr(c)+km);let v=ch.pr(c);if(v>=1)return 1;if(c.p.subs&&c.p.subs.mental)v+=.05;v+=km;return clamp(v,.05,.95+km)};
 function monthlyCost(p){
   const P=p.fam.partner,pro=p.stage==='pro';
   const items=[];
   if(pro)items.push(['生活費',20]);
+  if(pro&&p.agent)items.push(['代理人手数料',Math.round(p.salary*.05/12)]);
   if(P&&P.married)items.push(['家族の生活費',10+p.fam.kids.length*8]);
   const rent={apart:15,tower:70}[p.home];if(rent)items.push(['家賃',rent]);
   if(p.car)items.push(['クルマの維持費',shopItem(p.car).up]);
@@ -2819,6 +2833,7 @@ function applyFx(p,fx){
     else if(k==='famAbroad'){p.fam.abroad=v;p.abroadNew=false;if(P)P.abroadAsked=1}
     else if(k==='kaminoko'){['tec','spd','sho'].forEach(s=>{p.cap[s]=Math.min(SMAX,p.cap[s]+5);if(p.capLim)p.capLim[s]=Math.max(p.capLim[s]||0,p.cap[s]);p.st[s]=Math.min(p.cap[s],p.st[s]+5)});if(!has(p,'kaminoko'))p.skills.push('kaminoko');out.push(['神の子','テクニック・スピード・シュート+5',1]);if(typeof cutQ==='function')cutQ('messi','特殊能力「神の子」獲得！','伝説から受け継いだもの',2600)}
     else if(k==='awaken'){const top=KEYS.slice().sort((a,b)=>p.st[b]-p.st[a]).slice(0,2);top.forEach(s=>{p.cap[s]=clamp(p.cap[s]+4,40,capLimOf(p,s));p.st[s]=stAdd(p,s,2)});if(!has(p,'zone'))p.skills.push('zone');out.push(['限界突破',top.map(s=>lbl(s,p)).join('・'),1])}
+    else if(typeof applyFx2==='function'){const r=applyFx2(p,k,v);if(r)out.push(r)}
   }
   return out;
 }
@@ -2827,7 +2842,7 @@ function applyFx(p,fx){
 function pickEvents(p,n){
   const c=ctx(p),m=p.month;
   const me=turnEnd(m),inTurn=x=>x>=m&&x<=me;
-  const ok=EV.filter(e=>e.st.includes(p.stage)&&(!e.when||e.when(c))&&(e.mo?e.mo.some(inTurn):!OFF(m)));
+  const ok=EV.filter(e=>e.st.includes(p.stage)&&(!e.when||e.when(c))&&(e.mo?e.mo.some(inTurn):!OFF(m))&&(typeof evOk!=='function'||evOk(e,p)));
   let pool=ok.filter(e=>!(p.seen[e.id]!=null&&p.season-p.seen[e.id]<2));
   if(pool.length<n)pool=ok;
   // 重みつきで選ぶ（買ったもののイベントは起きやすい）
@@ -2877,6 +2892,7 @@ function dogTurn(p,res){
 function rollEvent(){
   const p=S.p,m=p.month;
   const f=famCandidate(p);if(f)return f;
+  const c2=typeof c2Roll==='function'?c2Roll(p):null;if(c2)return c2;
   if(!OFF(m)&&Math.random()<(p.stage==='pro'?.035:.025))return legendSlot(p);
   if(p.age>=19&&p.age<=30&&Math.max(...KEYS.map(k=>p.st[k]))>=80&&Math.random()<.015)return 'sp:awaken';
   if(p.stage==='pro'&&p.money>=1000&&dogOk(p)&&Math.random()<.15)return 'sp:dog';
@@ -2921,6 +2937,7 @@ const MESSI_P=.05,MESSI_OK=.10;
 function messiPlan(p){const mt=!!(p.legFx&&p.legFx.mateo);p.flags=p.flags||{};p.flags.messi=Math.random()<MESSI_P+(mt?.40:0)?{age:p.age+ri(1,9),m:ri(0,11),ok:MESSI_OK+(mt?.20:0)}:null}
 function messiNow(p){const f=p.flags&&p.flags.messi;return !!(f&&!f.done&&!OFF(p.month)&&(p.age>f.age||(p.age===f.age&&p.month>=f.m)))}
 function spEv(id,p){
+  if(typeof spEv2==='function'){const e2=spEv2(id,p);if(e2)return e2}
   if(id==='sp:messi'){const f=p.flags.messi||{ok:MESSI_OK},mt=!!(p.legFx&&p.legFx.mateo);return {id,t:'伝説降臨：リオネル・メツシ',x:`練習場に、見覚えのある小柄な男が立っていた。世界中が知る伝説の選手、リオネル・メツシだ。${mt?'マテオ・メツシ君が「パパの友だちだよ」と手を振っている。':'たまたま来日していたらしい。'}「少しだけボールを蹴ろうか」`,ch:[
     {l:'1対1で勝負を挑む',d:`成功すると特殊能力「神の子」（テクニック・スピード・シュート+5、勝負強くなる）。成功率${Math.round(f.ok*100)}%`,fixed:1,pr:()=>f.ok,ok:{m:'一瞬だけ、伝説の足元からボールを奪った。メツシは笑って言った。「君は神の子だ」',fx:{kaminoko:1,pop:10}},ng:{m:'何度挑んでも、ボールに触れることすらできなかった。それでも、一生の宝物になった。',fx:{tec:1,cond:8}}},
     {l:'サインと写真をお願いする',d:'',pr:()=>1,ok:{m:'ユニフォームにサインをもらった。部屋の一番目立つところに飾った。',fx:{cond:10,pop:2}},ng:{m:'',fx:{}}}]}}
@@ -2944,13 +2961,15 @@ function spread(total,n){const b=Math.floor(total/n),r=total-b*n,a=Array(n).fill
 function fillerName(lgk,used){
   let n,t=0;
   do{
-    if(lgk==='HS')n=pick(CITY['日本'])+pick(['学園','工業','商業','第一','実業','中央'])+'高校';
+    if(lgk==='HSX'){const cc=typeof homeCty==='function'&&S.p?homeCty(S.p):'日本';n=pick(CITY[cc]||CITY['日本'])+'ユース'}
+    else if(lgk==='HS')n=pick(CITY['日本'])+pick(['学園','工業','商業','第一','実業','中央'])+'高校';
     else if(lgk==='UNI')n=pick(UNI_PFX)+'大学';
     else{const c=LG[lgk].cty;n=pick(CITY[c])+(c==='日本'?pick(['FC','SC','ユナイテッド','シティ']):'FC')}
   }while(used.has(n)&&t++<50);
   return n;
 }
 function contOpp(L,club){
+  if(L.cont!=='ACL'&&L.cont!=='UCL')return pick(CONT_CITY[L.cont])+'FC';
   if(L.cont==='ACL')return pick(ASIA_CITY)+'FC';
   return pick(CLUBS.filter(c=>c.lg!==club.lg&&LG[c.lg].cont==='UCL'&&c.rep>=cr(74))).n;
 }
@@ -2985,8 +3004,9 @@ function newSeason(first){
     }
   }else if(p.stage==='hs'){
     cur.comps.tour={key:'tour',name:'全国高校選手権',tk:'hs',i:0,alive:true,lose:['県予選敗退','県予選敗退','1回戦敗退','2回戦敗退','3回戦敗退','ベスト8','ベスト4','準優勝'],
-      rounds:['県予選準決勝','県予選決勝','1回戦','2回戦','3回戦','準々決勝','準決勝','決勝'].map((nm,i)=>({nm,m:[3,3,4,4,5,5,5,5][i],legs:1,os:47+i*1.1+rnd(-4,4),opp:fillerName('HS',used)}))};
+      rounds:['県予選準決勝','県予選決勝','1回戦','2回戦','3回戦','準々決勝','準決勝','決勝'].map((nm,i)=>({nm,m:[3,3,4,4,5,5,5,5][i],legs:1,os:47+i*1.1+rnd(-4,4),opp:fillerName(club.lg,used)}))};
   }
+  typeof c2Season==='function'&&c2Season(p,cur,club,first);
   S.cur=cur;S.screen='camp';
 }
 const sortTable=T=>T.slice().sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf);
@@ -3014,10 +3034,10 @@ function sim(p,{os,base,home,neutral,comp}){
     const gKey=p.pos==='FW'?p.st.sho:p.pos==='MF'?p.st.sho*.6+p.st.tec*.4:p.st.phy;
     const aKey=p.st.pas*.6+p.st.tec*.4;
     const gR=Math.min(1.15,P.g*sty.g*Math.pow(gKey/70,2.2)*lv*(1+p.boost*.03)*(has(p,'goal')?1.15:1)*(has(p,'fk')?1.1:1)*(has(p,'speed')?1.05:1));
-    const aR=Math.min(.8,P.a*sty.a*Math.pow(aKey/70,2)*lv*(has(p,'vision')?1.2:1));
+    const aR=Math.min(.8,P.a*sty.a*Math.pow(aKey/70,2)*lv*(has(p,'vision')?1.2:1)*(1+((p.mates==null?50:p.mates)-50)/250));
     pg=poisson(gR*min/90);pa=poisson(aR*min/90);
     gf=Math.max(gf,pg);pa=Math.min(pa,gf-pg);
-    let r=6.2+(o-os)*.035+pg*.9+pa*.55+(gf>ga?.3:gf<ga?-.3:0)+(p.pos==='GK'?(ga===0?.6:-.18*ga):0)+(has(p,'speed')?.1:0)+(has(p,'big')&&comp!=='lg'?.2:0)+rnd(-.45,.45);
+    let r=6.2+(o-os)*.035+pg*.9+pa*.55+(gf>ga?.3:gf<ga?-.3:0)+(p.pos==='GK'?(ga===0?.6:-.18*ga):0)+(has(p,'speed')?.1:0)+(has(p,'big')&&comp!=='lg'?.2:0)+rnd(-.45,.45)-(p.fat||0)/150;
     if(min<30)r=6+(r-6)*.5;
     rt=clamp(r,4.5,10);
     p.sta=clamp(p.sta-min/90*3.2,0,100);
@@ -3035,22 +3055,22 @@ function addStats(p,cur,comp,r){
 }
 const mkRec=(f,comp,opp,home,r,note='')=>({day:Math.floor(f.day),comp,opp,home,gf:r.gf,ga:r.ga,res:r.gf>r.ga?'w':r.gf<r.ga?'l':'d',min:r.min,start:r.start,pg:r.pg,pa:r.pa,rt:r.rt,inj:r.inj,out:r.out,note});
 const myStr=(cur,club)=>{const t=cur.teams&&cur.teams.find(x=>x.me);return t?t.str:club.rep};
-const natBase=c=>c.tk==='oly'?68:cr(76);
+const natBase=c=>c.tk==='oly'?68+(natStr(S.p)-76)*.6:cr(natStr(S.p));
 function natCall(p,extra=0){
   const o=ovrOf(p),cur=S.cur,rt=cur&&cur.lg.rn?cur.lg.rs/cur.lg.rn:6.6;
-  const pr=sig((o-cr(74)+p.nat/6+(p.pop-50)/30+(rt-6.8)*2-extra)/2.2)*(p.inj>6?.15:1);
+  const pr=sig((o-cr(natLine(p))+p.nat/6+(p.pop-50)/30+(rt-6.8)*2-extra-(typeof natPen==='function'?natPen(p):0))/2.2)*(p.inj>6?.15:1);
   return Math.random()<pr;
 }
 function natTour(p,kind,m){
-  const used=new Set();const pk=(arr,n)=>shuffle(arr.filter(x=>!used.has(x[0]))).slice(0,n).map(x=>{used.add(x[0]);return {n:x[0],str:x[1]+rnd(-2,2),pts:0,gf:0,ga:0}});
-  if(kind==='wc'){const g=[...pk(NAT_STRONG,1),...pk(NAT_MID,1),...pk(NAT_ASIA.slice(0,4),1)];
+  const used=new Set();const pk=(arr,n)=>shuffle(arr.filter(x=>!used.has(x[0])&&x[0]!==natName(p))).slice(0,n).map(x=>{used.add(x[0]);return {n:x[0],str:x[1]+rnd(-2,2),pts:0,gf:0,ga:0}});
+  if(kind==='wc'){const g=[...pk(NAT_STRONG,1),...pk(NAT_MID,1),...pk(confPool(p).slice(0,4),1)];
     return {key:'wc',nat:1,name:'W杯',tk:'wc',i:0,alive:true,glose:'GL敗退',lose:['ベスト32','ベスト16','ベスト8','ベスト4','準優勝'],
       grp:{opps:g,me:{pts:0,gf:0,ga:0},played:0,n:3,ms:[m,m,m],pass:2,third:.6},
       rounds:['ラウンド32','ラウンド16','準々決勝','準決勝','決勝'].map((nm,i)=>{const o=i===0?pk(NAT_MID,1)[0]:pk(NAT_STRONG,1)[0];return {nm,m,legs:1,os:o.str+i*.8,opp:o.n}})}}
-  if(kind==='asia'){const g=pk(NAT_ASIA.slice(3),3);
+  if(kind==='asia'){const CP=confPool(p),g=pk(CP.slice(3),3);
     return {key:'asia',nat:1,name:'アジア杯',tk:'asia',i:0,alive:true,glose:'GL敗退',lose:['ベスト16','ベスト8','ベスト4','準優勝'],
       grp:{opps:g,me:{pts:0,gf:0,ga:0},played:0,n:3,ms:[m,m,m],pass:2,third:.7},
-      rounds:['ラウンド16','準々決勝','準決勝','決勝'].map((nm,i)=>{const o=pk(NAT_ASIA,1)[0]||{n:'韓国',str:75};return {nm,m,legs:1,os:o.str+i,opp:o.n}})}}
+      rounds:['ラウンド16','準々決勝','準決勝','決勝'].map((nm,i)=>{const o=pk(CP,1)[0]||{n:CP[0][0],str:CP[0][1]};return {nm,m,legs:1,os:o.str+i,opp:o.n}})}}
   const g=[...pk(NAT_STRONG,1),...pk(NAT_MID,2)].map(x=>({...x,str:x.str-6}));
   return {key:'oly',nat:1,name:'五輪',tk:'oly',i:0,alive:true,glose:'GL敗退',lose:['ベスト8','4位','銀メダル'],
     grp:{opps:g,me:{pts:0,gf:0,ga:0},played:0,n:3,ms:[m,m,m],pass:2},
@@ -3059,7 +3079,7 @@ function natTour(p,kind,m){
 function buildFixtures(p,m,cur,club,res){
   const out=[];
   const days=n=>{const st=27/Math.max(n,1);return Array.from({length:n},(_,i)=>Math.round(st*i+rnd(1,st)))};
-  if(m<=9&&cur.teams&&cur.lgk===club.lg){days(cur.sched[m]).forEach(d=>out.push({type:'lg',day:d}))}
+  if(m<=9&&cur.teams&&cur.lgk===club.lg&&!(cur.susp&&cur.susp[m])){days(cur.sched[m]).forEach(d=>out.push({type:'lg',day:d}))}
   // 大学選手権：11月末の順位で出場決定
   if(p.stage==='uni'&&m===4&&!cur.comps.tour&&cur.teams){
     if(myRank(cur)<=5)cur.comps.tour={key:'tour',name:'全日本大学選手権',tk:'uni',i:0,alive:true,lose:['1回戦敗退','ベスト8','ベスト4','準優勝'],
@@ -3069,11 +3089,12 @@ function buildFixtures(p,m,cur,club,res){
   // 代表
   const y=calYear(p);
   if(p.stage==='pro'&&p.age>=19){
-    if([1,2,3,7].includes(m)){if(natCall(p)){cur.nat.called++;res.notes.push('日本代表に招集された');if(cur.nat.called===1)typeof cutQ==='function'&&cutQ('national',p.natTot.caps?'日本代表に招集！':'日本代表に初招集！','日の丸を背負って',2200);const opp=shuffle([...NAT_STRONG,...NAT_MID,...NAT_ASIA]).slice(0,2);days(2).forEach((d,i)=>out.push({type:'nat',day:d+.3,opp:opp[i]}))}}
+    if([1,2,3,7].includes(m)){if(natCall(p)){cur.nat.called++;res.notes.push(`${natTeam(p)}に招集された`);if(cur.nat.called===1)typeof cutQ==='function'&&cutQ('national',p.natTot.caps?`${natTeam(p)}に招集！`:`${natTeam(p)}に初招集！`,natOf(p)==='jp'?'日の丸を背負って':'国旗を背負って',2200);const opp=shuffle([...NAT_STRONG,...NAT_MID,...NAT_ASIA]).slice(0,2);days(2).forEach((d,i)=>out.push({type:'nat',day:d+.3,opp:opp[i]}))}}
     let tk=null;
     if(m===5&&y%4===3)tk='asia';
     if(m===10&&y%4===2&&y>=2030)tk='wc';
-    if(tk){if(natCall(p,1.5)){cur.comps[tk]=natTour(p,tk,m);if(tk==='wc')p.natTot.wc++;res.notes.push(`${cur.comps[tk].name}の日本代表メンバーに選ばれた`);typeof cutQ==='function'&&cutQ('national',`${cur.comps[tk].name}メンバー入り！`,'世界の舞台へ',2400)}else res.notes.push(`${tk==='wc'?'W杯':'アジア杯'}の日本代表メンバーから漏れた`)}
+    if(tk==='wc'&&!wcQual(p,y)){res.notes.push(`${natTeam(p)}はW杯予選で敗退した`);tk=null}
+    if(tk){if(natCall(p,1.5)){cur.comps[tk]=natTour(p,tk,m);if(tk==='wc')p.natTot.wc++;res.notes.push(`${cur.comps[tk].name}の${natTeam(p)}メンバーに選ばれた`);typeof cutQ==='function'&&cutQ('national',`${cur.comps[tk].name}メンバー入り！`,'世界の舞台へ',2400)}else res.notes.push(`${tk==='wc'?'W杯':'アジア杯'}の${natTeam(p)}メンバーから漏れた`)}
   }
   if(m===11&&y%4===0&&p.age<=23&&p.age>=18){
     if(Math.random()<sig((ovrOf(p)-63)/2.5)&&p.inj<=6){cur.comps.oly=natTour(p,'oly',m);res.notes.push('五輪代表に選ばれた')}
@@ -3109,14 +3130,14 @@ function playFixture(p,f,cur,club,res){
     for(let i=0;i<idx.length;i+=2){
       const A=T[idx[i]],B=T[idx[i+1]],home=Math.random()<.5;
       if(A.me||B.me){const me=A.me?A:B,op=A.me?B:A;
-        const r=sim(p,{os:op.str,base:me.str,home,comp:'lg'});addStats(p,cur,'lg',r);upd(me,op,r.gf,r.ga);rec=mkRec(f,L.n,op.n,home,r);
+        const r=clutchHook(p,{lg:1,opp:op.n},sim(p,{os:op.str,base:me.str,home,comp:'lg'}),res);addStats(p,cur,'lg',r);upd(me,op,r.gf,r.ga);rec=mkRec(f,L.n,op.n,home,r);
       }else{const h=home?.12:-.12;upd(A,B,qg(A.str,B.str,h),qg(B.str,A.str,-h))}
     }
     return rec;
   }
   if(f.type==='nat'){
     const o=ovrOf(p);p._nf=clamp(sig((o-78+p.nat/8)/3),.1,.95);
-    const home=Math.random()<.5,r=sim(p,{os:f.opp[1],base:76,home,comp:'nat'});addStats(p,cur,'nat',r);
+    const home=Math.random()<.5,r=sim(p,{os:f.opp[1],base:natStr(p),home,comp:'nat'});addStats(p,cur,'nat',r);
     return mkRec(f,[0,1].includes(calYear(p)%4)?'W杯予選':'国際親善試合',f.opp[0],home,r);
   }
   const c=cur.comps[f.key];if(!c||!c.alive)return null;
@@ -3141,7 +3162,7 @@ function playFixture(p,f,cur,club,res){
   }
   if(c.i!==f.ri)return null;
   const R=c.rounds[f.ri],neutral=c.nat||R.legs===1&&R.nm==='決勝',home=R.legs===2?f.leg===1:Math.random()<.5;
-  const r=sim(p,{os:R.os,base,home,neutral,comp});addStats(p,cur,comp,r);
+  const r=clutchHook(p,{key:f.key,nm:R.nm,opp:R.opp},sim(p,{os:R.os,base,home,neutral,comp}),res);addStats(p,cur,comp,r);
   let note='';
   if(R.legs===2&&f.leg===1){c.agg=[r.gf,r.ga];note='第1戦'}
   else{
@@ -3167,7 +3188,9 @@ function confirmAction(){
   S.lastEv=null;
   // 1ターンに起きる出来事は0〜3個（ランダム）
   const q=ev?[ev]:[];
+  const cl=typeof clutchEv==='function'?clutchEv(p):null;
   if(ev!=='sp:fate'){const extra=Math.random()<.35?(Math.random()<.3?2:1):0;for(let k=0;k<extra;k++){const id=pickEvents(p,6).find(x=>!q.includes(x));if(id)q.push(id)}}
+  if(cl&&!q.includes(cl))q.push(cl);
   if(q.length){S.evq=q;S.evi=0;S.evr=null;S.screen='event'}else runMonth();
 }
 const JIT_KEYS=['spd','tec','sho','pas','phy','def','key','all','pop','coach','cond','sta','scout','nat','fam','love','money'];
@@ -3200,6 +3223,7 @@ function chooseEvent(ci){
 }
 function nextEvent(){S.lastEv=S.evr?S.evr.e:null;S.evr=null;S.evi++;if(S.evi>=S.evq.length)runMonth()}
 function grow(p,mult,f,a){
+  if(typeof growMul==='function')mult*=growMul(p);
   const g=GROWTH[p.growth].c(p.age),t=TRAIN[p.train.int];
   const ub=p.stage==='uni'?UNIS[p.uni].g:1;
   const sb=(has(p,'legend')?2:has(p,'monster')?1.1:1)*(has(p,'heir')?1.1:1)*(p.subs.trainer?1.2:1)*(p.items.gym?1.1:1);
@@ -3211,6 +3235,7 @@ function grow(p,mult,f,a){
       if(p.train.focus===k)d+=t.g/12*mult*(g>0?sb:1);
       else if(p.train.focus==='all')d+=t.g/12*.33*mult;
       if(a.boost&&a.boost.includes(k))d+=.3;
+      if(p.alloc&&p.alloc[k])d+=p.alloc[k]*.09*mult*(g>0?1:.5);
       if(d>0)d=Math.min(d,p.cap[k]-p.st[k]+.05);
     }
     p.st[k]=clamp(p.st[k]+d,20,SMAX);
@@ -3253,7 +3278,7 @@ function monthStep(a,res,first){
     if(Math.random()<risk){const w=Math.random()<.15?ri(12,24):ri(2,8);p.inj+=w;cur.injW+=w;res.notes.push(`${MONTHS[m]}月 練習中に負傷（全治${w}週間）`);if(w>=4)typeof cutQ==='function'&&cutQ('injury','練習中に負傷…',`全治${w}週間`,2000)}}
   // 起用の見込み
   const o=ovrOf(p);
-  const r=o-club.rep+(p.coach-50)/7+(p.cond-60)/12+(p.sta-60)/15+p.boost+rnd(-1.5,1.5)+(p.stage!=='pro'?5:0);
+  const r=o-club.rep+(p.coach-50)/7+(p.cond-60)/12+(p.sta-60)/15+p.boost+rnd(-1.5,1.5)+(p.stage!=='pro'?5:0)+(typeof c2Start==='function'?c2Start(p,club):0);
   p._f=clamp(sig((r+1.5)/2.6),.03,.97);
   // 試合
   const fx=buildFixtures(p,m,cur,club,res).sort((x,y)=>x.day-y.day);
@@ -3279,6 +3304,7 @@ function monthStep(a,res,first){
   const sk=checkSkills(p);res.skills.push(...sk);
   sk.forEach(k=>pushNews(`【話題】${p.sei}${p.mei}、「${SKILLS[k].n}」の領域へ`));
   if(sk.length&&typeof cutQ==='function')cutQ('skill',`特殊能力「${SKILLS[sk[0]].n}」習得！`,'新たな領域へ',2000);
+  typeof c2Month==='function'&&c2Month(p,a,res,m,first);
 }
 /* 1ターン＝約3か月。試合と成長は1か月ずつ計算する */
 function runMonth(){
@@ -3329,7 +3355,7 @@ function seasonEnd(){
     if(Lg.as>=L.as+ri(-1,4))R.awards.push('アシスト王');
     if(rating>=7.15&&big)R.awards.push('ベストイレブン');
     if(big&&((rating>=7.45&&rank<=3&&Math.random()<.55)||rating>=7.85))R.awards.push('リーグMVP');
-    if(L.cty==='日本'&&p.age<=21&&Lg.a>=18&&rating>=6.6)R.awards.push('ベストヤングプレーヤー');
+    if(L.cty===homeCty(p)&&p.age<=21&&Lg.a>=18&&rating>=6.6)R.awards.push('ベストヤングプレーヤー');
     const world=rep>=cr(84)&&big;let bc=0;
     if(world&&o0>=cr(90)&&rating>=7.5)bc=clamp((rating-7.4)*.8+(R.cont&&R.cont.won?.35:0)+(p.flags.wcWonYear===p.year?.45:0)+(rank===1?.1:0)+(G>=30?.12:0)+(o0>=cr(100)?.2:0),0,.8);
     if(Math.random()<bc)R.awards.push('金球賞');
@@ -3350,6 +3376,7 @@ function seasonEnd(){
   if(!p.flags.potShown){p.flags.potShown=1;p.flags.potEst=potGrade(p.pot+rnd(-1,1));R.potNote=p.flags.potEst}
   p.log.push({y:p.year,age:p.age,club:club.n,a:cur.all.a,g:G,as:cur.all.as,cs:Lg.cs,rt:rating,o:R.o1,rank,teams:L.t,aw:R.awards.slice(),notes:R.notes.slice(),stage:p.stage});
   p.rankClub=club.id;p.lastRank=rank;
+  typeof c2SeasonEnd==='function'&&c2SeasonEnd(p,R,cur);
   R.head=headline(p,R);
   S.report=R;S.screen='report';
   if(typeof cutQ==='function'){const big=R.awards.find(a=>/金球賞$|年間最優秀|MVP|得点王/.test(a));if(R.stage==='pro'&&R.rank===1)cutQ('trophy','リーグ優勝！',`${shortClub(R.club)}で頂点に`,2400);else if(R.tour&&R.tour.won)cutQ('trophy','大会優勝！','仲間と掴んだ栄冠',2400);if(big)cutQ('trophy',big+'！','個人タイトル獲得',2400)}
@@ -3390,19 +3417,19 @@ function lede(p,R){
 function mkOffer(p,c,o,renew,rating){let s=salaryFor(c,o)*rnd(.92,1.12);if(renew&&rating)s*=1+clamp((rating-6.6)*.3,-.2,.35);return {club:c.id,renew,sal:Math.round(s/10)*10}}
 function visOf(p,rating){return ovrOf(p)+p.scout*.3+Math.max(0,23-p.age)*1.2+(rating?clamp((rating-6.6)*5,-4,6):0)+rnd(-2,2)}
 function genOffers(p,rating,opt={}){
-  const o=ovrOf(p),vis=visOf(p,rating);
+  const o=ovrOf(p),vis=visOf(p,rating)-(typeof visPen==='function'?visPen(p):0);
   if(opt.minVis&&vis<opt.minVis)return [];
   const cur=p.stage==='pro'?p.club:null;
-  let pool=CLUBS.filter(c=>c.id!==cur&&c.rep<=vis+4&&c.rep>=Math.min(vis-15,cr(85)));
-  if(p.stage!=='pro')pool=pool.filter(c=>LG[c.lg].cty==='日本'||vis>=68);
-  const w=c=>Math.exp(-Math.abs(c.rep-Math.min(vis-3,cr(95)))/4.5);
+  let pool=CLUBS.filter(c=>c.id!==cur&&c.rep<=vis+4&&(c.rep>=Math.min(vis-15,cr(85))||LG[c.lg].ext&&LG[c.lg].cty===homeCty(p))&&clubOk(p,c));
+  if(p.stage!=='pro')pool=pool.filter(c=>offerCtyOk(p,LG[c.lg].cty)||vis>=68);
+  const w=c=>Math.exp(-Math.abs(c.rep-Math.min(vis-3,cr(95)))/4.5)*(typeof offerW==='function'?offerW(p,c):1);
   const n=clamp(2+(o>=70?1:0)+(p.scout>=40?1:0),2,4),res=[];
   while(res.length<n&&pool.length){
     let x=Math.random()*pool.reduce((s,c)=>s+w(c),0),i=0;
     for(;i<pool.length-1;i++){x-=w(pool[i]);if(x<=0)break}
     res.push(pool[i]);pool.splice(i,1);
   }
-  if(!res.length&&!opt.noTryout)res.push(pick(CLUBS.filter(c=>c.lg==='J3').sort((a,b)=>a.rep-b.rep).slice(0,3)));
+  if(!res.length&&!opt.noTryout&&!noTry(p))res.push(natOf(p)==='jp'?pick(CLUBS.filter(c=>c.lg==='J3').sort((a,b)=>a.rep-b.rep).slice(0,3)):tryClub(p));
   return res.sort((a,b)=>b.rep-a.rep).map(c=>mkOffer(p,c,o,false));
 }
 function buildOffers(){
@@ -3417,6 +3444,7 @@ function buildOffers(){
     X.list.push(...genOffers(p,rt,{noTryout:p.age>=33}));
     X.canRetire=p.age>=30||!X.list.length;
   }
+  typeof c2Offers==='function'&&c2Offers(p,X);
   S.offers=X;S.screen='offers';
 }
 function histPush(n,y){const h=S.p.hist;if(h[h.length-1].n!==n)h.push({n,y0:y})}
@@ -3431,11 +3459,11 @@ function decide(kind,idx){
     const of=S.offers.list[idx],c=CLUBS[of.club];
     if(!of.renew){
       const from=clubOf(p).n,wasAbroad=isAbroad(p);
-      p.stage='pro';p.club=c.id;p.coach=50;histPush(c.n,ny);
+      p.stage='pro';p.club=c.id;p.coach=50;p.mates=45;p.ptG=0;p.contY=0;histPush(c.n,ny);
       const bonus=Math.round(of.sal*.15/10)*10;p.money+=bonus;p.earnings+=bonus;S.signBonus=bonus;
       const P=p.fam.partner;
-      if(LG[c.lg].cty!=='日本'&&!wasAbroad&&P&&P.married){p.abroadNew=true;P.abroadAsked=0}
-      if(LG[c.lg].cty==='日本')p.fam.abroad=1;
+      if(LG[c.lg].cty!==homeCty(p)&&!wasAbroad&&P&&P.married){p.abroadNew=true;P.abroadAsked=0}
+      if(LG[c.lg].cty===homeCty(p))p.fam.abroad=1;
       pushNews(`【移籍】${c.n}、${from}の${p.pos}${p.sei}${p.mei}を獲得`);
       if(typeof cutQ==='function')cutQ('sign',`${c.n}と契約！`,`年俸 ${yen(of.sal)}`,2200);
     }else pushNews(`【契約】${c.n}、${p.sei}${p.mei}と契約更新`);
@@ -3477,6 +3505,7 @@ function retire(){
   const sum={name:`${p.sei} ${p.mei}`,pos:p.pos,years:`${p.hist[0].y0}–${p.year+1}`,clubs:mainClubs(p).join(' / ')||clubOf(p).n,apps:p.tot.apps,goals:p.tot.goals,ast:p.tot.ast,peak:p.peak,score,grade:g,title,hi:highlights(p),age:p.age,quote:QUOTES[g],pro:p.hist.some(x=>!/高校|大学/.test(x.n))};
   const l=hofList();l.push(sum);l.sort((a,b)=>b.score-a.score);hofSave(l.slice(0,30));
   if(typeof addPlayerCard==='function'){const r=addPlayerCard(p,sum);sum.cardId=r.card.id;sum.coins=r.coins;sum.cardOvr=cardOvr(r.card);if(typeof metaSave==='function')metaSave()}
+  typeof c2Retire==='function'&&c2Retire(p,sum);
   if(p.fate){sum.fate={ty:p.fate.ty,why:p.fate.why};sum.hi=(p.fate.ty==='death'?'志半ばで逝去・':'突然の引退・')+(sum.hi||'')}
   S.summary=sum;S.screen='retired';
   if(!p.fate){if(typeof cutQ==='function')cutQ('retire','現役引退',`${p.sei}${p.mei}、長い間お疲れさま`,2800);
@@ -4701,6 +4730,7 @@ H.title=()=>{
 function customForm(d){
   const P=POS[d.pos];
   return `<div class="custom">
+  ${typeof natPick==='function'?natPick(d):''}
   <div class="label">名前</div>
   <div class="field"><input id="sei" aria-label="姓" value="${esc(d.sei)}" maxlength="6"><input id="mei" aria-label="名" value="${esc(d.mei)}" maxlength="6"><button class="opt" data-act="randName">おまかせ</button></div>
   <div class="label">守備位置</div>
@@ -4717,6 +4747,7 @@ H.create=()=>{
   return `<div class="kick">スカウトレポート<span class="r">No.${String(d.n||1).padStart(3,'0')}</span></div>
   <p class="note">${pv.skills.includes('legend')?'<b style="color:var(--gold)">10万人に1人の伝説が現れた。</b>3つの能力が95を超えていく器だ。':pv.skills.includes('monster')?'<b style="color:var(--gold)">天才が見つかった。</b>並の選手より限界がはるかに高い。':d.custom?'条件を変えるたびに、能力は引き直される。':'新しい才能が見つかった。この選手の人生を歩むか、別の選手を探すか。'}</p>
   ${pcard(pv,'preview')}
+  ${typeof natInfo==='function'?natInfo(d):''}
   <dl class="scout"><div><dt>守備位置</dt><dd>${d.pos}<small>${P.n}</small></dd></div><div><dt>プレースタイル</dt><dd>${sty.n}<small>${sty.d}</small></dd></div><div><dt>成長タイプ</dt><dd>${g.n}<small>${g.d}</small></dd></div><div><dt>スカウト評価</dt><dd>${pv.flags.potEst}<small>伸びしろの見立て（SS〜D）</small></dd></div></dl>
   ${tkBlock(d)}
   ${legBlock(d)}
@@ -4735,6 +4766,7 @@ H.camp=()=>{
   return `${pcard(p)}
   <div class="kick">${p.year}-${String(p.year+1).slice(2)} キャンプ<span class="r"><span class="role ${rc}">${rl}</span></span></div>
   <p class="note">${stageTxt}</p>${inv}
+  ${typeof campExtra==='function'?campExtra(p):''}
   <div class="label">今季の練習の重点</div>
   <div class="seg c4">${opts.map(([k,n,v])=>`<button class="opt" aria-pressed="${t.focus===k}" data-act="setFocus" data-v="${k}">${n}<span class="d">${v}</span></button>`).join('')}</div>
   <div class="label">今季の練習の強度</div>
@@ -4804,6 +4836,7 @@ H.month=()=>{
   <div class="kick">この${tl}か月の予定</div><ul class="plan">${turnPlan(p,m,cur).map(s=>`<li>${s}</li>`).join('')}</ul>
   ${inLg&&me.pl?`<div class="kick">順位表<span class="r">${myRank(cur)}位・勝点${me.pts}</span></div>${tableHtml(cur,S.tableOpen)}`:''}
   ${so?`<div class="kick">今季の成績</div>${so}`:''}
+  ${typeof allocHtml==='function'?allocHtml(p):''}
   <div class="kick">この${tl}か月の行動<span class="r">ひとつ選ぶ</span></div>
   <div class="acts">${actsFor(p).map(a=>actCard(a,p)).join('')}</div>
   ${S.act&&S.act.id==='trip'?tripPicker(p):''}
@@ -4820,7 +4853,7 @@ H.mres=()=>{
   const p=S.p,R=S.mres,m=R.m;
   const ds=R.d.filter(([,v])=>Math.abs(v)>=.5).map(([k,v],i)=>`<span class="chip pop ${v>0?'up':'down'}${v>=2?' big':''}" style="animation-delay:${300+i*90}ms">${lbl(k,p)} ${v>0?'+':''}<span data-cnt="0>${v}" data-dec="1" data-wait="${300+i*90}">${v.toFixed(1)}</span></span>`).join('');
   const mini=[['体力',R.dsta],['調子',R.dcond]];if(R.dfam!==null)mini.push([p.fam.partner&&p.fam.partner.married?'家族':'愛情',R.dfam]);
-  const m1=R.m1!=null?R.m1:m,next=p.fate&&p.fate.ty!=='acc'?(p.fate.ty==='death'?'お別れの会へ':'引退会見へ'):m1===9?'シーズン総括へ':m1===11?'新シーズンへ':`${MONTHS[m1+1]}–${MONTHS[turnEnd(m1+1)]}月へ`;
+  const m1=R.m1!=null?R.m1:m,next=p.fate&&p.fate.ty!=='acc'?(p.fate.ty==='death'?'お別れの会へ':p.fate.ty==='dream'?'その後の人生へ':'引退会見へ'):m1===9?'シーズン総括へ':m1===11?'新シーズンへ':`${MONTHS[m1+1]}–${MONTHS[turnEnd(m1+1)]}月へ`;
   // ハイライト：自分のゴール（GKならセーブ）をドット絵で流す
   if(S._scnKey!=='mres'+R.y+'-'+m){S._scnKey='mres'+R.y+'-'+m;careerScnTeams(p);
     const goals=R.matches.reduce((s,x)=>s+(x.pg||0),0),gk=p.pos==='GK',cs=R.matches.filter(x=>x.min&&x.ga===0).length,q=[];
@@ -4890,6 +4923,8 @@ H.report=()=>{
   <table class="st"><tbody>${rows.map(([a,b])=>`<tr><th>${esc(a)}</th><td class="n">${esc(b)}</td></tr>`).join('')}</tbody></table>
   <div class="kick">能力の変化<span class="r">総合 <span class="delta">${R.o0} → <b class="cntv${R.o1>R.o0?' upv':''}" data-cnt="${R.o0}>${R.o1}">${R.o1}</b></span></span></div>
   ${dchips?`<div class="chips" style="margin-top:0">${dchips}</div>`:'<p class="note">変化なし</p>'}
+  ${R.rival?`<div class="kick">ライバル年代記</div><p class="note">${esc(R.rival)}</p>`:''}
+  ${R.hope!=null?`<p class="note">夢の灯：${R.hope}</p>`:''}
   ${R.potNote?`<p class="note" style="margin-top:14px">コーチの見立て：伸びしろは <b style="color:var(--gold);font-size:17px">${R.potNote}</b>（SS〜D）</p>`:''}
   <div class="stack" style="margin-top:22px"><button class="btn red" data-act="toOffers">${p.age>=CAREER_END_AGE?'現役最後のシーズンを終える':p.stage==='hs'?'進路を決める':p.stage==='uni'?'オフシーズンへ':'移籍市場へ'}</button></div>`;
 };
@@ -4912,6 +4947,7 @@ H.offers=()=>{
   return `${pcard(p,'compact')}<div class="kick">${head}</div><p class="note">${note}</p>
   <div class="stack">${X.list.map(offerCard).join('')}
   ${X.uniEnter?uniCard(X.uniEnter):''}${X.uniStay?uniCard(p.uni):''}
+  ${typeof offersExtra==='function'?offersExtra(p,X):''}
   ${X.canRetire?`<button class="btn ghost" data-act="askRetire">${X.retireLabel||'現役を引退する'}</button>`:''}</div>`;
 };
 
@@ -4924,10 +4960,11 @@ H.retired=()=>{
   const owned=SHOP.filter(x=>p.items[x.id]&&x.price>=3000).map(x=>x.n);
   const F=s.fate,dead=F&&F.ty==='death';
   return `<article class="front ${dead?'mourn':''}"><span class="gogai">${dead?'訃報':'号外'}</span><div><div class="dateline"><span>${calYear(p)}年${MONTHS[p.month]}月</span><span>${dead?`享年${s.age}`:`${s.age}歳で引退`}</span></div>
-   <p class="deck">${esc(p.sei)}${esc(p.mei)}、${dead?'突然の別れ':F?'無念の現役引退':s.pro?'現役引退を発表':'プロの夢を胸に、ユニフォームを脱ぐ'}</p>
-   ${F?`<p class="lede">${esc(F.why)}。${dead?'スタジアムには花束が並び、背番号は永久欠番になった。':'会見では最後まで前を向き、仲間とファンに感謝を伝えた。'}</p>`:`<p class="quote">「${esc(s.quote)}」</p>`}
+   <p class="deck">${esc(p.sei)}${esc(p.mei)}、${dead?'突然の別れ':F?(F.ty==='dream'?'プロの夢をあきらめる':'無念の現役引退'):s.pro?'現役引退を発表':'プロの夢を胸に、ユニフォームを脱ぐ'}</p>
+   ${F?`<p class="lede">${esc(F.why)}。${dead?'スタジアムには花束が並び、背番号は永久欠番になった。':F.ty==='dream'?'それでも、ボールを蹴る喜びが消えることはなかった。':'会見では最後まで前を向き、仲間とファンに感謝を伝えた。'}</p>`:`<p class="quote">「${esc(s.quote)}」</p>`}
    <p class="lede">主な所属は${esc(s.clubs)}。公式戦通算${p.tot.apps}試合${p.pos==='GK'?`、無失点${p.tot.cs}試合`:`${p.tot.goals}得点${p.tot.ast}アシスト`}。${p.natTot.caps?`日本代表では${p.natTot.caps}試合に出場した。`:''}${esc(famTxt)}生涯収入は${yen(p.earnings)}、引退時の資産は${yen(p.money+p.inv)}。</p></div>
    ${vhead(p.sei,dead?'追悼':'引退','ink')}</article>
+  ${typeof afterHtml==='function'?afterHtml(p,s):''}
   <div class="kick">通算成績</div>
   <div class="statgrid"><div><b>${p.tot.apps}</b><span>試合</span></div><div><b>${p.pos==='GK'?p.tot.cs:p.tot.goals}</b><span>${p.pos==='GK'?'無失点':'得点'}</span></div><div><b>${p.tot.ast}</b><span>アシスト</span></div><div><b>${p.peak}</b><span>最高総合</span></div></div>
   <table class="st" style="margin-top:8px"><tbody><tr><th>平均評価点</th><td class="n">${avg}</td></tr><tr><th>日本代表</th><td class="n">${p.natTot.caps}試合 ${p.natTot.goals}得点${p.natTot.wc?`・W杯${p.natTot.wc}大会`:''}</td></tr>
@@ -5007,7 +5044,7 @@ function cntUp(){
 function render(){
   if(typeof document==='undefined')return;
   const app=document.getElementById('app');
-  app.innerHTML=inAppNotice()+masthead()+mainView();
+  app.innerHTML=inAppNotice()+masthead()+locH(mainView());
   document.getElementById('tabs').innerHTML=`<div class="in">${MODES.map(([k,n])=>`<button data-act="go" data-v="${k}" ${G.mode===k?'aria-current="page"':''}>${n}${k==='gacha'&&freeReady()?'<i class="dot" aria-label="無料10連あり"></i>':''}</button>`).join('')}</div>`;
   const m=document.getElementById('modal');
   const cur=S.p||(S._resume&&S._resume.p);
@@ -5019,7 +5056,7 @@ function render(){
   if(!CUT&&CUTQ.length&&G.mode==='career'){const c=CUTQ.shift();cutPlay(c[0],c[1],c[2],c[3],c[4])}
   gfxMount();
   let cl=document.getElementById('cutl');if(!cl){cl=document.createElement('div');cl.id='cutl';document.body.appendChild(cl)}
-  if(CUT&&G.mode==='career'){if(cl.dataset.k!==CUT.key){cl.dataset.k=CUT.key;cl.innerHTML=cutHtml()}}else if(cl.dataset.k){cl.dataset.k='';cl.innerHTML='';if(CUT)CUT=null}
+  if(CUT&&G.mode==='career'){if(cl.dataset.k!==CUT.key){cl.dataset.k=CUT.key;cl.innerHTML=locH(cutHtml())}}else if(cl.dataset.k){cl.dataset.k='';cl.innerHTML='';if(CUT)CUT=null}
   cntUp();
   if(typeof pkMount==='function'&&G.mode==='battle')pkMount();
   if(G.mode==='battle'&&G.bt.view==='match'&&G.bt.play&&!G.bt.play.done&&!PB){const L=G.bt.match&&G.bt.match.live;if(!(L&&L.pend&&matchMin()>=L.pend.m))startPlayback()}
@@ -5045,7 +5082,7 @@ function inhBlock(d,mode,act){
   <div class="picks">${ps.map(c=>{const on=sel.includes(c.id),full=!on&&sel.length>=INH_MAX;return `<button class="pk" aria-pressed="${on}" data-act="${act}" data-v="${c.id}" ${full?'disabled':''}><span class="po">${isMgr(c)?'監督':c.pos}</span><b>${esc(c.name)}</b><span class="num">${ov(c)}</span></button>`}).join('')}</div>
   ${res.length?`<div class="chips">${res.map(r=>`<span class="chip gold">${esc(r.name)} → ${esc(T[r.k].n)}</span>`).join('')}</div><p class="note">${res.map(r=>`<b>${esc(T[r.k].n)}</b>：${esc(T[r.k].d)}`).join('<br>')}</p>`:''}`;
 }
-function newDraft(prev){const d={sei:pick(SEI),mei:pick(MEI),pos:wpick(['FW','MF','DF','GK'],k=>({FW:3,MF:3,DF:2.8,GK:1.2})[k]),foot:wpick(['R','L','B'],k=>({R:7,L:2.2,B:.8})[k]),style:ri(0,2),growth:pick(Object.keys(GROWTH)),custom:false,n:(prev&&prev.n||0)+1,inh:prev&&prev.inh?prev.inh.slice():[],leg:prev&&prev.leg?prev.leg.slice():[],tkG:prev&&prev.tkG||M.tkActive||null,iseed:inhSeed(prev)};d.prev=makePlayer(d);return d}
+function newDraft(prev){const d={nation:pickNation(prev),natLock:prev&&prev.natLock?1:0,sei:pick(SEI),mei:pick(MEI),pos:wpick(['FW','MF','DF','GK'],k=>({FW:3,MF:3,DF:2.8,GK:1.2})[k]),foot:wpick(['R','L','B'],k=>({R:7,L:2.2,B:.8})[k]),style:ri(0,2),growth:pick(Object.keys(GROWTH)),custom:false,n:(prev&&prev.n||0)+1,inh:prev&&prev.inh?prev.inh.slice():[],leg:prev&&prev.leg?prev.leg.slice():[],tkG:prev&&prev.tkG||M.tkActive||null,iseed:inhSeed(prev)};nameFor(d);d.prev=makePlayer(d);return d}
 function syncNames(){const a=document.getElementById('sei'),b=document.getElementById('mei');if(a&&S.draft){S.draft.sei=a.value.trim()||S.draft.sei;S.draft.mei=b.value.trim()||S.draft.mei}if(S.draft&&S.draft.prev){S.draft.prev.sei=S.draft.sei;S.draft.prev.mei=S.draft.mei}}
 const toTop=()=>{try{window.scrollTo(0,0)}catch(e){}};
 const ACT={
@@ -5055,7 +5092,7 @@ const ACT={
  newGame:()=>{if(S._resume||(S.p&&inCareer())){S.modal='new';return}ACT.confirmNew()},
  confirmNew:()=>{S.modal=null;S._resume=null;S.p=null;S.cur=null;S.draft=newDraft();S.screen='create';S.tab='play';try{localStorage.removeItem(SAVE_KEY)}catch(e){}},
  closeModal:()=>{S.modal=null},
- randName:()=>{S.draft.sei=pick(SEI);S.draft.mei=pick(MEI);S.draft.prev.sei=S.draft.sei;S.draft.prev.mei=S.draft.mei},
+ randName:()=>{nameFor(S.draft);S.draft.prev.sei=S.draft.sei;S.draft.prev.mei=S.draft.mei},
  toggleCustom:()=>{syncNames();S.draft.custom=!S.draft.custom},
  setPos:v=>{syncNames();S.draft.pos=v;S.draft.style=0;S.draft.prev=makePlayer(S.draft)},
  setFoot:v=>{syncNames();S.draft.foot=v;S.draft.prev=makePlayer(S.draft)},
@@ -5077,7 +5114,7 @@ const ACT={
  nextEvent:()=>{nextEvent();toTop()},
  afterMonth:()=>{afterMonth();toTop()},
  toOffers:()=>{const p=S.p;if(p.age>=CAREER_END_AGE){retire()}else buildOffers();toTop()},
- pickOffer:v=>{decide('offer',+v);toTop()},
+ pickOffer:v=>{if(typeof negOpen==='function'&&negOpen(+v)){toTop();return}decide('offer',+v);toTop()},
  pickUni:()=>{decide('uni');toTop()},
  askRetire:()=>{S.modal='retire'},
  doRetire:()=>{S.modal=null;retire();toTop()},
@@ -5485,7 +5522,7 @@ function syncInputs(){
   const r=document.getElementById('rcode');if(r)G.bt.code=normCode(r.value);
   const a=document.getElementById('msei'),b=document.getElementById('mmei');if(a&&G.mdraft){G.mdraft.sei=a.value.trim()||G.mdraft.sei;G.mdraft.mei=b.value.trim()||G.mdraft.mei}
 }
-if(typeof document!=='undefined'){document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.matches&&t.matches('textarea.code[readonly]'))setTimeout(()=>{try{t.setSelectionRange(0,t.value.length)}catch(x){}},0)});boot()}
+if(typeof document!=='undefined'){document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.matches&&t.matches('textarea.code[readonly]'))setTimeout(()=>{try{t.setSelectionRange(0,t.value.length)}catch(x){}},0)});setTimeout(boot,0)}
 
 /* ========== 特別モード：伝説降臨・ワールドカップ・賭博伝説試合 ========== */
 const shuf=(a,r)=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor((r?r():Math.random())*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
@@ -6004,6 +6041,7 @@ function rulesHtml(){
   const ul=a=>`<ul class="plan">${a.map(x=>`<li>${x}</li>`).join('')}</ul>`;
   const sp=[[ICHIKAWA,CAP_SKILL],[SHANCHI,EMP_SKILL],[MAO,MAO_SKILL],[INKANSU,STARTER_SKILL],[KAMAPOKO,RENKEI_SKILL],[BATSUMARU,OIBORE_SKILL],[GORIMORI,UHHO_SKILL],[SASACHI,TABAKO_SKILL]];
   return `<div class="kick">ルール説明<span class="r">タップで開く</span></div>
+  ${typeof rules2==='function'?rules2(sec,ul):''}
   ${sec('育成（サッカー選手）',ul([
     `${17}歳の高校生から始まり、${CAREER_END_AGE}歳のシーズンで現役最後。30歳からは自分で引退を選べる（オファーがなくなったときも引退できる）`,
     '1シーズンは4ターン。ターンごとに行動を1つ選ぶ：'+ACTS.map(a=>`<b>${a.n}</b>（${a.d}）`).join('、')+'。シーズン中とオフで選べる行動が変わる',
@@ -6179,6 +6217,656 @@ Object.assign(ACT,{
    G.tr.msg='受け取っている…';navigator.clipboard.readText().then(v=>tradeTake(v)).then(trOk).catch(e=>{G.tr={msg:e&&e.name==='NotAllowedError'?'コピーした文字を読む許可がなかった。下の欄に貼り付けてね':e.message,manual:true};render()})},
  trManual:()=>{G.tr=G.tr||{};G.tr.manual=true},
  trTake:()=>{const t=document.getElementById('trin'),v=t?t.value:'';G.tr=G.tr||{};G.tr.msg='受け取っている…';tradeTake(v).then(trOk).catch(e=>{G.tr={msg:e.message,manual:true};render()})},
+});
+
+/* ========== 育成の深化：国籍・地域イベント・人間関係・練習配分・体・交渉・進路・ライバル・大一番 ========== */
+const NATIONS={
+ jp:{n:'日本',cty:'日本',fl:'🇯🇵',team:'日本代表',conf:'アジア',cup:'アジア杯',str:76,call:74,wcq:1,poor:0,war:0,bias:{},d:'技術と勤勉さ。育成環境が整い、高校・大学・プロと道が多い'},
+ br:{n:'ブラジル',cty:'ブラジル',fl:'🇧🇷',team:'ブラジル代表',conf:'南米',cup:'コパ・アメリカ',str:87,call:82,wcq:.99,poor:.25,war:0,bias:{tec:4,spd:2,def:-3},d:'路地裏で磨くひらめきと技術。貧しい地区からの成り上がりも多い',
+  gn:['ガブリエル','ルーカス','マテウス','ラファエル','ヴィニシウス','ロドリゴ','ジョアン','ペドロ','カイオ','ブルーノ','ダニーロ','エンドリッキ'],sn:['シウバ','サントス','オリヴェイラ','ソウザ','ペレイラ','コスタ','アウヴェス','リマ','ゴメス','フェレイラ','カルドーゾ','メロ'],
+  youth:['サンパウロ州立ユース','リオ・フラメンコス下部組織','ファヴェーラの草サッカーチーム','サントス・ペイシェU-18']},
+ ar:{n:'アルゼンチン',cty:'アルゼンチン',fl:'🇦🇷',team:'アルゼンチン代表',conf:'南米',cup:'コパ・アメリカ',str:88,call:82,wcq:.98,poor:.15,war:0,bias:{tec:3,sho:2,phy:-1,spd:-1},d:'空き地で育つ勝負強さ。ダービーの熱狂は世界一',
+  gn:['マティアス','ニコラス','フランコ','ラウタロ','フリアン','エミリアーノ','サンティアゴ','ルシアーノ','ガストン','イバン'],sn:['ゴンサレス','フェルナンデス','ロペス','ディアス','マルティネス','ペレス','ロメロ','アルバレス','アクーニャ','パレデス'],
+  youth:['ロサリオ・カナジャスU-18','ブエノス・リベルタ下部組織','バリオの少年クラブ']},
+ es:{n:'スペイン',cty:'スペイン',fl:'🇪🇸',team:'スペイン代表',conf:'欧州',cup:'欧州選手権',str:87,call:82,wcq:.98,poor:0,war:0,bias:{pas:4,tec:2,phy:-3,spd:-1},d:'パスと判断の国。カンテラ（下部組織）の層が厚い',
+  gn:['アレハンドロ','パブロ','ハビエル','セルヒオ','ダニエル','アドリアン','イケル','マルコス','ガビ','アルバロ'],sn:['ガルシア','ロドリゲス','マルティン','サンチェス','ヒメネス','ルイス','モレノ','アロンソ','ナバーロ','トーレス'],
+  youth:['マドリード近郊の名門カンテラ','バルセロナ郊外の育成クラブ','セビージャのユース']},
+ it:{n:'イタリア',cty:'イタリア',fl:'🇮🇹',team:'イタリア代表',conf:'欧州',cup:'欧州選手権',str:83,call:80,wcq:.85,poor:0,war:0,bias:{def:4,pas:1,spd:-2,tec:-1},d:'守備は芸術。戦術に厳しく、サポーターは情熱的',
+  gn:['ルカ','マルコ','アレッサンドロ','ロレンツォ','フェデリコ','ダヴィデ','マッテオ','ニコロ','アンドレア','シモーネ'],sn:['ロッシ','ルッソ','フェラーリ','エスポージト','ビアンキ','ロマーノ','コロンボ','リッチ','マリーノ','ガッロ'],
+  youth:['ミラノの名門プリマヴェーラ','ナポリの下町クラブU-18','トリノのユース']},
+ de:{n:'ドイツ',cty:'ドイツ',fl:'🇩🇪',team:'ドイツ代表',conf:'欧州',cup:'欧州選手権',str:85,call:81,wcq:.98,poor:0,war:0,bias:{phy:3,def:2,pas:1,tec:-2},d:'規律と育成システム。体が強く、組織で戦う',
+  gn:['レオン','ヨナス','フェリックス','マクシミリアン','ニクラス','ティモ','ユリアン','カイ','ヤン','フロリアン'],sn:['ミュラー','シュミット','シュナイダー','フィッシャー','ヴェーバー','マイヤー','ヴァーグナー','ベッカー','ホフマン','シュルツ'],
+  youth:['ミュンヘンの育成センター','ドルトムントのユース','ハンブルクのU-19']},
+ en:{n:'イングランド',cty:'イングランド',fl:'🏴',team:'イングランド代表',conf:'欧州',cup:'欧州選手権',str:86,call:82,wcq:.98,poor:0,war:0,bias:{phy:3,spd:2,tec:-2,pas:-1},d:'激しさとスピード。世界一の人気リーグのおひざ元',
+  gn:['ハリー','ジャック','オリバー','チャーリー','ジョージ','メイソン','ジェイデン','デクラン','フィル','コール'],sn:['スミス','ジョーンズ','ウィリアムズ','テイラー','ブラウン','デイヴィス','エヴァンズ','ウォーカー','ライト','トンプソン'],
+  youth:['ロンドンのアカデミー','マンチェスターのユース','リヴァプールの育成クラブ']},
+ nl:{n:'オランダ',cty:'オランダ',fl:'🇳🇱',team:'オランダ代表',conf:'欧州',cup:'欧州選手権',str:84,call:80,wcq:.92,poor:0,war:0,bias:{pas:3,tec:1,def:-1,phy:-1},d:'全員攻撃・全員守備。若手を育てて送り出す国',
+  gn:['ティース','ヨリス','フレンキー','マタイス','ステフェン','コーディ','ユリエン','デンゼル','バス','ライアン'],sn:['デ・ヨング','ヤンセン','デ・フリース','バッカー','フィッセル','スミット','メールテンス','デ・ブール','ブリント','クラーセン'],
+  youth:['アムステルダムの名門アカデミー','ロッテルダムのユース','アイントホーフェンU-18']},
+ pt:{n:'ポルトガル',cty:'ポルトガル',fl:'🇵🇹',team:'ポルトガル代表',conf:'欧州',cup:'欧州選手権',str:85,call:80,wcq:.93,poor:.05,war:0,bias:{tec:3,spd:1,def:-2},d:'名門アカデミーから技巧派が次々に生まれる',
+  gn:['ジョアン','ディオゴ','ルイ','ベルナルド','ヌーノ','ゴンサロ','ラファエル','ヴィティーニャ','ペドロ','アンドレ'],sn:['シルヴァ','サントス','フェレイラ','ペレイラ','オリヴェイラ','コスタ','ロドリゲス','マルティンス','ソウザ','フェルナンデス'],
+  youth:['リスボンの名門アカデミー','ポルトのユース','ブラガのU-19']},
+ ng:{n:'ナイジェリア',cty:'ナイジェリア',fl:'🇳🇬',team:'ナイジェリア代表',conf:'アフリカ',cup:'アフリカ杯',str:76,call:72,wcq:.55,poor:.4,war:0,bias:{spd:4,phy:4,tec:-3,pas:-3},d:'圧倒的な身体能力。ただし道具も環境も足りない',
+  gn:['チディ','エメカ','オビナ','ヴィクター','サミュエル','アデモラ','ケレチ','ウィルフレッド','タイウォ','イフェアニ'],sn:['オコンクォ','アデバヨ','イウォビ','エゼ','オシメーン','ンディディ','ムサ','オニエカ','アリボ','オグ'],
+  youth:['ラゴスのストリートアカデミー','カノの少年クラブ','アブジャのサッカー学校']},
+ kr:{n:'韓国',cty:'韓国',fl:'🇰🇷',team:'韓国代表',conf:'アジア',cup:'アジア杯',str:75,call:73,wcq:.93,poor:0,war:0,bias:{phy:2,spd:2,tec:-1,pas:-1},d:'走力と精神力。上下関係が厳しく、兵役もある',sf:1,
+  gn:['キム','イ','パク','チェ','チョン','カン','チョ','ユン','チャン','ファン'],sn:['ミンジェ','フンミン','ガンイン','ヒチャン','ジソン','ウヨン','ソンミン','ヒョンウ','ドユン','ジュホ'],
+  youth:['ソウルの高校サッカー部','水原のU-18','浦項の高校チーム']},
+ us:{n:'アメリカ',cty:'アメリカ',fl:'🇺🇸',team:'アメリカ代表',conf:'北中米',cup:'ゴールドカップ',str:78,call:75,wcq:.95,poor:0,war:0,bias:{phy:2,spd:1,tec:-2},d:'大学経由のプロ入りも多い。移動距離は世界一',
+  gn:['タイラー','クリスチャン','ウェストン','ジオ','ジョシュ','ブランデン','マット','ライアン','ケヴィン','タイ'],sn:['アダムス','ロビンソン','マッケニー','レイナ','ターナー','ジョンソン','ミラー','デイヴィス','ムーア','パリッシュ'],
+  youth:['テキサスの高校チーム','カリフォルニアのクラブユース','ニューヨークのアカデミー']},
+ war:{n:'ザルヴァ共和国',cty:'ザルヴァ共和国',fl:'◆',team:'ザルヴァ代表',conf:'アジア',cup:'アジア杯',str:55,call:56,wcq:.12,poor:.5,war:1,bias:{phy:3,def:1,tec:-1,pas:-1},d:'（架空の国）内戦が長く続く。練習もままならず、プロになれないこともある',
+  gn:['アレン','ミロ','タヴィ','ソラン','イザク','ノア','カミル','ルカ','エリフ','ダヴィ'],sn:['ヴァルドル','カザン','ミレフ','オルハン','セリム','ドラヴ','ナザール','ベリク','サヴァ','ロスタム'],
+  youth:['避難民キャンプのチーム','首都の少年クラブ','国境の町のサッカー教室']},
+ poor:{n:'タリム高原国',cty:'タリム高原国',fl:'◇',team:'タリム代表',conf:'アジア',cup:'アジア杯',str:50,call:52,wcq:.05,poor:.75,war:0,bias:{phy:2,spd:2,tec:-2,sho:-1},d:'（架空の国）貧しい山あいの小国。家計を支えるため、夢をあきらめる子も多い',
+  gn:['テンジン','ドルジ','カルマ','ペマ','ソナム','ニマ','ラクパ','ツェリン','ダワ','ミンマ'],sn:['ノルブ','ワンチュク','シェルパ','タマン','ラマ','グルン','ドルマ','ギャルツェン','リンジン','パサン'],
+  youth:['谷の村の草サッカー','高原の町の少年団','茶畑の村のチーム']},
+};
+const NAT_KEYS=Object.keys(NATIONS),NAT_REAL=NAT_KEYS.filter(k=>!['war','poor'].includes(k));
+const natOf=p=>(p&&p.nation)||'jp';
+const NATN=p=>NATIONS[natOf(p)]||NATIONS.jp;
+const homeCty=p=>NATN(p).cty;
+const natTeam=p=>NATN(p).team;
+const natName=p=>NATN(p).cty;
+const natStr=p=>NATN(p).str;
+const natLine=p=>NATN(p).call;
+function wcQual(p,y){const f=p.flags;f.wcq=f.wcq||{};if(f.wcq[y]==null)f.wcq[y]=Math.random()<NATN(p).wcq?1:0;return !!f.wcq[y]}
+const POOL_EU=[['フランス',88],['スペイン',87],['イングランド',86],['ドイツ',85],['ポルトガル',85],['オランダ',84],['イタリア',83],['ベルギー',82],['クロアチア',81],['スイス',79],['デンマーク',79],['セルビア',77],['ポーランド',76],['オーストリア',76],['トルコ',75],['ウクライナ',74],['チェコ',73],['スコットランド',72]];
+const POOL_SA=[['アルゼンチン',88],['ブラジル',87],['ウルグアイ',82],['コロンビア',80],['エクアドル',76],['ペルー',72],['チリ',72],['パラグアイ',71],['ベネズエラ',68],['ボリビア',62]];
+const POOL_AF=[['モロッコ',80],['セネガル',78],['ナイジェリア',76],['エジプト',75],['コートジボワール',75],['アルジェリア',74],['カメルーン',73],['ガーナ',72],['チュニジア',71],['マリ',71],['南アフリカ',68]];
+const POOL_NA=[['メキシコ',78],['アメリカ',78],['カナダ',75],['パナマ',70],['コスタリカ',70],['ジャマイカ',68],['ホンジュラス',66],['エルサルバドル',62]];
+function confPool(p){const c=NATN(p).conf;return c==='欧州'?POOL_EU:c==='南米'?POOL_SA:c==='アフリカ'?POOL_AF:c==='北中米'?POOL_NA:natOf(p)==='jp'?NAT_ASIA:[['日本',76],...NAT_ASIA]}
+function nameOf(k){const N=NATIONS[k]||NATIONS.jp;if(!N.gn)return {sei:pick(SEI),mei:pick(MEI)};return {sei:pick(N.gn),mei:'・'+pick(N.sn)}}
+const fullName=(k)=>{const x=nameOf(k);return x.sei+x.mei};
+function nameFor(d){const x=nameOf(d.nation||'jp');d.sei=x.sei;d.mei=x.mei;if(d.prev){d.prev.sei=d.sei;d.prev.mei=d.mei}}
+function pickNation(prev){if(prev&&prev.natLock)return prev.nation;return wpick(NAT_KEYS,k=>k==='jp'?4:k==='war'||k==='poor'?.6:1)}
+const ctyKey=cty=>NAT_KEYS.find(k=>NATIONS[k].cty===cty)||(['ベルギー','オランダ'].includes(cty)?'nl':null);
+
+/* ----- 新しいリーグとクラブ ----- */
+Object.assign(LG,{
+ HSX:{n:'U-18ユースリーグ',m:18,t:10,mean:48,cty:'*'},
+ BRA:{n:'ブラジル1部',m:38,t:20,mean:68,cty:'ブラジル',sc:21,as:10,base:3000,cup:'ブラジル杯',cont:'LIB',spots:4,ext:1},
+ ARG:{n:'アルゼンチン1部',m:34,t:18,mean:66,cty:'アルゼンチン',sc:19,as:10,base:2000,cup:'アルゼンチン杯',cont:'LIB',spots:3,ext:1},
+ KOR:{n:'Kリーグ1',m:38,t:12,mean:61,cty:'韓国',sc:17,as:9,base:1500,cup:'韓国FA杯',cont:'ACL',spots:2,ext:1},
+ USA:{n:'MLS',m:34,t:16,mean:64,cty:'アメリカ',sc:19,as:10,base:4000,cup:'USオープン杯',cont:'CCC',spots:3,ext:1},
+ NGA:{n:'ナイジェリア1部',m:38,t:20,mean:50,cty:'ナイジェリア',sc:16,as:8,base:120,cup:'ナイジェリア杯',cont:'CAF',spots:2,ext:1},
+ ZAR:{n:'ザルヴァ国内リーグ',m:22,t:10,mean:42,cty:'ザルヴァ共和国',sc:12,as:7,base:40,cup:'ザルヴァ杯',ext:1},
+ TAR:{n:'タリム国内リーグ',m:22,t:10,mean:40,cty:'タリム高原国',sc:12,as:7,base:30,cup:'タリム杯',ext:1},
+});
+Object.assign(CONT,{
+ LIB:{n:'リベルタドーレス杯',opp:[70,74,77,79,81].map(cr),labels:['GS敗退','ベスト16','ベスト8','ベスト4','準優勝','優勝']},
+ CCC:{n:'北中米CL',opp:[62,66,68,70,72].map(cr),labels:['GS敗退','ベスト16','ベスト8','ベスト4','準優勝','優勝']},
+ CAF:{n:'アフリカCL',opp:[52,56,58,60,62].map(cr),labels:['GS敗退','ベスト16','ベスト8','ベスト4','準優勝','優勝']},
+});
+const CONT_CITY={LIB:['モンテビデオ','サンティアゴ','ボゴタ','リマ','キト','アスンシオン','ラパス','カラカス'],CCC:['メキシコシティ','グアダラハラ','モンテレイ','トロント','サンホセ','パナマシティ'],CAF:['カイロ','カサブランカ','チュニス','ヨハネスブルク','ダカール','アクラ','ドゥアラ']};
+Object.assign(CITY,{
+ 'ブラジル':['レシフェ','サルバドール','ゴイアニア','ベレン','マナウス','フロリアノポリス','ナタール','カンピーナス','クイアバ','ジョアンペソア','マセイオ','テレジーナ','アラカジュ','ブラジリア'],
+ 'アルゼンチン':['メンドーサ','トゥクマン','サンタフェ','マル・デル・プラタ','サルタ','バイアブランカ','パラナ','コリエンテス','ネウケン','ラヌス','バンフィエルド','キルメス','フフイ'],
+ '韓国':['光州','仁川','済州','金泉','江原','大田','安養','釜山'],
+ 'アメリカ':['ナッシュビル','オースティン','シンシナティ','オーランド','ミネソタ','ポートランド','デンバー','シャーロット','セントルイス','フィラデルフィア','ヒューストン','ダラス'],
+ 'ナイジェリア':['アブジャ','カドゥナ','ベニン','ジョス','ウヨ','アクレ','オウェリ','マクルディ','ソコト','イロリン','アバ','ワリ','カツィナ','ゴンベ','ラフィア','ヨラ'],
+ 'ザルヴァ共和国':['北部の町','南部の町','川沿いの町','山の村','国境の村','旧市街','新市街','港町','砂漠の町','オアシスの町'],
+ 'タリム高原国':['東の谷','西の谷','高原の町','川の村','茶畑の村','鉱山の町','峠の村','湖の村','市場の町','雪の村'],
+});
+[['リオ・フラメンコス','BRA',77],['サンパウロ・トリコロール','BRA',76],['パルメイラ・ヴェルデ','BRA',76],['ベロオリゾンテ・ガロ','BRA',74],['ポルトアレグレ・グレミオス','BRA',73],['サントス・ペイシェ','BRA',72],['クリチバ・フラコン','BRA',68],['フォルタレザ・レオン','BRA',66],
+ ['ブエノス・リベルタ','ARG',77],['ボカ・ショネイゼス','ARG',76],['アベジャネーダ・ラシン','ARG',71],['ロサリオ・カナジャス','ARG',70],['ラ・プラタ・エストゥディアンテ','ARG',68],['コルドバ・タジェレス','ARG',67],
+ ['蔚山タイガース','KOR',67],['全州グリーンモータース','KOR',66],['ソウル・ライオンズ','KOR',64],['浦項スティーラーズ','KOR',63],['水原ブルーウィングス','KOR',60],['大邱スカイブルー','KOR',59],
+ ['マイアミ・フラミンゴス','USA',68],['ロサンゼルス・ギャラクシーズ','USA',67],['ニューヨーク・シティズン','USA',65],['シアトル・サウンダーズ','USA',64],['アトランタ・ファイブ','USA',63],['コロンバス・クルー','USA',62],
+ ['ラゴス・イーグルス','NGA',53],['エヌグ・レンジャーズ','NGA',52],['カノ・ピラーズ','NGA',50],['ポートハーコート・ドルフィンズ','NGA',49],['イバダン・シューティングスターズ','NGA',47],
+ ['首都FC','ZAR',44],['国境の町ユナイテッド','ZAR',41],['港湾労働者FC','ZAR',40],['キャンプ選抜','ZAR',38],
+ ['高原FC','TAR',42],['鉱山労働者クラブ','TAR',40],['市場の町SC','TAR',38],['谷の村FC','TAR',36]
+].forEach(([n,lg,r])=>CLUBS.push({id:CLUBS.length,n,lg,rep:cr(r)}));
+const HOME_LG={jp:'J3',br:'BRA',ar:'ARG',es:'ESP',it:'ITA',de:'GER',en:'ENG',nl:'NED',pt:'POR',ng:'NGA',kr:'KOR',us:'USA',war:'ZAR',poor:'TAR'};
+function offerCtyOk(p,cty){return cty===homeCty(p)||(p.flags&&p.flags.refugee&&['ドイツ','オランダ','ベルギー'].includes(cty))}
+function clubOk(p,c){const L=LG[c.lg];if(!L.ext||L.cty===homeCty(p))return true;if(['ZAR','TAR','NGA'].includes(c.lg))return false;return Math.random()<.5}
+function offerW(p,c){const k=natOf(p);if(k==='jp')return 1;const cty=LG[c.lg].cty;if(cty===homeCty(p))return 2.5;if(cty==='日本')return .25;return LG[c.lg].ext?.6:1}
+function visPen(p){const N=NATN(p);if(p.stage==='pro')return 0;return N.poor*10*(p.scout>=40?.5:1)}
+function noTry(p){return NATN(p).poor>=.3}
+function tryClub(p){const lg=HOME_LG[natOf(p)];const l=CLUBS.filter(c=>c.lg===lg).sort((a,b)=>a.rep-b.rep).slice(0,3);return l.length?pick(l):pick(CLUBS.filter(c=>c.lg==='J3'))}
+
+function c2Make(pl,d){
+  const k=d.nation&&NATIONS[d.nation]?d.nation:'jp',N=NATIONS[k];pl.nation=k;
+  if(k!=='jp'){
+    for(const [s,v] of Object.entries(N.bias)){pl.cap[s]=clamp(pl.cap[s]+v*.5,30,SMAX);if(pl.capLim)pl.capLim[s]=Math.max(pl.capLim[s],Math.round(pl.cap[s]));pl.st[s]=clamp(pl.st[s]+v,25,Math.min(80,pl.cap[s]-4))}
+    pl.school=pick(N.youth);pl.hist=[{n:pl.school,y0:2027}];pl.money=Math.round(20*(1-N.poor));
+  }
+  if(N.poor||N.war)pl.hope=70;
+  pl.mates=50;pl.fat=8;pl.oldInj=0;
+  const key=POS[pl.pos].key;pl.alloc={[key]:2,[key==='phy'?'spd':'phy']:1};
+  pl.rv=mkRival(pl,k);
+  return pl;
+}
+/* ----- 練習・体 ----- */
+const ALLOC_K=['sho','pas','spd','tec','phy','def'],ALLOC_N=4;
+const restOf=p=>Math.max(0,ALLOC_N-ALLOC_K.reduce((s,k)=>s+((p.alloc&&p.alloc[k])||0),0));
+const REST_FX=[{g:1,inj:1.6,f:7,t:'休みなし：ケガのリスク大・疲労がたまる'},{g:1,inj:1,f:2,t:'休み1：標準'},{g:.88,inj:.8,f:-3,t:'休み2：回復しやすいが成長やや控えめ'},{g:.72,inj:.65,f:-6,t:'休み3：成長が鈍る'},{g:.55,inj:.5,f:-9,t:'休み4：ほとんど伸びない'}];
+function bodyInj(p){return (1+(p.fat||0)/110)*(1+.15*(p.oldInj||0))*(p.alloc?REST_FX[restOf(p)].inj:1)*(p.vet?.9:1)}
+function growMul(p){return (1-(p.fat||0)/280)*(p.alloc?REST_FX[restOf(p)].g:1)}
+function c2Start(p,club){
+  let r=0;
+  if(p.posR){const d=ovrOf(p)-p.posR.o;r+=d<0?Math.max(d/3,-3):Math.min(d/6,1)}
+  r+=((p.mates==null?50:p.mates)-50)/16;
+  if(p.coach<25)r-=2;
+  if(p.ptG&&p.ptClub===p.club&&p.stage==='pro')r+=p.ptG*1.6;
+  return r;
+}
+function c2Month(p,a,res,m,first){
+  const N=NATN(p),off=OFF(m);
+  // チームメイト
+  if(p.mates==null)p.mates=50;
+  if(first&&a.mates)p.mates=clamp(p.mates+a.mates,0,100);
+  p.mates=clamp(p.mates+(50-p.mates)*.03,0,100);
+  // 疲労
+  const mins=res.matches.filter(x=>x.mo===m).reduce((s,x)=>s+(x.min||0),0);
+  let df=mins/90*2.2+(p.alloc?REST_FX[restOf(p)].f:0)-5+(a.id==='extra'?7:a.id==='rest'?-10:a.id==='trip'?-14:a.id==='family'?-4:0)+(off?-6:0)+(p.age>=30?1.5:0)+(p.age>=34?1.5:0);
+  p.fat=clamp((p.fat||0)+df,0,100);
+  // 古傷
+  if(p._lastInj==null)p._lastInj=0;
+  const nw=p.inj-Math.max(0,p._lastInj-4.3);
+  if(nw>=8&&(p.oldInj||0)<3){p.oldInj=(p.oldInj||0)+1;res.notes.push(`${MONTHS[m]}月 大ケガが古傷になった（再発しやすくなる）`)}
+  p._lastInj=p.inj;
+  // 年齢による衰え：30歳から足が落ちる
+  if(p.age>=30&&!off){p.st.spd=clamp(p.st.spd-.04*(p.age-29)*(p.vet?.5:1),20,SMAX);if(p.age>=33)p.st.phy=clamp(p.st.phy-.03*(p.age-32),20,SMAX)}
+  // 夢の灯（貧困・紛争地域）
+  if(p.hope!=null&&p.stage!=='pro'){
+    p.hope=clamp(p.hope-N.poor*1.1-(N.war?.6:0)+(p.scout>=30?.6:0)-(p.money<0?1.5:0),0,100);
+    if(p.hope<=0&&!p.fate){p.fate={ty:'dream',why:N.war?'故郷の情勢と家族の暮らしを前に、プロの夢をあきらめた':'家族を支えるため、プロの夢をあきらめた'};res.notes.push('夢の灯が消えた…')}
+  }
+}
+function c2Season(p,cur,club,first){
+  const N=NATN(p),L=LG[club.lg];
+  if(p.mates==null)p.mates=50;
+  if(Math.random()<.78){const k=ctyKey(L.cty==='*'?homeCty(p):L.cty)||natOf(p);p.posR={n:fullName(k),o:Math.round(clamp(club.rep+rnd(-2,5),35,95)),age:p.stage==='pro'?ri(19,32):p.age+ri(0,1)}}else p.posR=null;
+  if(N.war&&cur.teams&&L.cty===N.cty&&Math.random()<.45){const s=ri(1,6),n=ri(2,3);cur.susp={};for(let i=s;i<Math.min(10,s+n);i++)cur.susp[i]=1;cur.notes.push('情勢の悪化で、リーグが一時中断した')}
+  if((N.poor||N.war)&&p.hope==null&&p.stage!=='pro')p.hope=70;
+  if(p.stage==='pro'&&p.hope!=null)p.hope=null;
+}
+function natPen(p){const v=p.rv;if(!v||v.nat!==natOf(p)||v.pos!==p.pos)return 0;const d=v.o-ovrOf(p);return d>0?Math.min(3,d/3):0}
+
+/* ----- ライバル年代記 ----- */
+function mkRival(pl,k){
+  const nat=Math.random()<.55?k:pick(NAT_REAL.filter(x=>x!==k));
+  const pos=Math.random()<.6?pl.pos:pick(['FW','MF','DF','GK'].filter(x=>x!==pl.pos));
+  const N=NATIONS[nat];
+  return {n:fullName(nat),nat,cty:N.n,pos,o:Math.round(ovrOf(pl)+rnd(-3,3)),pot:ri(84,95),g:0,as:0,caps:0,aw:[],h2h:{w:0,d:0,l:0},cid:null,yth:N.youth?pick(N.youth):pick(SCHOOLS)};
+}
+function rvClub(v){return v.cid!=null&&CLUBS[v.cid]?CLUBS[v.cid].n:v.yth}
+function rivalSeason(p){
+  const v=p.rv;if(!v)return null;const a=p.age;
+  const dg=a<=23?rnd(1,3.5):a<=28?rnd(-.3,1.2):a<=31?rnd(-1.5,.3):rnd(-3,-.8);
+  v.o=Math.round(clamp(v.o+dg,40,cr(v.pot)+8));
+  let moved='';
+  if(a>=18&&(v.cid==null||Math.random()<.28)){
+    const home=NATIONS[v.nat].cty;
+    let pool=CLUBS.filter(c=>c.rep<=v.o+2&&c.rep>=v.o-9&&(a>=21||LG[c.lg].cty===home)&&!['ZAR','TAR'].includes(c.lg));
+    const myLg=p.stage==='pro'?CLUBS[p.club].lg:null,same=pool.filter(c=>c.lg===myLg&&c.id!==p.club);
+    if(same.length&&Math.random()<.45)pool=same;
+    if(!pool.length)pool=CLUBS.filter(c=>LG[c.lg].cty===home);
+    if(pool.length){const c=pick(pool);if(c.id!==v.cid){moved=v.cid==null?`${c.n}でプロ入り`:`${c.n}へ移籍`;v.cid=c.id}}
+  }
+  const pro=v.cid!=null,fac=v.pos==='FW'?1:v.pos==='MF'?.5:v.pos==='DF'?.15:0;
+  const g=pro?Math.max(0,Math.round(((v.o-52)/2.2+rnd(-4,4))*fac)):Math.max(0,Math.round(rnd(0,8)*fac));v.g+=g;
+  const as=pro?Math.max(0,Math.round(((v.o-55)/4+rnd(-2,3))*(v.pos==='MF'?1:.5))):0;v.as+=as;
+  let ex='';
+  if(pro&&a>=19&&v.o>=cr(NATIONS[v.nat].call)+1){const c=ri(3,9);v.caps+=c;ex+=`・代表${c}試合`}
+  if(pro&&v.o>=cr(90)&&Math.random()<.22){v.aw.push('金球賞');ex+='・金球賞受賞！';pushNews(`【衝撃】${p.sei}${p.mei}のライバル${v.n}が金球賞`)}
+  const me=ovrOf(p),gap=v.o-me;
+  const cmp=gap>=6?'差は広がるばかりだ':gap>=2?'わずかに先を行かれている':gap<=-6?'今やはっきり追い越した':gap<=-2?'少しだけ前に出た':'ほぼ互角だ';
+  const t=`${v.n}（${v.cty}・${v.pos}）：${moved?moved+'。':''}${rvClub(v)}で${v.pos==='GK'?'正GKを争った':g+'得点'}${as?as+'アシスト':''}${ex}。総合${v.o}、${cmp}`;
+  if(moved)pushNews(`【同世代】${v.n}、${moved}`);
+  return t;
+}
+function c2SeasonEnd(p,R,cur){
+  R.rival=rivalSeason(p);
+  if(p.rv&&p.rv.nat===natOf(p)&&p.rv.pos===p.pos&&p.stage==='pro'&&p.age>=19)R.notes.push(`代表の${p.pos}の座を${p.rv.n}と争った`);
+  R.rel={coach:Math.round(p.coach),mates:Math.round(p.mates==null?50:p.mates),posR:p.posR?{...p.posR}:null};
+  if(p.hope!=null)R.hope=Math.round(p.hope);
+}
+/* ----- 大一番 ----- */
+function clutchEv(p){
+  p.clutch=null;const cur=S.cur;if(!cur||!cur.comps)return null;
+  const m=p.month,me=turnEnd(m),y=calYear(p),cand=[];
+  for(const c of Object.values(cur.comps)){if(!c||!c.alive||!c.rounds)continue;
+    c.rounds.forEach((R,i)=>{if(i>=c.i&&['準決勝','決勝'].includes(R.nm)&&R.m>=m&&R.m<=me)cand.push({key:c.key,nm:R.nm,name:c.name,pri:R.nm==='決勝'?4:2})})}
+  if(p.stage==='pro'&&p.age>=19&&ovrOf(p)>=cr(natLine(p))-1){
+    if(m<=5&&me>=5&&y%4===3)cand.push({key:'asia',nm:'*',name:NATN(p).cup,pri:3,nat:1});
+    if(m<=10&&me>=10&&y%4===2&&y>=2030&&wcQual(p,y))cand.push({key:'wc',nm:'*',name:'W杯',pri:5,nat:1});
+  }
+  if(p.stage==='pro'&&cur.teams&&m<=9&&me>=9&&cur.lgk===clubOf(p).lg&&myRank(cur)<=3)cand.push({key:'lg',nm:'優勝争い',name:LG[cur.lgk].n,pri:3});
+  if(!cand.length)return null;
+  cand.sort((a,b)=>b.pri-a.pri);p._cc=cand[0];return 'sp:clutch';
+}
+function clutchRate(p,ty){const s=p.st,b=(has(p,'big')?.08:0)+(has(p,'kaminoko')?.08:0)+((p.cond||60)-60)/400-(p.fat||0)/400;
+  const v={sho:s.sho,dri:(s.tec+s.spd)/2,pas:s.pas,def:s.def,hed:(s.phy+s.sho)/2,save:(s.spd+s.def)/2}[ty]||60;
+  const lv=p.stage==='pro'?clubOf(p).rep:clubOf(p).rep+4;
+  return clamp(.32+(v-lv)/55+b,.08,.85)}
+const CLUTCH_T={sho:['自分で決めにいく','ミドルでもこぼれ球でも、最後は自分が打つ'],dri:['ドリブルで切り裂く','ひとりで2人、3人と抜いていく'],pas:['決定的なパスを通す','味方のゴールをお膳立てする'],def:['体を張って守り切る','相手エースを完封する'],hed:['セットプレーで競り勝つ','CKから頭で合わせる'],save:['ビッグセーブで救う','1対1、PK…最後の砦になる']};
+function c2Clutch(p){
+  const C=p._cc||{name:'大一番',nm:'決勝',key:'x'},tys=p.pos==='GK'?['save']:p.pos==='DF'?['def','hed','pas']:p.pos==='MF'?['pas','sho','dri']:['sho','dri','pas'];
+  const nm=C.nm==='*'?'決勝トーナメント':C.nm;
+  return {id:'sp:clutch',t:`大一番：${C.name}${C.key==='lg'?'':' '+nm}`,x:`${C.name}の${nm}が近づいている。勝負を分ける一瞬は、きっと自分のところに来る。その時、どう決める？（成功すれば新聞の一面と人気、外せば監督の評価が下がる）`,ch:[
+    ...tys.map(ty=>({l:CLUTCH_T[ty][0],d:`${CLUTCH_T[ty][1]}・成功率 約${Math.round(clutchRate(p,ty)*100)}%`,pr:()=>1,ok:{m:'心は決まった。あとはその瞬間を待つだけだ。',fx:{clutch:ty}},ng:{m:'',fx:{}}})),
+    {l:'いつも通りプレーする',d:'無理はしない',pr:()=>1,ok:{m:'特別なことはしない。積み重ねてきたものを出すだけだ。',fx:{cond:3}},ng:{m:'',fx:{}}}]};
+}
+function clutchHook(p,info,r,res){
+  const v=p.rv;
+  if(v&&v.cid!=null&&CLUBS[v.cid]&&info.opp===CLUBS[v.cid].n){const k=r.gf>r.ga?'w':r.gf<r.ga?'l':'d';v.h2h[k]++;res.notes.push(`ライバル${v.n}との直接対決：${r.gf}-${r.ga}`)}
+  const C=p.clutch;if(!C||C.done||r.min<=0)return r;
+  let hit=false;
+  if(C.key==='lg')hit=!!info.lg&&p.month>=9;
+  else if(info.key===C.key)hit=C.nm==='*'?['準々決勝','準決勝','決勝'].includes(info.nm):info.nm===C.nm;
+  if(!hit)return r;
+  C.done=1;const ok=Math.random()<C.rate,nm=p.sei+p.mei,where=`${C.name}${C.key==='lg'?'':' '+(info.nm||'')}`;
+  if(ok){
+    if(['sho','dri','hed'].includes(C.ty)){r.gf++;r.pg++}else if(C.ty==='pas'){r.gf++;r.pa++}else if(r.ga>0)r.ga--;else{r.rt=(r.rt||6.5)+.3}
+    if(r.rt)r.rt=clamp(r.rt+1.2,4.5,10);
+    p.pop=clamp(p.pop+8,0,100);p.coach=clamp(p.coach+6,0,100);if(C.nat)p.nat+=6;
+    const what={sho:'値千金のゴール',dri:'独走から決勝点',hed:'打点の高いヘディング弾',pas:'決勝点をアシスト',def:'相手エースを完封',save:'神がかったビッグセーブ'}[C.ty];
+    res.notes.push(`【大一番】${where}で${what}！ 翌朝の一面を飾った`);pushNews(`【一面】${where}、${nm}が${what}`);
+    typeof cutQ==='function'&&cutQ('trophy','大一番で決めた！',`${where}・${what}`,2400);
+  }else{
+    if(['def','save'].includes(C.ty))r.ga++;
+    if(r.rt)r.rt=clamp(r.rt-.8,4.5,10);
+    p.coach=clamp(p.coach-8,0,100);p.pop=clamp(p.pop-3,0,100);
+    res.notes.push(`【大一番】${where}、${['def','save'].includes(C.ty)?'痛恨のミスで失点に絡んだ':'決定機を逃した'}…監督の評価が下がった`);
+  }
+  return r;
+}
+
+/* ----- 出来事：特別 ----- */
+function c2Roll(p){
+  const m=p.month,off=OFF(m);
+  if(p.age>=30&&!p.flags.vetAsk&&Math.random()<.4){p.flags.vetAsk=1;return 'sp:vet'}
+  if(p.coach<30&&!off&&Math.random()<.3)return 'sp:coach';
+  if(p.posR&&p.posR.o>=ovrOf(p)-2&&!off&&Math.random()<.1)return 'sp:posr';
+  if(natOf(p)!=='jp'&&Math.random()<.25){const c=ctx(p);const ids=EV.filter(e=>e.rg&&e.st.includes(p.stage)&&(!e.when||e.when(c))&&(!e.mo||e.mo.some(x=>x>=m&&x<=turnEnd(m)))&&!(p.seen[e.id]!=null&&p.season-p.seen[e.id]<2));if(ids.length)return pick(ids).id}
+  return null;
+}
+function spEv2(id,p){
+  if(id==='sp:clutch')return c2Clutch(p);
+  if(id==='sp:vet')return {id,t:'30代の分岐点',x:`${p.age}歳。トップスピードが少しずつ落ちてきたのが自分でもわかる。走り方を変えるか、このまま走り続けるか。`,ch:[
+    {l:'経験と頭脳で勝負するスタイルへ',d:'スピードの衰えが半分に・パスとテクニックの限界+',pr:()=>1,ok:{m:'ポジショニングと読みで勝負する。若手が「どうしていつもそこにいるんですか」と聞いてくるようになった。',fx:{vet:1}},ng:{m:'',fx:{}}},
+    {l:'最後まで走り続ける',d:'今のスタイルを貫く',pr:()=>.6,ok:{m:'体の手入れを徹底し、まだまだ走れることを証明した。',fx:{spd:2,cond:6,pop:3}},ng:{m:'気持ちに体がついてこない日が増えた。',fx:{cond:-4,fat:10}}}]};
+  if(id==='sp:coach')return {id,t:'監督との面談',x:'監督室に呼ばれた。「最近のお前は、チームのために動けているか？」という言葉に、空気が張りつめる。',ch:[
+    {l:'素直に謝り、指示に従う',d:'信頼を取り戻す',pr:()=>.85,ok:{m:'監督は小さくうなずいた。翌週から練習の指示が増えた。',fx:{coach:14,cond:-2}},ng:{m:'言葉だけでは足りなかった。',fx:{coach:4}}},
+    {l:'自分の考えをぶつける',d:'うまくいけば一目置かれる',pr:()=>.38,ok:{m:'「そこまで考えているなら任せる」。監督の目が変わった。',fx:{coach:10,pop:2}},ng:{m:'面談は物別れに終わった。しばらくベンチが続きそうだ。',fx:{coach:-10,boost:-1}}},
+    {l:'移籍を直訴する',d:'他クラブの注目が集まるが、監督との関係は悪化',pr:()=>1,ok:{m:'話は代理人を通じて外に漏れ、いくつかのクラブが興味を示した。',fx:{scout:12,coach:-15}},ng:{m:'',fx:{}}}]};
+  if(id==='sp:posr'){const R=p.posR;return {id,t:`ポジション争い：${R.n}`,x:`同じポジションの${R.n}（${R.age}歳・総合${R.o}）が好調だ。監督は練習で2人を交互に試している。`,ch:[
+    {l:'正面から競り勝つ',d:'紅白戦で結果を出す',pr:c=>clamp(.35+(c.ovr-R.o)/20,.1,.85),ok:{m:'紅白戦で圧倒した。翌日のメンバー表、先に名前があったのは自分だった。',fx:{posrWin:1,coach:6}},ng:{m:'相手のほうが一枚上だった。しばらくはベンチから見ることになる。',fx:{coach:-4,cond:-4}}},
+    {l:'ライバルに教えを請う',d:'仲間としての関係を築く',pr:()=>.8,ok:{m:'意外にも、彼は惜しみなくコツを教えてくれた。チームの空気も良くなった。',fx:{mates:10,key:1}},ng:{m:'軽くあしらわれた。',fx:{mates:-3}}},
+    {l:'別の役割で生き残る',d:'ポジションをずらして共存する',pr:()=>.6,ok:{m:'監督は2人を同時に起用し始めた。',fx:{posrWin:1,pas:1}},ng:{m:'慣れない役割で空回りした。',fx:{cond:-5}}}]}}
+  return null;
+}
+function applyFx2(p,k,v){
+  if(k==='mates'){p.mates=clamp((p.mates==null?50:p.mates)+v,0,100);return ['チームメイトとの仲',v]}
+  if(k==='hope'){if(p.hope==null)return null;p.hope=clamp(p.hope+v,0,100);return ['夢の灯',v]}
+  if(k==='fat'){p.fat=clamp((p.fat||0)+v,0,100);return ['疲労',(v>0?'+':'')+v,v>0?-1:1]}
+  if(k==='refugee'){p.flags.refugee=1;p.scout=clamp(p.scout+8,0,100);return ['国外へ','難民として再出発',1]}
+  if(k==='scholar'){p.flags.scholar=1;return ['奨学金','獲得',1]}
+  if(k==='clutch'){const C=p._cc||{key:'x',nm:'決勝',name:'大一番'};p.clutch={...C,ty:v,rate:clutchRate(p,v),done:0};return ['大一番','覚悟を決めた',1]}
+  if(k==='vet'){p.vet=1;[['pas',3],['tec',2]].forEach(([s,x])=>{if(p.capLim)p.capLim[s]=Math.min(SMAX,Math.max(p.capLim[s],p.cap[s]+x));p.cap[s]=Math.min(SMAX,p.cap[s]+x)});return ['プレースタイル','ベテラン型へ転向',1]}
+  if(k==='army'){p.flags.armyDone=1;p.salary=Math.round(p.salary*.3/10)*10;p.st.phy=stAdd(p,'phy',2);p.mates=clamp((p.mates||50)+6,0,100);return ['兵役','軍のチームでプレー',0]}
+  if(k==='armyEx'){p.flags.armyEx=1;return ['兵役','免除',1]}
+  if(k==='posrWin'){if(p.posR)p.posR.o-=4;return ['ポジション争い','優位に立った',1]}
+  return null;
+}
+function evOk(e,p){
+  if(natOf(p)==='jp')return true;
+  const s=(e.t||'')+(typeof e.x==='string'?e.x:'');
+  return !/日本(?!代表)/.test(s)&&!/天皇杯|Jリーグ|J1|J2|J3/.test(s);
+}
+
+/* ----- 地域ごとの出来事 ----- */
+const NK=k=>c=>natOf(c.p)===k;
+const NKS=(ks,f)=>c=>ks.includes(natOf(c.p))&&(!f||f(c));
+const RG_EV=[
+ // ブラジル
+ {id:'rg_br_street',st:['hs'],w:2,when:NK('br'),t:'坂の上のフットサル',x:'放課後、坂の上の空き地で年上の連中が小さなボールを蹴っている。狭いコートで股抜きを決めた者が王様だ。',ch:[
+  {l:'股抜きで勝負する',d:'技術で黙らせる',pr:c=>.45+(c.p.st.tec-55)/90,ok:{m:'股抜きからのヒールパス。歓声とともに「王様」と呼ばれた。',fx:{tec:2,pop:2}},ng:{m:'足を引っかけられて転がった。みんな大笑いだ。',fx:{cond:-3}}},
+  {l:'仲間とパスで崩す',d:'',pr:()=>.8,ok:{m:'ワンツーの連続でゴール。年上の連中にも認められた。',fx:{pas:1,mates:6}},ng:{m:'パスは読まれていた。',fx:{}}}]},
+ {id:'rg_br_hero',st:['hs'],when:NK('br'),t:'地区の英雄が帰ってきた',x:'同じ地区から欧州へ渡った先輩が帰ってきた。子どもたちに囲まれながら、こちらに気づいて手招きする。',ch:[
+  {l:'アドバイスを求める',d:'',pr:()=>.85,ok:{m:'「毎日、昨日の自分に勝て」。その言葉を胸に刻んだ。',fx:{key:1,hope:10,scout:3}},ng:{m:'人だかりで話せなかった。でも目は合った。',fx:{hope:3}}},
+  {l:'サインだけもらう',d:'',pr:()=>1,ok:{m:'ボロボロのボールにサインをもらった。宝物だ。',fx:{cond:5}},ng:{m:'',fx:{}}}]},
+ {id:'rg_br_carnival',st:['hs','uni','pro'],mo:[6],when:NK('br'),t:'カーニバルの夜',x:'街じゅうがサンバのリズムに包まれる。チームメイトが「一晩だけ」と誘ってくる。',ch:[
+  {l:'みんなで繰り出す',d:'',pr:()=>.7,ok:{m:'朝まで踊り明かした。チームの絆は深まった。',fx:{cond:8,mates:8,sta:-6}},ng:{m:'翌日の練習に遅刻し、監督に雷を落とされた。',fx:{sta:-12,coach:-5,mates:4}}},
+  {l:'家で早く寝る',d:'',pr:()=>1,ok:{m:'遠くの太鼓の音を子守唄に眠った。',fx:{sta:6}},ng:{m:'',fx:{}}}]},
+ {id:'rg_br_poor',st:['hs'],when:NKS(['br'],c=>c.p.money<30),t:'家計の苦しさ',x:'母が夜遅くまで働いている。弟たちの靴も穴だらけだ。',ch:[
+  {l:'露店の手伝いで稼ぐ',d:'',pr:()=>1,ok:{m:'週末は市場でジュースを売った。わずかでも家に入れられた。',fx:{money:12,sta:-6,hope:-3}},ng:{m:'',fx:{}}},
+  {l:'プロになって楽にさせると誓う',d:'',pr:()=>.6,ok:{m:'母は黙って抱きしめてくれた。もう迷わない。',fx:{hope:10,cond:5}},ng:{m:'口に出したら、急に怖くなった。',fx:{hope:-5,cond:-4}}}]},
+ {id:'rg_br_test',st:['hs'],when:NK('br'),t:'名門クラブの入団テスト',x:'朝4時のバスに乗り、街の名門クラブのテストへ。グラウンドには300人の少年が並んでいる。',ch:[
+  {l:'ドリブルで目立つ',d:'',pr:c=>.3+(c.p.st.tec-50)/80,ok:{m:'3人抜きを見たコーチが、名前を聞いてきた。',fx:{scout:14,pop:4,hope:10}},ng:{m:'ボールを奪われた瞬間、テストは終わった。',fx:{hope:-8,cond:-5}}},
+  {l:'堅実にまとめる',d:'',pr:()=>.7,ok:{m:'目立たなかったが、連絡先は聞かれた。',fx:{scout:5}},ng:{m:'印象に残らなかった。',fx:{hope:-3}}}]},
+ // アルゼンチン
+ {id:'rg_ar_clasico',st:['hs','pro'],when:NK('ar'),t:'宿敵とのダービー',x:'街を二分するダービー。スタンドの紙吹雪で前が見えない。',ch:[
+  {l:'闘志をむき出しにする',d:'',pr:c=>.55+(c.p.st.phy-55)/150,ok:{m:'最初のタックルでスタンドに火がついた。チームは勝ち、英雄扱いだ。',fx:{pop:8,coach:5,mates:5}},ng:{m:'熱くなりすぎて足を痛めた。',fx:{inj:3,coach:-4}}},
+  {l:'冷静にボールを動かす',d:'',pr:c=>.6+(c.p.st.pas-55)/150,ok:{m:'熱狂の中で、ひとりだけ時間が止まったようにパスをさばいた。',fx:{pas:1,pop:4}},ng:{m:'「腰抜け」と野次られた。',fx:{pop:-3}}}]},
+ {id:'rg_ar_mate',st:['hs','uni','pro'],when:NK('ar'),t:'マテ茶の回し飲み',x:'ロッカールームでマテ茶が回ってきた。新入りが受け取るかどうか、みんなが見ている。',ch:[
+  {l:'笑って受け取る',d:'',pr:()=>1,ok:{m:'「これでお前も仲間だ」と背中を叩かれた。',fx:{mates:10}},ng:{m:'',fx:{}}},
+  {l:'遠慮する',d:'',pr:()=>1,ok:{m:'少し空気が冷えた気がする。',fx:{mates:-4,sta:2}},ng:{m:'',fx:{}}}]},
+ {id:'rg_ar_potrero',st:['hs'],when:NK('ar'),t:'ポトレロ（空き地）の掟',x:'石ころだらけの空き地。負けたほうが次の試合を待つルールだ。',ch:[
+  {l:'夜まで勝ち続ける',d:'',pr:c=>.5+(c.p.st.tec-55)/120,ok:{m:'日が暮れるまでコートを譲らなかった。',fx:{tec:2,sho:1}},ng:{m:'早々に負けて、ずっと待たされた。',fx:{sta:-6,cond:-3}}},
+  {l:'年下にコツを教える',d:'',pr:()=>1,ok:{m:'教えることで、自分の頭も整理された。',fx:{pas:1,cond:4}},ng:{m:'',fx:{}}}]},
+ {id:'rg_ar_infl',st:['hs','uni','pro'],when:NK('ar'),t:'物価がどんどん上がる',x:'物価が毎月のように上がり、手元のお金の価値がみるみる下がっていく。',ch:[
+  {l:'ドルに替えて守る',d:'',pr:()=>.7,ok:{m:'なんとか目減りを防いだ。',fx:{money:8}},ng:{m:'両替で損をした。',fx:{money:-15}}},
+  {l:'気にせずサッカーに集中',d:'',pr:()=>1,ok:{m:'財布は軽くなったが、気持ちは軽い。',fx:{cond:3,money:-6}},ng:{m:'',fx:{}}}]},
+ // スペイン
+ {id:'rg_es_rondo',st:['hs','uni','pro'],when:NK('es'),t:'終わらないロンド',x:'練習の最初の30分は鳥かご（ロンド）。ワンタッチで回せなければ真ん中の鬼になる。',ch:[
+  {l:'ワンタッチで回し続ける',d:'',pr:c=>.5+(c.p.st.pas-55)/100,ok:{m:'一度も鬼にならなかった。コーチがうなずいた。',fx:{pas:2,coach:3}},ng:{m:'鬼から抜け出せず、みんなに笑われた。',fx:{coach:-2}}},
+  {l:'鬼として奪いにいく',d:'',pr:c=>.55+(c.p.st.def-55)/120,ok:{m:'読みでパスを2本カットした。',fx:{def:1,spd:1}},ng:{m:'走らされただけだった。',fx:{sta:-5}}}]},
+ {id:'rg_es_siesta',st:['hs','uni','pro'],when:NK('es'),t:'シエスタの習慣',x:'昼食のあとは街じゅうが静まり返る。先輩も「寝るのも練習だ」と言う。',ch:[
+  {l:'しっかり昼寝する',d:'',pr:()=>1,ok:{m:'午後の練習は体が軽かった。',fx:{sta:8,fat:-8}},ng:{m:'',fx:{}}},
+  {l:'その間に自主練',d:'',pr:()=>.6,ok:{m:'誰もいないグラウンドでボールと向き合った。',fx:{tec:1}},ng:{m:'暑さでばてた。',fx:{sta:-6}}}]},
+ {id:'rg_es_cantera',st:['hs'],when:NK('es'),t:'カンテラの昇格テスト',x:'下部組織から一つ上のチームへ。監督は「判断の速さ」しか見ないと言われている。',ch:[
+  {l:'先を読んでプレーする',d:'',pr:c=>.45+(c.p.st.pas-55)/90,ok:{m:'受ける前に次のプレーが決まっていた。昇格のリストに名前が載った。',fx:{scout:10,pas:1}},ng:{m:'考えすぎて遅れた。',fx:{cond:-4}}},
+  {l:'技術で魅せる',d:'',pr:c=>.4+(c.p.st.tec-55)/90,ok:{m:'ルーレットで2人をかわした。スタンドの親たちがざわめいた。',fx:{scout:10,tec:1}},ng:{m:'「無駄なタッチが多い」と言われた。',fx:{}}}]},
+ // イタリア
+ {id:'rg_it_tactic',st:['hs','uni','pro'],when:NK('it'),t:'守備戦術の講義',x:'ホワイトボードに矢印がびっしり。イタリアでは、守備は芸術だと教わる。',ch:[
+  {l:'メモを取って頭に叩き込む',d:'',pr:()=>.7,ok:{m:'ラインの上げ下げの意味が、初めて腑に落ちた。',fx:{def:2,coach:3}},ng:{m:'途中から頭がパンクした。',fx:{def:1}}},
+  {l:'実戦で覚える',d:'',pr:()=>.55,ok:{m:'紅白戦で何度も同じ形を試し、体に染み込ませた。',fx:{def:1,phy:1}},ng:{m:'何度もラインを破られた。',fx:{coach:-2}}}]},
+ {id:'rg_it_tifosi',st:['pro'],when:NK('it'),t:'ティフォージの横断幕',x:'練習場の外に熱狂的なサポーターが集まった。前節のミスに抗議する横断幕だ。',ch:[
+  {l:'直接話しに行く',d:'',pr:()=>.55,ok:{m:'正面から謝ると、彼らは拍手で応えてくれた。',fx:{pop:8,cond:4}},ng:{m:'火に油を注いでしまった。',fx:{pop:-5,cond:-6}}},
+  {l:'プレーで黙らせる',d:'',pr:()=>.5,ok:{m:'次の試合でゴールを決め、彼らの前で胸のエンブレムを叩いた。',fx:{cond:6,key:1}},ng:{m:'重圧で体が硬くなった。',fx:{cond:-5}}}]},
+ {id:'rg_it_nonna',st:['hs','uni','pro'],when:NK('it'),t:'ノンナの手料理',x:'下宿先のおばあちゃん（ノンナ）が、山盛りのパスタを作ってくれた。',ch:[
+  {l:'全部たいらげる',d:'',pr:()=>1,ok:{m:'「よく食べる子は強くなる」とノンナは笑った。',fx:{cond:8,sta:6}},ng:{m:'',fx:{}}},
+  {l:'体重管理のため半分',d:'',pr:()=>1,ok:{m:'ノンナは少し寂しそうだった。',fx:{phy:1}},ng:{m:'',fx:{}}}]},
+ // ドイツ
+ {id:'rg_de_center',st:['hs'],when:NK('de'),t:'育成センターの選抜',x:'地域の育成センターに選ばれた。週2回、プロのコーチが細かく指導してくれる。',ch:[
+  {l:'戦術理解を深める',d:'',pr:()=>.75,ok:{m:'ポジショニングの基準がはっきりした。',fx:{pas:1,def:1,scout:5}},ng:{m:'情報量に圧倒された。',fx:{scout:2}}},
+  {l:'フィジカル強化に励む',d:'',pr:()=>.75,ok:{m:'体幹トレーニングで当たり負けしなくなった。',fx:{phy:2}},ng:{m:'筋肉痛で1週間動けなかった。',fx:{sta:-6}}}]},
+ {id:'rg_de_snow',st:['hs','uni','pro'],mo:[4,5],when:NKS(['de','nl','kr']),t:'雪の中の練習',x:'気温マイナス10度。ピッチは真っ白で、吐く息が凍る。',ch:[
+  {l:'いつも通り全力で',d:'',pr:()=>.65,ok:{m:'寒さに負けない体になってきた。',fx:{phy:1,coach:3}},ng:{m:'凍ったピッチで足をひねった。',fx:{inj:2}}},
+  {l:'室内で調整する',d:'',pr:()=>1,ok:{m:'ジムで黙々と体を作った。',fx:{sta:4}},ng:{m:'',fx:{}}}]},
+ {id:'rg_de_disc',st:['hs','uni','pro'],when:NK('de'),t:'時間厳守',x:'集合に1分遅れたチームメイトが、その日の練習から外された。ドイツでは規律がすべてだ。',ch:[
+  {l:'誰より早く来る',d:'',pr:()=>1,ok:{m:'監督は何も言わないが、ちゃんと見ている。',fx:{coach:6}},ng:{m:'',fx:{}}},
+  {l:'仲間をかばう',d:'',pr:()=>.5,ok:{m:'「次はない」とだけ言われ、仲間は練習に戻れた。',fx:{mates:10,coach:-2}},ng:{m:'自分まで練習から外された。',fx:{coach:-6,mates:6}}}]},
+ // イングランド
+ {id:'rg_en_boxing',st:['pro'],mo:[4],when:NK('en'),t:'ボクシングデーの連戦',x:'クリスマス明けから中2日の連戦。スタジアムは満員の家族連れであふれている。',ch:[
+  {l:'全試合フル出場を志願',d:'',pr:c=>.55+(c.p.st.phy-55)/120,ok:{m:'全試合に出て勝ち点を積み上げた。ファンが名前を歌ってくれた。',fx:{pop:6,coach:6,fat:15}},ng:{m:'3試合目でふくらはぎが悲鳴を上げた。',fx:{inj:4,fat:20}}},
+  {l:'監督に任せる',d:'',pr:()=>1,ok:{m:'ローテーションで体を守った。',fx:{fat:5}},ng:{m:'',fx:{}}}]},
+ {id:'rg_en_tabloid',st:['pro'],when:NK('en'),t:'タブロイド紙の記者',x:'夜の街で写真を撮られた。明日の一面に何が書かれるかわからない。',ch:[
+  {l:'笑顔で取材に応じる',d:'',pr:()=>.5,ok:{m:'「好青年」の見出しが躍った。',fx:{pop:6}},ng:{m:'切り取られた一言が炎上した。',fx:{pop:-6,coach:-3}}},
+  {l:'無視して帰る',d:'',pr:()=>.7,ok:{m:'特に記事にはならなかった。',fx:{}},ng:{m:'「傲慢」と書かれた。',fx:{pop:-3}}}]},
+ {id:'rg_en_rain',st:['hs','uni','pro'],when:NKS(['en','de','nl']),t:'横殴りの雨',x:'雨と風でボールがまっすぐ転がらない。それでも試合は中止にならない。',ch:[
+  {l:'体をぶつけて戦う',d:'',pr:()=>.6,ok:{m:'泥だらけで競り合いに勝ち続けた。',fx:{phy:2}},ng:{m:'滑って膝を打った。',fx:{inj:2}}},
+  {l:'シンプルにつなぐ',d:'',pr:()=>.7,ok:{m:'難しいピッチほど、基本が生きる。',fx:{pas:1}},ng:{m:'水たまりでボールが止まった。',fx:{}}}]},
+ // オランダ・ポルトガル
+ {id:'rg_nl_total',st:['hs','uni','pro'],when:NK('nl'),t:'全員攻撃・全員守備',x:'コーチは「全員がどこでもできるように」と、毎日違うポジションで練習させる。',ch:[
+  {l:'慣れない位置でも楽しむ',d:'',pr:()=>.6,ok:{m:'GK以外すべての位置を経験し、視野が広がった。',fx:{all:1}},ng:{m:'混乱して自分のプレーを見失った。',fx:{cond:-3}}},
+  {l:'自分の位置を極めたいと伝える',d:'',pr:()=>.7,ok:{m:'コーチは渋い顔をしたが、認めてくれた。',fx:{key:1,coach:-2}},ng:{m:'',fx:{coach:-4}}}]},
+ {id:'rg_nl_bike',st:['hs','uni'],when:NK('nl'),t:'自転車通学',x:'練習場まで片道12km。向かい風の日は脚がパンパンになる。',ch:[
+  {l:'毎日ペダルをこぐ',d:'',pr:()=>1,ok:{m:'脚が一回り太くなった。',fx:{phy:1,spd:1,fat:6}},ng:{m:'',fx:{}}},
+  {l:'たまにはバスで',d:'',pr:()=>1,ok:{m:'車窓の風車をぼんやり眺めた。',fx:{sta:3}},ng:{m:'',fx:{}}}]},
+ {id:'rg_pt_academy',st:['hs'],when:NK('pt'),t:'名門アカデミーの寮生活',x:'寮の壁には、ここから巣立ったスターたちの写真がずらりと並んでいる。',ch:[
+  {l:'誰よりも遅くまでボールを蹴る',d:'',pr:()=>.6,ok:{m:'夜の照明の下で、フェイントを何百回も繰り返した。',fx:{tec:2}},ng:{m:'疲れがたまって動けなくなった。',fx:{fat:10,sta:-6}}},
+  {l:'寮の仲間と過ごす',d:'',pr:()=>1,ok:{m:'一生の友だちができた。',fx:{mates:8,cond:4}},ng:{m:'',fx:{}}}]},
+ {id:'rg_pt_fado',st:['hs','uni','pro'],when:NK('pt'),t:'ファドの夜',x:'港町の小さな店で、ファドの哀しい歌声を聴いた。',ch:[
+  {l:'静かに聴き入る',d:'',pr:()=>1,ok:{m:'胸の奥が熱くなった。明日もがんばろう。',fx:{cond:6}},ng:{m:'',fx:{}}}]},
+ // ナイジェリア
+ {id:'rg_ng_sand',st:['hs'],w:2,when:NK('ng'),t:'砂のピッチ',x:'ボールはすり減り、ゴールは木の枝。裸足の子も多い。でも誰もが全力で走る。',ch:[
+  {l:'裸足で走り回る',d:'',pr:()=>.7,ok:{m:'砂に足を取られながら走り続けた。脚力がついた。',fx:{spd:2,phy:1}},ng:{m:'石で足の裏を切った。',fx:{inj:2}}},
+  {l:'ボールの手入れを学ぶ',d:'',pr:()=>1,ok:{m:'縫い直したボールは、前よりまっすぐ転がった。',fx:{tec:1}},ng:{m:'',fx:{}}}]},
+ {id:'rg_ng_power',st:['hs','uni','pro'],when:NKS(['ng','war','poor']),t:'停電の夜',x:'また停電だ。試合の映像を見ようと思っていたのに、街は真っ暗になった。',ch:[
+  {l:'暗闇で筋トレ',d:'',pr:()=>1,ok:{m:'腕立て、スクワット、腹筋。数えながら眠くなった。',fx:{phy:1}},ng:{m:'',fx:{}}},
+  {l:'早めに寝る',d:'',pr:()=>1,ok:{m:'星がいつもよりきれいだった。',fx:{sta:6}},ng:{m:'',fx:{}}}]},
+ {id:'rg_ng_fake',st:['hs'],when:NKS(['ng','br','poor']),t:'「欧州のスカウト」を名乗る男',x:'「手数料を払えばヨーロッパのクラブを紹介する」という男が現れた。仲介料は家族の貯金ほどだ。',ch:[
+  {l:'信じて払う',d:'',pr:()=>.08,ok:{m:'驚いたことに本物だった。連絡先がクラブに渡った。',fx:{scout:20,hope:15}},ng:{m:'男は二度と現れなかった。家族の貯金は消えた。',fx:{money:-30,hope:-15,cond:-8}}},
+  {l:'断って本物のテストを待つ',d:'',pr:()=>1,ok:{m:'近所の大人が「正しい判断だ」と言ってくれた。',fx:{hope:3}},ng:{m:'',fx:{}}}]},
+ {id:'rg_ng_family',st:['hs','uni','pro'],when:NKS(['ng','br']),t:'大家族の期待',x:'親戚一同が集まり、「お前が一族の希望だ」と肩を叩かれた。',ch:[
+  {l:'期待を力に変える',d:'',pr:()=>.6,ok:{m:'背負うものがある人間は強い。',fx:{cond:8,hope:8}},ng:{m:'その夜、眠れなかった。',fx:{cond:-6}}},
+  {l:'重圧を打ち明ける',d:'',pr:()=>1,ok:{m:'祖母が「好きなようにやりなさい」と笑った。',fx:{cond:3}},ng:{m:'',fx:{}}}]},
+ // 韓国
+ {id:'rg_kr_army',st:['pro'],when:NKS(['kr'],c=>c.p.age>=25&&!c.p.flags.armyDone&&!c.p.flags.armyEx),t:'兵役の通知',x:'兵役の時期が近づいている。軍のチームでプレーを続ける道もあるが、年俸は大きく下がる。',ch:[
+  {l:'軍のチームに入隊する',d:'年俸が大きく下がるが、仲間と体は鍛えられる',pr:()=>1,ok:{m:'規律正しい日々の中で、ボールを蹴れることのありがたさを知った。',fx:{army:1}},ng:{m:'',fx:{}}},
+  {l:'国際大会のメダルで免除を狙う',d:'',pr:()=>.25,ok:{m:'国際大会でメダルを獲り、兵役免除が決まった。',fx:{armyEx:1,pop:8}},ng:{m:'メダルには届かなかった。入隊することになった。',fx:{army:1,cond:-6}}}]},
+ {id:'rg_kr_senior',st:['hs','uni','pro'],when:NK('kr'),t:'先輩への礼儀',x:'食事の席で、先輩より先に箸をつけてはいけない。上下関係は厳しい。',ch:[
+  {l:'礼儀を徹底する',d:'',pr:()=>1,ok:{m:'先輩たちにかわいがられるようになった。',fx:{mates:6,coach:3}},ng:{m:'',fx:{}}},
+  {l:'実力で黙らせる',d:'',pr:()=>.45,ok:{m:'紅白戦で結果を出し、誰も何も言わなくなった。',fx:{pop:3,key:1}},ng:{m:'「生意気だ」と浮いてしまった。',fx:{mates:-8}}}]},
+ {id:'rg_kr_exam',st:['hs'],when:NK('kr'),t:'大学か、プロか',x:'周りは受験一色。サッカー部でも「大学へ行け」と言う大人が多い。',ch:[
+  {l:'プロ一本で練習',d:'',pr:()=>.6,ok:{m:'迷いが消えると、プレーに鋭さが出た。',fx:{key:1,scout:5}},ng:{m:'周りの目が気になった。',fx:{cond:-4}}},
+  {l:'勉強も両立',d:'',pr:()=>.7,ok:{m:'強豪大学の推薦をもらえた。',fx:{uni:1}},ng:{m:'寝不足でへとへとだ。',fx:{sta:-6}}}]},
+ // アメリカ
+ {id:'rg_us_college',st:['hs'],when:NK('us'),t:'大学スカラシップ',x:'名門大学のサッカー部から奨学金つきの誘いが届いた。大学経由でプロになる選手も多い。',ch:[
+  {l:'奨学金を受ける',d:'',pr:()=>1,ok:{m:'これで学費の心配はない。',fx:{uni:1,scholar:1}},ng:{m:'',fx:{}}},
+  {l:'プロの下部組織に残る',d:'',pr:()=>.6,ok:{m:'クラブはプロ契約を真剣に考え始めた。',fx:{scout:8}},ng:{m:'',fx:{scout:2}}}]},
+ {id:'rg_us_flight',st:['pro'],when:NK('us'),t:'時差のある遠征',x:'東海岸から西海岸へ6時間のフライト。時差ボケのまま試合だ。',ch:[
+  {l:'機内でしっかり眠る',d:'',pr:()=>.7,ok:{m:'着いた瞬間から体が動いた。',fx:{sta:4}},ng:{m:'まったく眠れなかった。',fx:{fat:10}}},
+  {l:'機内で映像研究',d:'',pr:()=>1,ok:{m:'相手の右SBの癖を見つけた。',fx:{pas:1,fat:6}},ng:{m:'',fx:{}}}]},
+ // 紛争の続く国（架空）
+ {id:'rg_war_siren',st:['hs','uni','pro'],w:2,when:NK('war'),t:'練習中の警報',x:'遠くで警報が鳴り、練習は中断された。避難所で、みんな黙ってボールを抱えていた。',ch:[
+  {l:'仲間を励まし続ける',d:'',pr:()=>1,ok:{m:'小さな声で応援歌を歌った。一人、また一人と声が重なった。',fx:{mates:10,cond:-4,hope:4}},ng:{m:'',fx:{}}},
+  {l:'静かに祈る',d:'',pr:()=>1,ok:{m:'朝が来て、警報は止んだ。',fx:{cond:-6}},ng:{m:'',fx:{}}}]},
+ {id:'rg_war_pitch',st:['hs','pro'],when:NK('war'),t:'グラウンドが使えない',x:'グラウンドが立ち入り禁止になった。練習できるのは、ひびの入った学校の中庭だけだ。',ch:[
+  {l:'中庭で工夫して練習',d:'',pr:()=>.7,ok:{m:'狭い場所でのボールタッチが、驚くほど上達した。',fx:{tec:1,hope:3}},ng:{m:'段差につまずいて足首をひねった。',fx:{inj:2}}},
+  {l:'しばらく休む',d:'',pr:()=>1,ok:{m:'体は休まったが、心は焦るばかりだ。',fx:{sta:6,hope:-6}},ng:{m:'',fx:{}}}]},
+ {id:'rg_war_ngo',st:['hs'],when:NKS(['war','poor']),t:'国際NGOのサッカー教室',x:'海外のNGOがサッカー教室を開いた。ボランティアのコーチの中には、元プロもいるらしい。',ch:[
+  {l:'本気でプレーを見せる',d:'',pr:c=>.5+(c.ovr-50)/60,ok:{m:'元プロのコーチが「君の映像を知り合いのクラブに送る」と言った。',fx:{scout:15,hope:15}},ng:{m:'緊張で思うように動けなかった。それでも楽しかった。',fx:{scout:4,hope:4}}},
+  {l:'子どもたちに教える側に回る',d:'',pr:()=>1,ok:{m:'小さな子たちの笑顔が、何よりの力になった。',fx:{pas:1,hope:8,pop:2}},ng:{m:'',fx:{}}}]},
+ {id:'rg_war_family',st:['hs','uni','pro'],when:NK('war'),t:'家族の安否',x:'故郷の町と連絡が取れなくなった。電話は何日もつながらない。',ch:[
+  {l:'練習を休んで連絡を待つ',d:'',pr:()=>.8,ok:{m:'数日後、ようやく電話がつながった。家族は無事だった。',fx:{absent:3,cond:4}},ng:{m:'家族は隣国へ避難したと知った。しばらく会えない。',fx:{absent:3,cond:-8,hope:-6}}},
+  {l:'ボールを蹴って気を紛らわす',d:'',pr:()=>.8,ok:{m:'練習の後、無事を知らせるメッセージが届いた。',fx:{cond:2}},ng:{m:'何も手につかなかった。',fx:{cond:-10}}}]},
+ {id:'rg_war_flee',st:['hs','uni','pro'],when:NKS(['war'],c=>!c.p.flags.refugee&&c.p.age<=24),t:'国を離れる決断',x:'情勢は悪くなる一方だ。家族は「お前だけでも国外でサッカーを続けなさい」と言う。',ch:[
+  {l:'国外へ渡り、難民として再出発する',d:'欧州のクラブから声がかかりやすくなる',pr:()=>.7,ok:{m:'長い旅の末、ヨーロッパの小さな町にたどり着いた。地元のクラブが練習に参加させてくれた。',fx:{refugee:1,hope:12}},ng:{m:'国境で足止めされ、戻るしかなかった。',fx:{hope:-10,cond:-8,money:-10}}},
+  {l:'故郷に残る',d:'',pr:()=>1,ok:{m:'この国でボールを蹴り続けることが、自分の答えだ。',fx:{hope:-4,mates:8,pop:3}},ng:{m:'',fx:{}}}]},
+ {id:'rg_war_truce',st:['hs','pro'],when:NK('war'),t:'停戦の日の試合',x:'一時的な停戦が決まり、街の広場で試合が開かれた。何千人もの人が集まった。',ch:[
+  {l:'みんなのためにゴールを狙う',d:'',pr:c=>.5+(c.p.st.sho-55)/100,ok:{m:'ゴールが決まった瞬間、広場じゅうが抱き合った。',fx:{pop:12,hope:15,cond:8}},ng:{m:'ゴールは奪えなかった。でも誰も責めなかった。',fx:{hope:5,cond:2}}},
+  {l:'全員にボールを回す',d:'',pr:()=>1,ok:{m:'子どもからお年寄りまで、全員がボールに触れた。',fx:{mates:10,hope:10}},ng:{m:'',fx:{}}}]},
+ {id:'rg_war_league',st:['pro'],when:NK('war'),t:'リーグ中断',x:'国内リーグが無期限で中断された。給料の支払いも止まった。',ch:[
+  {l:'海外クラブのテストに申し込む',d:'',pr:c=>.3+(c.ovr-55)/60,ok:{m:'映像を送った海外クラブから、返事が届いた。',fx:{scout:18}},ng:{m:'返事は来なかった。',fx:{money:-10}}},
+  {l:'再開を信じて待つ',d:'',pr:()=>1,ok:{m:'仲間と自主練を続けた。',fx:{sta:8,money:-15,mates:5}},ng:{m:'',fx:{}}}]},
+ // 貧しい国（架空）
+ {id:'rg_pr_shoes',st:['hs'],w:2,when:NK('poor'),t:'スパイクがない',x:'1足しかないスパイクの底がはがれた。新しいのを買うお金はない。',ch:[
+  {l:'テープで巻いて使い続ける',d:'',pr:()=>.6,ok:{m:'不格好だが、まだ戦える。',fx:{hope:2}},ng:{m:'試合中にテープが切れて転んだ。',fx:{inj:2}}},
+  {l:'裸足でプレーする',d:'',pr:()=>.7,ok:{m:'ボールの感触が足の裏に直接伝わる。',fx:{tec:1,spd:1}},ng:{m:'足の裏を痛めた。',fx:{inj:3}}}]},
+ {id:'rg_pr_work',st:['hs','uni'],w:2,when:NKS(['poor','war','ng']),t:'家計を支える',x:'父が体を壊し、家族の収入が途絶えた。長男の自分が働くしかない。',ch:[
+  {l:'昼は働き、夜にボールを蹴る',d:'',pr:()=>1,ok:{m:'くたくたの体で、月明かりの下ボールを蹴った。',fx:{money:12,sta:-10,fat:12,hope:-6}},ng:{m:'',fx:{}}},
+  {l:'サッカーを続けさせてほしいと頼む',d:'',pr:()=>.45,ok:{m:'母は「あなたの夢は家族の夢」と言ってくれた。',fx:{hope:8,cond:4}},ng:{m:'家族の暮らしを思うと、何も言えなくなった。',fx:{hope:-14,cond:-8}}}]},
+ {id:'rg_pr_hunger',st:['hs'],when:NK('poor'),t:'食べ物が足りない',x:'冬の間、食事は1日2回。体が思うように大きくならない。',ch:[
+  {l:'食堂を手伝ってまかないをもらう',d:'',pr:()=>1,ok:{m:'温かいスープが体にしみた。',fx:{phy:1,sta:-4,money:3}},ng:{m:'',fx:{}}},
+  {l:'がまんして練習を続ける',d:'',pr:()=>.5,ok:{m:'空腹の中でも集中を切らさなかった。',fx:{key:1}},ng:{m:'練習中にふらついた。',fx:{phy:-1,cond:-6,hope:-4}}}]},
+ {id:'rg_pr_coach',st:['hs'],when:NK('poor'),t:'村に来た元選手',x:'町からひとりの元選手が村に来て、子どもたちを指導してくれることになった。',ch:[
+  {l:'基礎から教わる',d:'',pr:()=>1,ok:{m:'止める、蹴る。当たり前のことの奥深さを知った。',fx:{tec:1,pas:1,hope:8,scout:3}},ng:{m:'',fx:{}}},
+  {l:'試合形式で鍛えてもらう',d:'',pr:()=>.7,ok:{m:'「お前は町でも通用する」と言われた。',fx:{sho:1,spd:1,hope:6}},ng:{m:'',fx:{hope:2}}}]},
+ {id:'rg_pr_bus',st:['hs'],when:NK('poor'),t:'都会のテストへ',x:'都会のクラブのテストに行くには、バスで丸1日かかる。運賃は家族の1か月分の食費だ。',ch:[
+  {l:'借金してでも行く',d:'',pr:c=>.25+(c.ovr-50)/60,ok:{m:'テストに合格の手応え。クラブの人が名前をメモした。',fx:{scout:20,hope:20,money:-10}},ng:{m:'結果は不合格。帰りのバスで、窓の外ばかり見ていた。',fx:{money:-10,hope:-15}}},
+  {l:'今回は見送る',d:'',pr:()=>1,ok:{m:'次のチャンスは、いつ来るのだろう。',fx:{hope:-8}},ng:{m:'',fx:{}}}]},
+ {id:'rg_pr_scholar',st:['hs'],when:NKS(['poor','war'],c=>(c.p.hope||0)>=40),t:'奨学金の話',x:'海外の財団が、才能ある子どもにサッカー奨学金を出すらしい。選考は一度きりだ。',ch:[
+  {l:'選考に挑む',d:'合格すれば日本の大学への留学も選べる',pr:c=>.2+(c.ovr-50)/50,ok:{m:'合格の手紙が届いた。家族みんなで泣いた。',fx:{scholar:1,uni:1,hope:20,scout:10}},ng:{m:'選ばれなかった。でも、挑んだことは誇りだ。',fx:{hope:-8}}},
+  {l:'家族のそばにいる',d:'',pr:()=>1,ok:{m:'今はここで、できることをやる。',fx:{cond:3}},ng:{m:'',fx:{}}}]},
+ {id:'rg_pr_fest',st:['hs','uni','pro'],when:NKS(['poor','war']),t:'村の祭りの試合',x:'年に一度の祭りで、隣村との試合が開かれる。村じゅうが応援に来る。',ch:[
+  {l:'村のために勝つ',d:'',pr:c=>.55+(c.ovr-50)/80,ok:{m:'勝利の夜、焚き火を囲んで歌った。',fx:{pop:6,hope:10,cond:6}},ng:{m:'惜しくも負けた。来年こそ。',fx:{hope:-3}}},
+  {l:'子どもたちと一緒に楽しむ',d:'',pr:()=>1,ok:{m:'勝ち負けより大切なものがある。',fx:{cond:5,mates:5}},ng:{m:'',fx:{}}}]},
+ // 人間関係（全地域）
+ {id:'rg_mate_dinner',st:['hs','uni','pro'],t:'先輩からの食事の誘い',x:'チームの中心選手に「今夜メシ行くぞ」と誘われた。明日は朝練がある。',ch:[
+  {l:'ついて行く',d:'',pr:()=>.85,ok:{m:'ピッチの外の顔を知り、パスが来るようになった。',fx:{mates:10,sta:-3}},ng:{m:'つい夜更かししてしまった。',fx:{mates:6,sta:-8}}},
+  {l:'丁寧に断る',d:'',pr:()=>1,ok:{m:'「真面目だな」と笑われた。',fx:{mates:-3,sta:3}},ng:{m:'',fx:{}}}]},
+ {id:'rg_mate_fight',st:['hs','uni','pro'],t:'練習中の口論',x:'パスのタイミングをめぐって、チームメイトと言い合いになった。周りが止めに入る。',ch:[
+  {l:'先に謝る',d:'',pr:()=>.8,ok:{m:'翌日、相手からも謝ってきた。前よりうまく合うようになった。',fx:{mates:8}},ng:{m:'わだかまりは残った。',fx:{mates:-2}}},
+  {l:'自分の正しさを主張する',d:'',pr:()=>.4,ok:{m:'監督が「あいつの言う通りだ」と言った。',fx:{coach:5,mates:-4}},ng:{m:'チームの空気が悪くなった。',fx:{mates:-10,coach:-3}}}]},
+ {id:'rg_mate_ego',st:['uni','pro'],when:c=>c.p.pos!=='GK',t:'「エゴイスト」と呼ばれて',x:'シュートを打ちすぎだと、ロッカールームで言われた。パスを出せばフリーの味方がいた場面もあった。',ch:[
+  {l:'もっとパスを出す',d:'',pr:()=>.8,ok:{m:'味方がゴールを決めると、全員が自分のところに走ってきた。',fx:{mates:10,pas:1}},ng:{m:'迷いが出てしまった。',fx:{cond:-4}}},
+  {l:'ゴールで答える',d:'',pr:c=>.4+(c.p.st.sho-60)/80,ok:{m:'2試合連続ゴール。もう誰も文句は言わない。',fx:{sho:1,pop:4}},ng:{m:'外し続け、孤立した。',fx:{mates:-10}}}]},
+];
+RG_EV.forEach(e=>{e.rg=1;EV.push(e);EVM[e.id]=e});
+ACTS.splice(ACTS.findIndex(a=>a.id==='media'),0,{id:'mates',n:'チームメイトと交流',d:'食事や遊びで仲を深める。パスが集まり、出場機会も増える',g:.65,sta:-1,form:3,mates:14,on:'all'});
+
+/* ----- オファー・交渉・進路 ----- */
+function c2Offers(p,X){
+  const N=NATN(p);
+  if(p.stage!=='pro'){
+    if(N.poor>0)X.list=X.list.filter(()=>Math.random()>N.poor*.8);
+    if(p.stage==='hs'&&N.poor>=.3&&!p.flags.scholar)delete X.uniEnter;
+    if(p.stage==='hs'&&!X.list.length&&!X.uniEnter)X.poorEnd=1;
+    if(p.stage==='uni'&&p.uniYear>=4&&!X.list.length&&N.poor>=.3)X.poorEnd=1;
+  }else{
+    if(p.contY>0)p.contY--;
+    if(p.contY>0&&p.contClub===p.club){
+      let r=X.list.find(o=>o.renew);
+      if(!r){r={club:p.club,renew:true,sal:p.salary};X.list.unshift(r);X.released=false}
+      r.sal=p.salary;r.locked=1;
+    }
+  }
+}
+function negOpen(i){
+  const of=S.offers.list[i];if(!of||of.locked||of.final)return false;
+  S.neg={i,sal:1,pt:0,yrs:2,ag:S.p.agent?1:0,msg:null};S.screen='neg';return true;
+}
+const NEG_SAL=[['控えめ',.9,-.05],['提示額',1,0],['強気',1.2,.2],['超強気',1.4,.4]];
+const NEG_PT=[['なし',1,0],['準レギュラー',.96,.1],['レギュラー確約',.9,.25]];
+const NEG_YR=[[1,1.04,.02],[2,1,0],[3,.97,.03],[4,.94,.07]];
+function negProb(p,N){
+  const of=S.offers.list[N.i],c=CLUBS[of.club],o=ovrOf(p);
+  let r=NEG_SAL[N.sal][2]+NEG_PT[N.pt][2]*(1+Math.max(0,c.rep-o)/8)+NEG_YR[N.yrs-1][2];
+  const pr=.92-r+(o-c.rep)/40+p.pop/500+(N.ag?.15:0)-(of.renew&&p.coach<40?.1:0);
+  return clamp(pr,.05,.97);
+}
+function negMul(N){return NEG_SAL[N.sal][1]*NEG_PT[N.pt][1]*NEG_YR[N.yrs-1][1]*(N.ag?1.08:1)}
+H.neg=()=>{
+  const p=S.p,N=S.neg,X=S.offers,of=X.list[N.i],c=CLUBS[of.club],L=LG[c.lg],pr=negProb(p,N),sal=Math.round(of.sal*negMul(N)/10)*10;
+  const seg=(key,arr,lab)=>`<div class="seg c${arr.length}">${arr.map((a,i)=>{const v=key==='yrs'?a[0]:i;return `<button class="opt" aria-pressed="${N[key]===v}" data-act="negSet" data-v="${key}:${v}">${key==='yrs'?a[0]+'年':a[0]}${lab?`<span class="d">${lab(a,i)}</span>`:''}</button>`}).join('')}</div>`;
+  return `${pcard(p,'compact')}<div class="kick">契約交渉<span class="r">${esc(c.n)}</span></div>
+  <p class="note">${esc(L.n)}・チーム力${c.rep}。クラブの提示は年俸${yen(of.sal)}。条件を上げるほど交渉は決裂しやすい。</p>
+  <div class="label">年俸の要求</div>${seg('sal',NEG_SAL,a=>`×${a[1]}`)}
+  <div class="label">出場の保証</div>${seg('pt',NEG_PT,(a,i)=>i?'出場機会↑・年俸少し↓':'')}
+  <div class="label">契約年数</div>${seg('yrs',NEG_YR,a=>a[0]>=3?'長期は安定・年俸↓':a[0]===1?'短期・年俸少し↑':'標準')}
+  <div class="label">代理人</div>
+  <div class="seg c2"><button class="opt" aria-pressed="${!N.ag}" data-act="negSet" data-v="ag:0" ${p.agent?'disabled':''}>自分で交渉<span class="d">手数料なし</span></button><button class="opt" aria-pressed="${!!N.ag}" data-act="negSet" data-v="ag:1">代理人に任せる<span class="d">${p.agent?'契約中':'成功率↑年俸↑・以後 年俸の5%'}</span></button></div>
+  ${N.msg?`<div class="toast">${esc(N.msg)}</div>`:''}
+  <table class="st" style="margin-top:14px"><tbody><tr><th>この条件の年俸</th><td class="n">${yen(sal)}</td></tr><tr><th>交渉成立の見込み</th><td class="n"><b>${Math.round(pr*100)}%</b></td></tr></tbody></table>
+  <div class="stack" style="margin-top:14px"><button class="btn red" data-act="negGo">この条件で交渉する</button><button class="btn" data-act="negBase">提示どおりで契約する</button><button class="btn ghost" data-act="negBack">ほかのオファーを見る</button></div>`;
+};
+function negFinish(i,yrs,pt){
+  const p=S.p;decide('offer',i);
+  p.contY=yrs;p.contClub=p.club;p.ptG=pt;p.ptClub=p.club;
+}
+function offersExtra(p,X){
+  const N=NATN(p),out=[];
+  if(X.negMsg)out.push(`<div class="toast">${esc(X.negMsg)}</div>`);
+  if(p.stage==='pro'&&p.contY>0&&p.contClub===p.club)out.push(`<p class="note">今のクラブとの契約は残り${p.contY}年。クラブはあなたを放出できない${p.ptG?`（出場保証：${NEG_PT[p.ptG][0]}）`:''}。</p>`);
+  if(p.stage==='hs'){
+    if(X.uniEnter&&natOf(p)!=='jp')out.push(`<p class="note">大学は日本の${esc(UNIS[X.uniEnter].n)}への留学になる。</p>`);
+    if(!X.abroad){const cost=30,ok=p.money>=cost||p.flags.scholar;
+      out.push(`<div class="offer"><div class="top"><div><div class="club">海外挑戦</div><div class="lg">${natOf(p)==='jp'?'欧州・南米・アメリカ':'日本・欧州など'}のクラブの入団テストを受ける</div></div><div class="stars">TEST</div></div><p class="sub" style="margin:0">渡航費 ${yen(cost)}${p.flags.scholar?'（奨学金で無料）':''}。合格すれば海外クラブとプロ契約。不合格でも、ほかの道は残る。</p><button class="btn" data-act="abroadTest" ${ok?'':'disabled'}>${ok?'テストを受けに行く':'お金が足りない'}</button></div>`)}
+    else out.push(`<div class="toast">${esc(X.abroad)}</div>`);
+  }
+  if(X.poorEnd){
+    out.push(`<div class="evcard"><h2>${N.war?'道が閉ざされていく':'夢と暮らしのあいだで'}</h2><p>${N.war?'情勢のせいでスカウトは来ず、テストの話もなくなった。':'どのクラブからも声はかからず、家計はもう限界だ。'}${p.hope!=null?`夢の灯は残り${Math.round(p.hope)}。`:''}</p></div>`);
+    if((p.hsExtra||0)<2&&p.age<=20)out.push(`<button class="btn" data-act="hsAgain">もう1年、働きながらチャンスを待つ</button>`);
+    out.push(`<button class="btn ghost" data-act="giveUp">サッカーをあきらめる</button>`);
+  }
+  return out.join('');
+}
+function abroadTarget(p){
+  const lgs=natOf(p)==='jp'?['BEL','NED','POR','BRA','USA','KOR']:['J2','J1','BEL','POR','USA','NED'];
+  const home=homeCty(p),o=ovrOf(p);
+  let pool=CLUBS.filter(c=>lgs.includes(c.lg)&&LG[c.lg].cty!==home).sort((a,b)=>a.rep-b.rep);
+  const near=pool.filter(c=>c.rep<=o+6);return pick((near.length?near:pool).slice(-4))||pool[0];
+}
+
+/* ----- 引退後の人生 ----- */
+const AFTER=[['coach','監督になる','指導者ライセンスを取り、ベンチから戦う'],['pundit','解説者になる','テレビやネットでサッカーを語る'],['biz','実業家になる','稼いだお金で事業を始める'],['school','故郷にサッカー学校を作る','次の世代に道具と居場所を']];
+function c2Retire(p,sum){
+  sum.nation=natOf(p);
+  if(p.rv)sum.rv={n:p.rv.n,cty:p.rv.cty,h2h:{...p.rv.h2h},g:p.rv.g,aw:p.rv.aw.length,caps:p.rv.caps};
+}
+function epilogue(p,s,k){
+  const N=NATN(p),club=(s.clubs||'').split(' / ').pop()||'古巣',sc=s.score||0,r=Math.random();
+  const t=[];
+  if(k==='coach'){
+    if(sc>=1450&&r<.6)t.push(`引退から6年後、${N.team}の監督に就任した。選手時代と同じく、誰よりも早くグラウンドに来る監督だった。`);
+    else if(sc>=600&&r<.7)t.push(`指導者ライセンスを取り、${club}の監督に就任。就任3年目、選手たちに胴上げされた。`);
+    else t.push('ユースの指導者になった。派手な肩書きはないが、教え子が何人もプロになった。');
+  }else if(k==='pundit'){
+    if(p.pop>=55)t.push('テレビ中継の解説者として人気者になった。歯に衣着せぬ物言いで、毎週のように話題になった。');
+    else t.push('ラジオや地方局で解説を続けた。穏やかな語り口と、選手への優しいまなざしで愛された。');
+  }else if(k==='biz'){
+    if(p.money>=5000&&r<.7)t.push('自分の名を冠したスポーツブランドを立ち上げ、大きな成功を収めた。');
+    else if(r<.55)t.push('小さなカフェを開いた。壁には現役時代のユニフォームが飾られ、ファンの集まる場所になった。');
+    else t.push('最初の事業はうまくいかなかった。それでも子ども向けのサッカー教室で再起し、町の人気者になった。');
+  }else{
+    t.push(N.poor||N.war?`故郷${N.n}に小さなサッカー学校を開いた。スパイクのない子どもたちに、道具と居場所を届けた。10年後、その学校から初めてのプロ選手が生まれた。`:'故郷に小さなサッカー学校を開いた。週末のグラウンドには、いつも子どもたちの声が響いている。');
+  }
+  if(s.rv&&!s.pro)t.push(`同い年のライバルだった${s.rv.n}がテレビの向こうで活躍するたび、少しだけ胸が痛んだ。それでも、あの日々に後悔はない。`);
+  else if(s.rv){const h=s.rv.h2h,n=h.w+h.d+h.l;t.push(`引退試合には、同い年のライバル${s.rv.n}が駆けつけた。${n?`通算の直接対決は${h.w}勝${h.d}分${h.l}敗。`:'公式戦での直接対決はついに実現しなかったが、互いの活躍はいつも気にしていた。'}試合後、彼は笑って言った。「お前がいたから、ここまで来られた」。`)}
+  const P=p.fam.partner;if(P&&P.married)t.push(`隣にはいつも${P.n}がいた。`);
+  return t.join('');
+}
+function afterHtml(p,s){
+  if(s.fate&&s.fate.ty==='death')return '';
+  if(!s.after)return `<div class="kick">引退後の人生<span class="r">ひとつ選ぶ</span></div><div class="stack">${AFTER.filter(a=>a[0]!=='school'||true).map(a=>`<button class="choice" data-act="afterPick" data-v="${a[0]}"><span><b>${a[1]}</b><small>${a[2]}</small></span></button>`).join('')}</div>`;
+  const a=AFTER.find(x=>x[0]===s.after);
+  return `<div class="kick">エピローグ<span class="r">${esc(a?a[1].replace('になる','').replace('を作る',''):'')}</span></div><div class="evcard"><p>${esc(s.epi)}</p></div>`;
+}
+
+/* ----- 画面パーツ ----- */
+const meter=(lab,v,col,tx)=>`<div class="c2m"><span>${lab}</span><i><b style="width:${clamp(Math.round(v),0,100)}%;background:${col}"></b></i><em>${tx!=null?tx:Math.round(v)}</em></div>`;
+function statusHtml(p){
+  const fat=p.fat||0,ms=p.mates==null?50:p.mates;
+  return `<div class="c2s">${meter('監督の信頼',p.coach,p.coach<30?'var(--down)':'var(--soft)')}${meter('チームメイト',ms,ms<30?'var(--down)':'var(--soft)')}${meter('疲労',fat,fat>=60?'var(--down)':fat>=35?'var(--gold)':'var(--up)',fat>=60?'危険':fat>=35?'注意':'良好')}${p.hope!=null?meter('夢の灯',p.hope,p.hope<25?'var(--down)':'var(--gold)'):''}
+  ${p.oldInj||p.age>=30?`<p class="sub" style="margin:2px 0 0">${p.oldInj?`古傷 ${p.oldInj}か所（ケガが再発しやすい）`:''}${p.oldInj&&p.age>=30?'・':''}${p.age>=30?`年齢による衰え：スピード${p.vet?'（ベテラン型で緩やか）':'が落ち始めている'}`:''}</p>`:''}</div>`;
+}
+function allocHtml(p){
+  if(!p.alloc){const key=POS[p.pos].key;p.alloc={[key]:2,[key==='phy'?'spd':'phy']:1}}const rest=restOf(p),used=ALLOC_N-rest,R=REST_FX[rest];
+  return `<div class="kick">練習メニューの配分<span class="r">${ALLOC_N}コマ・休み${rest}</span></div>
+  ${statusHtml(p)}
+  <div class="c2a">${ALLOC_K.map(k=>{const n=p.alloc[k]||0;return `<div class="c2r"><span>${lbl(k,p)}<small>${Math.round(p.st[k])}</small></span><span class="pips">${n?'●'.repeat(n):'<span style="color:var(--muted)">—</span>'}</span><button class="opt sm" data-act="allocDn" data-v="${k}" ${n?'':'disabled'}>−</button><button class="opt sm" data-act="allocUp" data-v="${k}" ${used<ALLOC_N?'':'disabled'}>＋</button></div>`}).join('')}</div>
+  <p class="sub" style="margin:4px 0 0">${R.t}。使わなかったコマは休みになる。</p>`;
+}
+function campExtra(p){
+  const N=NATN(p),v=p.rv,R=p.posR;
+  return `<div class="kick">チームの中の自分</div>${statusHtml(p)}
+  ${R?`<p class="note">ポジション争い：<b>${esc(R.n)}</b>（${R.age}歳・総合${R.o}）${R.o>ovrOf(p)?'がいまは一歩リード。':'より、いまは自分が上。'}</p>`:'<p class="note">今季は同じポジションに強力なライバルはいない。</p>'}
+  ${v?`<div class="kick">ライバル年代記</div><p class="note"><b>${esc(v.n)}</b>（${esc(v.cty)}・${v.pos}）　所属：${esc(rvClub(v))}　総合${v.o}${v.g?`・通算${v.g}得点`:''}${v.caps?`・代表${v.caps}試合`:''}${v.aw.length?`・金球賞${v.aw.length}回`:''}<br>直接対決 ${v.h2h.w}勝${v.h2h.d}分${v.h2h.l}敗</p>`:''}
+  ${natOf(p)!=='jp'?`<p class="sub">出身：${N.fl} ${esc(N.n)}　${esc(N.d)}${p.flags.refugee?'（いまは国外で暮らしている）':''}</p>`:''}`;
+}
+function natPick(d){
+  return `<div class="label">国籍・出身</div><div class="seg c3">${NAT_KEYS.map(k=>{const N=NATIONS[k];return `<button class="opt" aria-pressed="${(d.nation||'jp')===k}" data-act="setNat" data-v="${k}">${N.fl} ${N.n}<span class="d">${N.poor>=.5?'貧困・紛争':N.poor>=.25?'貧しい地区も':N.conf}</span></button>`}).join('')}</div>`;
+}
+function natInfo(d){
+  const N=NATIONS[d.nation||'jp'],b=Object.entries(N.bias).map(([k,v])=>`${lbl(k)}${v>0?'+':''}${v}`).join(' ');
+  return `<p class="note">出身：<b>${N.fl} ${esc(N.n)}</b>　${esc(N.d)}${b?`<br><small>地域の特色：${b}</small>`:''}${N.poor>=.3?'<br><b style="color:var(--down)">この地域では、プロになれないまま夢をあきらめることもある。</b>':''}</p>`;
+}
+function rules2(sec,ul){
+  return sec('育成：人生のドラマ',ul([
+   '<b>国籍</b>：「名前や守備位置を自分で決める」で14の国・地域から出身を選べる。地域ごとに能力の傾向・名前・ユース・国内リーグ・代表チームが違い、その土地ならではの出来事が起きる。',
+   '<b>貧困・紛争地域</b>：「夢の灯」が0になる、または卒業時にどこからも声がかからないと、プロになれずに引退することがある。奨学金や国外への移住で道が開けることも。',
+   '<b>大一番</b>：決勝・準決勝・代表の大会・優勝争いの前に、勝負どころでのプレーを選べる。決めれば一面と人気、外せば監督の評価が下がる。',
+   '<b>人間関係</b>：監督の信頼とチームメイトとの仲が出場機会を左右する。同じポジションのライバルにも注意。',
+   '<b>練習メニューの配分</b>：毎ターン4コマを能力に振り分ける。休みゼロはケガしやすく、休みすぎると伸びない。',
+   '<b>体</b>：疲労・古傷・年齢による衰えがある。30歳を過ぎると「ベテラン型」へのスタイル転向を選べることも。',
+   '<b>移籍交渉</b>：年俸・出場保証・契約年数を要求できる。欲張ると決裂。代理人を雇うと成功しやすい。',
+   '<b>進路</b>：高校卒業時に、プロ・大学に加えて「海外挑戦（入団テスト）」も選べる。引退後は監督・解説者・実業家・サッカー学校からエピローグを選ぶ。',
+   '<b>ライバル年代記</b>：同い年のライバルが毎年ニュースになり、直接対決や代表争い、引退試合での再会がある。']));
+}
+function locH(h){
+  if(!S||!S.p||G.mode!=='career')return h;const k=natOf(S.p);if(k==='jp')return h;const N=NATIONS[k];
+  const R=[['全国高校選手権',N.n+' U-18選手権'],['高校プリンスリーグ','U-18ユースリーグ'],['高校選抜','U-18選抜'],['高校','ユース'],['日本代表',N.team],['アジア年間最優秀選手',N.conf+'年間最優秀選手'],['アジア杯優勝',N.cup+'優勝'],['アジア杯',N.cup],['アジア制覇',N.conf+'制覇'],['日の丸','国旗']];
+  for(const [a,b] of R)if(h.includes(a))h=h.split(a).join(b);
+  return h;
+}
+
+/* ----- 操作 ----- */
+Object.assign(ACT,{
+ setNat:v=>{syncNames();const d=S.draft;d.nation=v;d.natLock=1;nameFor(d);d.prev=makePlayer(d);d.prev.sei=d.sei;d.prev.mei=d.mei},
+ allocUp:v=>{const p=S.p;p.alloc=p.alloc||{};if(restOf(p)>0)p.alloc[v]=(p.alloc[v]||0)+1},
+ allocDn:v=>{const p=S.p;p.alloc=p.alloc||{};if(p.alloc[v])p.alloc[v]--},
+ negSet:v=>{const [k,x]=v.split(':');S.neg[k]=+x;S.neg.msg=null;if(k==='ag'&&S.p.agent)S.neg.ag=1},
+ negBack:()=>{S.neg=null;S.screen='offers';toTop()},
+ negBase:()=>{const N=S.neg;S.neg=null;negFinish(N.i,2,0);toTop()},
+ negGo:()=>{const p=S.p,N=S.neg,X=S.offers,of=X.list[N.i],c=CLUBS[of.club];
+  if(N.ag&&!p.agent){p.agent=1;pushNews(`【契約】${p.sei}${p.mei}、代理人と契約`)}
+  if(Math.random()<negProb(p,N)){of.sal=Math.round(of.sal*negMul(N)/10)*10;const y=N.yrs,pt=N.pt;S.neg=null;negFinish(N.i,y,pt)}
+  else{S.neg=null;
+   if(X.list.length>1&&!of.renew){X.list.splice(N.i,1);X.negMsg=`${c.n}との交渉は決裂した。オファーは取り下げられた。`}
+   else{of.final=1;X.negMsg=`${c.n}は「これが最終提示だ」と言っている。条件の上乗せはもうできない。`}
+   S.screen='offers'}
+  toTop()},
+ abroadTest:()=>{const p=S.p,X=S.offers;if(!p.flags.scholar)p.money-=30;const c=abroadTarget(p),o=ovrOf(p);
+  const pr=clamp(sig((o+4-c.rep)/3)*.9,.05,.85);
+  if(Math.random()<pr){X.list.unshift({club:c.id,renew:false,sal:Math.round(salaryFor(c,o)*.7/10)*10});X.abroad=`${c.n}（${LG[c.lg].n}）の入団テストに合格した！ オファーが届いている。`;typeof cutQ==='function'&&cutQ('sign','入団テスト合格！',c.n,2000)}
+  else{X.abroad=`${c.n}（${LG[c.lg].n}）の入団テストは不合格だった…（合格率${Math.round(pr*100)}%）`;p.pop=clamp(p.pop-2,0,100);if(p.hope!=null)p.hope=clamp(p.hope-6,0,100)}},
+ hsAgain:()=>{const p=S.p;p.hsExtra=(p.hsExtra||0)+1;if(p.hope!=null)p.hope=clamp(p.hope-12,5,100);p.money+=10;p.scout=Math.round(p.scout*.8);pushNews(`【地元紙】${p.sei}${p.mei}、働きながらプロを目指す`);p.month=10;startMonth();toTop()},
+ giveUp:()=>{const p=S.p,N=NATN(p);p.fate={ty:'dream',why:N.war?'故郷の情勢と家族の暮らしを前に、プロの夢をあきらめた':'家族を支えるため、プロの夢をあきらめた'};retire();toTop()},
+ afterPick:v=>{const s=S.summary;if(!s||s.after)return;s.after=v;s.epi=epilogue(S.p,s,v)},
 });
 
 </script>
