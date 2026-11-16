@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-112858';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-113105';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5715,54 +5715,81 @@ function tkBlock(d){
   return `<div class="tkbox ${d.tkG?'on':''}"><div><b>育成S以上確定チケット</b><span class="sub">${d.tkG?`使用済み：この選手の伸びしろは<b class="gold">${d.tkG}</b>。別の選手を探しても${d.tkG}のまま（もう戻せない）`:`持っている枚数：${tkN()}枚。使うと伸びしろがS以上になる（S 70%・SS 30%）。<b>一度使うと戻せない</b>`}</span></div>
    ${d.tkG?'':'<button class="btn red" data-act="tkOn">チケットを使う</button>'}</div>`;
 }
-/* ---------- 育成キャラの交換：コードで友達にあげる ---------- */
+/* ---------- 育成キャラの交換：コードで友達にあげる ----------
+   コードを作っただけでは消えない。「コピーして送る」「LINEで送る」を押したときに手元からいなくなる。
+   送ったあとでも、相手がまだ受け取っていなければ取り戻せる（共有データが使える画面では、受け取り済みかを確かめる） */
 const inSquad=id=>M.squad.slots.includes(id)||M.squad.bench.includes(id)||M.squad.mg===id;
 const giftable=()=>M.roster.filter(c=>c.from==='育成').concat(M.mgrs||[]);
+const findCard=id=>M.roster.find(x=>x.id===id)||(M.mgrs||[]).find(x=>x.id===id);
+const TR_MSG=c=>`サッカーやるよんの「${c}」をあげる！ アプリの「スカッド→交換」で「コピーしたコードを貼って受け取る」を押してね\n`;
 async function tradeMake(id){
-  const c=M.roster.find(x=>x.id===id)||(M.mgrs||[]).find(x=>x.id===id);if(!c)throw new Error('キャラが見つからない');
+  const c=findCard(id);if(!c)throw new Error('キャラが見つからない');
   if(inSquad(id))throw new Error('スカッドで使っているキャラはあげられない。先にスカッドから外してね');
   const o={gift:1,id:uidGen('gf'),t:Date.now(),from:(teamCalc().name||'だれか'),c:JSON.parse(JSON.stringify(c))};
-  const code=await b64z(JSON.stringify(o));
-  // 手放す：スカッド・ベンチ・監督からも外す
-  M.roster=M.roster.filter(x=>x.id!==id);M.mgrs=(M.mgrs||[]).filter(x=>x.id!==id);
-  M.sent=[{name:c.name,code,t:Date.now()}].concat(M.sent||[]).slice(0,5);metaSave();
-  return {code,name:c.name};
+  return {code:await b64z(JSON.stringify(o)),gid:o.id,name:c.name,cid:id};
 }
+// 送った：ここで手元からいなくなる
+function tradeSent(P){const c=findCard(P.cid);if(!c)return false;
+  M.roster=M.roster.filter(x=>x.id!==P.cid);M.mgrs=(M.mgrs||[]).filter(x=>x.id!==P.cid);
+  M.sent=[{name:P.name,code:P.code,gid:P.gid,t:Date.now()}].concat(M.sent||[]).slice(0,10);metaSave();return true}
+async function dbGet(p){if(!NET.db)return null;try{const s=await Promise.race([NET.db.doc(p).get(),new Promise((_,j)=>setTimeout(()=>j(0),4000))]);return s&&s.exists?(s.data?s.data():{}):null}catch(e){return null}}
+async function dbSet(p,v){if(!NET.db)return;try{await Promise.race([NET.db.doc(p).set(v),new Promise((_,j)=>setTimeout(()=>j(0),4000))])}catch(e){}}
 async function tradeTake(code){
   let o;try{o=JSON.parse(await unb64z(code))}catch(e){throw new Error(e.message&&e.message.length>20?e.message.replace(/バックアップコード/g,'プレゼントコード'):'コードが読み取れなかった。最後まで全部コピーしてもう一度貼り付けてほしい')}
   if(!o||!o.gift||!o.c)throw new Error('これはプレゼントのコードではない（バックアップコードは「記録」タブで読み込む）');
   M.gotGifts=M.gotGifts||[];if(M.gotGifts.includes(o.id))throw new Error('このプレゼントはもう受け取っている');
+  if((M.sent||[]).some(s=>s.gid===o.id))throw new Error('自分が送ったコードは受け取れない（取り戻すときは下の「送ったキャラ」から）');
+  if(await dbGet('giftrev/'+o.id))throw new Error('このコードは送った人が取り消している');
+  await dbSet('giftclaim/'+o.id,{t:Date.now()});
   const c=o.c,nc={...c,id:uidGen(c.kind==='mg'?'m':'c'),giftFrom:o.from,t:Date.now()};
   if(c.kind==='mg'){M.mgrs=M.mgrs||[];M.mgrs.unshift(nc)}else M.roster.unshift(nc);
   M.gotGifts.push(o.id);M.gotGifts=M.gotGifts.slice(-200);metaSave();
   return {name:c.name,from:o.from,kind:c.kind};
 }
+// 送ったキャラを取り戻す（まだ相手が受け取っていないとき）
+async function tradeBack(i){
+  const s=(M.sent||[])[i];if(!s)throw new Error('見つからない');
+  let o;try{o=JSON.parse(await unb64z(s.code))}catch(e){throw new Error('コードが読めなかった')}
+  if(await dbGet('giftclaim/'+o.id))throw new Error(`「${s.name}」はもう相手が受け取っている`);
+  await dbSet('giftrev/'+o.id,{t:Date.now()});
+  const c=o.c,nc={...c,id:findCard(c.id)?uidGen(c.kind==='mg'?'m':'c'):c.id};
+  if(c.kind==='mg'){M.mgrs=M.mgrs||[];M.mgrs.unshift(nc)}else M.roster.unshift(nc);
+  M.gotGifts=(M.gotGifts||[]).concat([o.id]);M.sent.splice(i,1);metaSave();return c.name;
+}
 function tradeHtml(){
-  const T=G.tr||(G.tr={}),list=giftable();
+  const T=G.tr||(G.tr={}),list=giftable(),P=T.pend;
   return `<div class="kick">キャラの交換<span class="r">育成した選手・監督をあげる</span></div>
-  <p class="note">あげたいキャラを選んでコードを作り、LINEなどで送る。相手が下の「受け取る」に貼ると、そのキャラが相手のものになる。<b>あげたキャラは自分の手元からいなくなる。</b>スカッド（スタメン・ベンチ・監督）に入っているキャラはあげられない。コード1つにつき受け取れるのは1回だけ。</p>
+  <p class="note">あげたいキャラを選んで「コピーして送る」か「LINEで送る」を押す。<b>送ったときに手元からいなくなる</b>（コードを作っただけでは消えない）。スカッド（スタメン・ベンチ・監督）に入っているキャラはあげられない。</p>
   ${T.msg?`<div class="toast"><b>${esc(T.msg)}</b></div>`:''}
-  ${T.code?`<div class="label">「${esc(T.name)}」のプレゼントコード</div><textarea class="code" id="trout" readonly>${esc(T.code)}</textarea>
-    <div class="seg c2"><button class="opt" data-act="copyFrom" data-v="trout">コピーする</button><a class="opt" href="https://line.me/R/share?text=${encodeURIComponent('サッカーやるよんのキャラをあげる！「対戦」ではなく「スカッド→交換→受け取る」に貼ってね\n'+T.code)}" target="_blank" rel="noopener">LINEで送る</a></div>`:''}
+  ${P?`<div class="trconf"><p><b>${esc(P.name)}</b>のコードができた。送ると手元からいなくなる。</p>
+    <div class="seg c2"><button class="opt" data-act="trCopy">コピーして送る</button><button class="opt" data-act="trLine">LINEで送る</button></div>
+    <button class="linkbtn center" data-act="trCancel">やめる（あげない）</button></div>`:''}
   <div class="label">あげるキャラを選ぶ（${list.length}人）</div>
   ${list.length?`<div class="plist">${list.map(c=>{const sel=T.sel===c.id,inSq=inSquad(c.id);
     return `<button class="prow ${sel?'on':''} ${inSq?'lock':''}" data-act="trSel" data-v="${c.id}" ${inSq?'disabled aria-disabled="true"':''}><span class="pf">${sprOf(c,c.kind==='mg'?'mg':undefined)}</span><span class="po">${c.kind==='mg'?'監督':c.pos}</span><b>${esc(c.name)}</b><span class="sub">${inSq?'🔒 スカッドで使用中（外すと交換できる）':`${c.grade?`評価${c.grade}`:''}${c.giftFrom?`・${esc(c.giftFrom)}からもらった`:''}`}</span><span class="num">${c.kind==='mg'?'':cardOvr(c)}</span></button>
-      ${sel&&!inSq?`<div class="trconf"><p>${esc(c.name)}をあげる？ コードを作った時点で手元からいなくなる。</p><div class="seg c2"><button class="opt" data-act="trMake" data-v="${c.id}">コードを作ってあげる</button><button class="opt" data-act="trSel" data-v="">やめる</button></div></div>`:''}`}).join('')}</div>`:'<p class="note">育成した選手・監督がまだいない。ガチャで出たキャラはあげられない。</p>'}
+      ${sel&&!inSq&&!P?`<div class="trconf"><p>${esc(c.name)}をあげる？</p><div class="seg c2"><button class="opt" data-act="trMake" data-v="${c.id}">あげるコードを作る</button><button class="opt" data-act="trSel" data-v="">やめる</button></div></div>`:''}`}).join('')}</div>`:'<p class="note">育成した選手・監督がまだいない。ガチャで出たキャラはあげられない。</p>'}
   <div class="label">もらったキャラを受け取る</div>
   <div class="stack"><button class="btn red" data-act="trPaste">コピーしたコードを貼って受け取る</button></div>
   <p class="sub">LINEなどで届いたコードを長押しでコピーしてから押す。</p>
   ${T.manual?`<div class="label">うまく貼れないときは、ここに貼り付けて「受け取る」</div><textarea class="code" id="trin" placeholder="KJ1:..."></textarea><div class="stack" style="margin-top:8px"><button class="btn ghost" data-act="trTake">受け取る</button></div>`:'<button class="linkbtn center" data-act="trManual">うまくいかないとき（手で貼り付ける）</button>'}
-  ${(M.sent||[]).length?`<details class="betteam"><summary>最近あげたキャラのコード（送り忘れたとき用）</summary>${M.sent.map((s,i)=>`<div class="label">${esc(s.name)}</div><textarea class="code" id="trs${i}" readonly>${esc(s.code)}</textarea><button class="opt" data-act="copyFrom" data-v="trs${i}">コピー</button>`).join('')}</details>`:''}`;
+  ${(M.sent||[]).length?`<div class="kick">送ったキャラ<span class="r">${M.sent.length}人</span></div><p class="sub">相手がまだ受け取っていなければ取り戻せる。送り忘れたときはもう一度コピーできる。</p>
+   <div class="plist">${M.sent.map((s,i)=>`<div class="prow" style="cursor:default"><b>${esc(s.name)}</b><span class="sub">${new Date(s.t).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}に送った</span><span class="mv"><button class="opt" data-act="trRecopy" data-v="${i}">コピー</button><button class="opt" data-act="trBack" data-v="${i}">取り戻す</button></span></div>`).join('')}</div>`:''}`;
 }
+const trOk=r=>{G.tr={msg:`🎁 ${r.from}から「${r.name}」をもらった！ スカッドで使える`};render()};
 Object.assign(ACT,{
  // 押したらその場でチケットを使う（戻せない）。育成を始めるまで、どの選手を選んでもこの伸びしろ
  tkOn:()=>{const d=S.draft;if(!d||d.tkG||!tkN())return;M.tickets.spS--;M.tkActive=tkGrade();M.tkRoll=null;d.tkG=M.tkActive;metaSave();d.prev=makePlayer(d);syncNames()},
  trSel:v=>{G.tr=G.tr||{};G.tr.sel=v||null;G.tr.msg=null},
- trMake:v=>{G.tr=G.tr||{};G.tr.msg='コードを作っている…';tradeMake(v).then(r=>{G.tr={code:r.code,name:r.name,msg:`${r.name}のコードができた。相手に送ってね`};render()}).catch(e=>{G.tr={msg:e.message};render()})},
+ trMake:v=>{G.tr=G.tr||{};G.tr.msg='コードを作っている…';tradeMake(v).then(r=>{G.tr={pend:r,sel:null};render()}).catch(e=>{G.tr={msg:e.message};render()})},
+ trCancel:()=>{G.tr={msg:'あげるのをやめた（キャラはそのまま）'}},
+ trCopy:()=>{const P=G.tr&&G.tr.pend;if(!P)return;copyText(TR_MSG(P.name)+P.code).then(ok=>{if(ok){tradeSent(P);G.tr={msg:`「${P.name}」のコードをコピーした。LINEなどに貼って送ってね（手元からいなくなった）`}}else G.tr.msg='コピーできなかった。もう一度押すか「LINEで送る」を使ってね';render()})},
+ trLine:()=>{const P=G.tr&&G.tr.pend;if(!P)return;try{window.open('https://line.me/R/share?text='+encodeURIComponent(TR_MSG(P.name)+P.code),'_blank','noopener')}catch(e){}tradeSent(P);G.tr={msg:`「${P.name}」をLINEで送った（手元からいなくなった）`}},
+ trRecopy:v=>{const s=(M.sent||[])[+v];if(!s)return;copyText(TR_MSG(s.name)+s.code).then(ok=>{G.tr={msg:ok?`「${s.name}」のコードをもう一度コピーした`:'コピーできなかった'};render()})},
+ trBack:v=>{G.tr={msg:'確かめている…'};tradeBack(+v).then(n=>{G.tr={msg:`「${n}」を取り戻した`};render()}).catch(e=>{G.tr={msg:e.message};render()})},
  trPaste:()=>{G.tr=G.tr||{};if(!navigator.clipboard||!navigator.clipboard.readText){G.tr.manual=true;G.tr.msg='この画面ではコピーした文字を読めなかった。下の欄に貼り付けてね';return}
-   G.tr.msg='受け取っている…';navigator.clipboard.readText().then(v=>tradeTake(v)).then(r=>{G.tr={msg:`🎁 ${r.from}から「${r.name}」をもらった！ スカッドで使える`};render()}).catch(e=>{G.tr={msg:e&&e.name==='NotAllowedError'?'コピーした文字を読む許可がなかった。下の欄に貼り付けてね':e.message,manual:true};render()})},
+   G.tr.msg='受け取っている…';navigator.clipboard.readText().then(v=>tradeTake(v)).then(trOk).catch(e=>{G.tr={msg:e&&e.name==='NotAllowedError'?'コピーした文字を読む許可がなかった。下の欄に貼り付けてね':e.message,manual:true};render()})},
  trManual:()=>{G.tr=G.tr||{};G.tr.manual=true},
- trTake:()=>{const t=document.getElementById('trin'),v=t?t.value:'';G.tr=G.tr||{};G.tr.msg='受け取っている…';tradeTake(v).then(r=>{G.tr={msg:`🎁 ${r.from}から「${r.name}」をもらった！ スカッドで使える`};render()}).catch(e=>{G.tr={msg:e.message,manual:true};render()})},
+ trTake:()=>{const t=document.getElementById('trin'),v=t?t.value:'';G.tr=G.tr||{};G.tr.msg='受け取っている…';tradeTake(v).then(trOk).catch(e=>{G.tr={msg:e.message,manual:true};render()})},
 });
 
 </script>
