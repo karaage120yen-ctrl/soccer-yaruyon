@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-111707';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-112248';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4657,7 +4657,7 @@ function inhBlock(d,mode,act){
   <div class="picks">${ps.map(c=>{const on=sel.includes(c.id),full=!on&&sel.length>=INH_MAX;return `<button class="pk" aria-pressed="${on}" data-act="${act}" data-v="${c.id}" ${full?'disabled':''}><span class="po">${isMgr(c)?'監督':c.pos}</span><b>${esc(c.name)}</b><span class="num">${ov(c)}</span></button>`}).join('')}</div>
   ${res.length?`<div class="chips">${res.map(r=>`<span class="chip gold">${esc(r.name)} → ${esc(T[r.k].n)}</span>`).join('')}</div><p class="note">${res.map(r=>`<b>${esc(T[r.k].n)}</b>：${esc(T[r.k].d)}`).join('<br>')}</p>`:''}`;
 }
-function newDraft(prev){const d={sei:pick(SEI),mei:pick(MEI),pos:wpick(['FW','MF','DF','GK'],k=>({FW:3,MF:3,DF:2.8,GK:1.2})[k]),foot:wpick(['R','L','B'],k=>({R:7,L:2.2,B:.8})[k]),style:ri(0,2),growth:pick(Object.keys(GROWTH)),custom:false,n:(prev&&prev.n||0)+1,inh:prev&&prev.inh?prev.inh.slice():[],leg:prev&&prev.leg?prev.leg.slice():[],tkG:prev&&prev.tkG||null,iseed:inhSeed(prev)};d.prev=makePlayer(d);return d}
+function newDraft(prev){const d={sei:pick(SEI),mei:pick(MEI),pos:wpick(['FW','MF','DF','GK'],k=>({FW:3,MF:3,DF:2.8,GK:1.2})[k]),foot:wpick(['R','L','B'],k=>({R:7,L:2.2,B:.8})[k]),style:ri(0,2),growth:pick(Object.keys(GROWTH)),custom:false,n:(prev&&prev.n||0)+1,inh:prev&&prev.inh?prev.inh.slice():[],leg:prev&&prev.leg?prev.leg.slice():[],tkG:prev&&prev.tkG||M.tkActive||null,iseed:inhSeed(prev)};d.prev=makePlayer(d);return d}
 function syncNames(){const a=document.getElementById('sei'),b=document.getElementById('mei');if(a&&S.draft){S.draft.sei=a.value.trim()||S.draft.sei;S.draft.mei=b.value.trim()||S.draft.mei}if(S.draft&&S.draft.prev){S.draft.prev.sei=S.draft.sei;S.draft.prev.mei=S.draft.mei}}
 const toTop=()=>{try{window.scrollTo(0,0)}catch(e){}};
 const ACT={
@@ -4676,7 +4676,7 @@ const ACT={
  legPl:v=>{syncNames();legToggle(S.draft,v)},
  setGrowth:v=>{syncNames();S.draft.growth=v;S.draft.prev=makePlayer(S.draft)},
  reroll:()=>{syncNames();if(S.draft.custom){S.draft.prev=makePlayer(S.draft);S.draft.n++}else S.draft=newDraft(S.draft)},
- start:()=>{syncNames();const p=S.draft.prev;p.sei=S.draft.sei;p.mei=S.draft.mei;if(S.draft.tkG&&tkN()>0){M.tickets.spS--;M.tkRoll=null;metaSave()}const lg=legApply(p,S.draft);messiPlan(p);if(lg.length)pushNews(`【伝説】${p.sei}${p.mei}、${lg.map(x=>x.n).join('・')}の教えを受ける`);const ih=inhRoll(S.draft,'pl');p.inh=ih.map(r=>r.k);ih.forEach(r=>{if(!p.skills.includes(r.k))p.skills.push(r.k)});S.p=p;if(ih.length)pushNews(`【継承】${p.sei}${p.mei}、${ih.map(r=>r.name+'から「'+SKILLS[r.k].n+'」').join('、')}を受け継ぐ`);S.draft=null;pushNews(`【高校】${p.school}の${p.pos}${p.sei}${p.mei}に注目集まる`);newSeason(true);toTop()},
+ start:()=>{syncNames();const p=S.draft.prev;p.sei=S.draft.sei;p.mei=S.draft.mei;if(S.draft.tkG){M.tkActive=null;metaSave()}const lg=legApply(p,S.draft);messiPlan(p);if(lg.length)pushNews(`【伝説】${p.sei}${p.mei}、${lg.map(x=>x.n).join('・')}の教えを受ける`);const ih=inhRoll(S.draft,'pl');p.inh=ih.map(r=>r.k);ih.forEach(r=>{if(!p.skills.includes(r.k))p.skills.push(r.k)});S.p=p;if(ih.length)pushNews(`【継承】${p.sei}${p.mei}、${ih.map(r=>r.name+'から「'+SKILLS[r.k].n+'」').join('、')}を受け継ぐ`);S.draft=null;pushNews(`【高校】${p.school}の${p.pos}${p.sei}${p.mei}に注目集まる`);newSeason(true);toTop()},
  setFocus:v=>{S.p.train.focus=v},
  setInt:v=>{S.p.train.int=v},
  toMonth:()=>{S.p.month=0;startMonth();toTop()},
@@ -5710,8 +5710,8 @@ const tkN=()=>(M.tickets&&M.tickets.spS)||0;
 function tkGrade(){M.tkRoll=M.tkRoll||(Math.random()<TK_SS?'SS':'S');return M.tkRoll}
 function tkBlock(d){
   if(!tkN()&&!d.tkG)return '';
-  return `<div class="tkbox ${d.tkG?'on':''}"><div><b>育成S以上確定チケット</b><span class="sub">${d.tkG?`使用中：この選手の伸びしろは<b class="gold">${d.tkG}</b>（「この選手で始める」でチケットを1枚使う）`:`持っている枚数：${tkN()}枚。使うと伸びしろがS以上になる（S 70%・SS 30%）`}</span></div>
-   <button class="btn ${d.tkG?'ghost':'red'}" data-act="${d.tkG?'tkOff':'tkOn'}">${d.tkG?'使わない':'チケットを使う'}</button></div>`;
+  return `<div class="tkbox ${d.tkG?'on':''}"><div><b>育成S以上確定チケット</b><span class="sub">${d.tkG?`使用済み：この選手の伸びしろは<b class="gold">${d.tkG}</b>。別の選手を探しても${d.tkG}のまま（もう戻せない）`:`持っている枚数：${tkN()}枚。使うと伸びしろがS以上になる（S 70%・SS 30%）。<b>一度使うと戻せない</b>`}</span></div>
+   ${d.tkG?'':'<button class="btn red" data-act="tkOn">チケットを使う</button>'}</div>`;
 }
 /* ---------- 育成キャラの交換：コードで友達にあげる ---------- */
 const giftable=()=>M.roster.filter(c=>c.from==='育成').concat(M.mgrs||[]);
@@ -5750,8 +5750,8 @@ function tradeHtml(){
   ${(M.sent||[]).length?`<details class="betteam"><summary>最近あげたキャラのコード（送り忘れたとき用）</summary>${M.sent.map((s,i)=>`<div class="label">${esc(s.name)}</div><textarea class="code" id="trs${i}" readonly>${esc(s.code)}</textarea><button class="opt" data-act="copyFrom" data-v="trs${i}">コピー</button>`).join('')}</details>`:''}`;
 }
 Object.assign(ACT,{
- tkOn:()=>{const d=S.draft;if(!d||!tkN())return;d.tkG=tkGrade();d.prev=makePlayer(d);syncNames()},
- tkOff:()=>{const d=S.draft;if(!d)return;d.tkG=null;d.prev=makePlayer(d);syncNames()},
+ // 押したらその場でチケットを使う（戻せない）。育成を始めるまで、どの選手を選んでもこの伸びしろ
+ tkOn:()=>{const d=S.draft;if(!d||d.tkG||!tkN())return;M.tickets.spS--;M.tkActive=tkGrade();M.tkRoll=null;d.tkG=M.tkActive;metaSave();d.prev=makePlayer(d);syncNames()},
  trSel:v=>{G.tr=G.tr||{};G.tr.sel=v||null;G.tr.msg=null},
  trMake:v=>{G.tr=G.tr||{};G.tr.msg='コードを作っている…';tradeMake(v).then(r=>{G.tr={code:r.code,name:r.name,msg:`${r.name}のコードができた。相手に送ってね`};render()}).catch(e=>{G.tr={msg:e.message};render()})},
  trTake:()=>{const t=document.getElementById('trin'),v=t?t.value:'';G.tr=G.tr||{};G.tr.msg='受け取っている…';tradeTake(v).then(r=>{G.tr={msg:`🎁 ${r.from}から「${r.name}」をもらった！ スカッドで使える`};render()}).catch(e=>{G.tr={msg:e.message};render()})},
