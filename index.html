@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-074635';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-082602';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -579,6 +579,8 @@ details.rule summary::after{content:'＋';opacity:.6}
 details.rule[open] summary::after{content:'−'}
 details.rule .rb{padding:0 14px 12px}
 details.rule .plan li{margin:6px 0;line-height:1.6}
+.matg{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin:14px 0 4px;padding:12px;border-radius:12px;border:1px solid rgba(212,160,23,.5);background:rgba(212,160,23,.08)}
+.matg>div{display:flex;flex-direction:column;gap:3px}.matg .btn{white-space:nowrap}
 
 </style>
 </head>
@@ -3218,13 +3220,18 @@ function legApply(p,d){
 }
 /* ガチャの種類（ピックアップ1%、ほかは育成素材） */
 const BANNERS={sasa:{card:()=>SASACHI,skill:()=>TABAKO_SKILL,short:'ささちー',head:['一服','覚醒']},gori:{card:()=>GORIMORI,skill:()=>UHHO_SKILL,short:'ゴリ森',head:['森の','番人']},kama:{pair:[KAMAPOKO,BATSUMARU],card:()=>KAMAPOKO,skill:()=>RENKEI_SKILL,short:'鎌ポコ＆丸尾',head:['老若','連携']},ich:{card:()=>ICHIKAWA,skill:()=>CAP_SKILL,short:'イチカワ',head:['主将','降臨']},shan:{card:()=>SHANCHI,skill:()=>EMP_SKILL,short:'シャン・チー',head:['帝国','開門']},mao:{card:()=>MAO,skill:()=>MAO_SKILL,short:'MAO',head:['黄金の','右足']},ink:{card:()=>INKANSU,skill:()=>STARTER_SKILL,short:'陰関数',head:['超','先発']},leg:{multi:true,card:()=>GLEGS[0],skill:()=>null,short:'レジェンド',head:['伝説','集結']}};
-function doGacha(n,free,bk){
+/* 素材ガチャ：育成素材を全種類100個ずつ使って、好きなガチャを1回。キャラが出る確率40% */
+const MATG_COST=100,MATG_PU=.4;
+const matgOk=()=>MATK.every(k=>M.mats[k]>=MATG_COST);
+function matgPull(BN){if(Math.random()<MATG_PU)return BN.multi?(Math.random()<LEG_PU/LEG_RATE?'pu':'pu2'):'pu';const x=Math.random()*99;return x<10?'m5':x<35?'m2':'m1'}
+function doGacha(n,free,bk,mat){
   const BN=BANNERS[bk]||BANNERS.ich;let pu=BN.card();
-  if(free){if(!freeReady())return null;M.freeDay=todayKey();n=10}
+  if(mat){if(!matgOk())return null;MATK.forEach(k=>M.mats[k]-=MATG_COST);n=1}
+  else if(free){if(!freeReady())return null;M.freeDay=todayKey();n=10}
   else{const cost=GACHA_COST*n;if(M.coins<cost)return null;M.coins-=cost}
   const out=[];
   for(let i=0;i<n;i++){
-    const k=pullOne(BN.multi?LEG_RATE:BN.pair?'pair':null);M.pulls++;
+    const k=mat?matgPull(BN):pullOne(BN.multi?LEG_RATE:BN.pair?'pair':null);M.pulls++;
     if(k==='pu'||k==='pu2'){if(BN.multi)pu=pick(GLEGS.filter(l=>k==='pu'?l.pu:!l.pu));if(BN.pair)pu=pick(BN.pair);
       M.puHits=M.puHits||{};M.puHits[pu.id]=(M.puHits[pu.id]||0)+1;
       if(!M.roster.some(c=>c.id===pu.id)){M.roster.unshift(JSON.parse(JSON.stringify({...pu,plus:{},enh:0,t:Date.now()})));out.push({type:'pu',id:pu.id,dup:false})}
@@ -4659,6 +4666,9 @@ H.gacha=()=>{
   <div class="gbar">${freeReady()?`<button class="btn red free" data-act="gachaFree">無料10連を引く（今日の分）</button>`:'<div class="freedone">今日の無料10連は受け取り済み。また明日。</div>'}<div>${coinPill()}<span class="sub">通算${M.pulls}回</span></div>
    <div class="seg c2"><button class="btn red" data-act="gacha" data-v="1" ${M.coins<GACHA_COST?'disabled':''}>1回 <small>100コイン</small></button><button class="btn red" data-act="gacha" data-v="10" ${M.coins<GACHA_COST*10?'disabled':''}>10回 <small>1,000コイン</small></button></div></div>
   ${resHtml}
+  <div class="matg"><div><b>素材ガチャ</b><span class="sub">育成素材を全種類${MATG_COST}個ずつ使って、このガチャを1回。キャラが出る確率<b class="gold">${Math.round(MATG_PU*100)}%</b>${BN.pair?'（2人のどちらか）':BN.multi?'（レジェンドのだれか）':''}</span>
+   <span class="sub">いちばん少ない素材：${Math.min(...MATK.map(k=>M.mats[k]))}/${MATG_COST}個</span></div>
+   <button class="btn red" data-act="gachaMat" ${matgOk()?'':'disabled'}>素材で1回引く</button></div>
   <div class="kick">手持ちの育成素材<span class="r">スカッドの「強化」で使う</span></div>
   <div class="mats">${MATK.map(k=>`<div class="mat"><b class="num">${M.mats[k]}</b><span>${MAT[k].n}</span><small>${MAT[k].s}用</small></div>`).join('')}</div>
   <div class="kick">排出率<span class="r">${BN.short}ガチャ</span></div>
@@ -4902,6 +4912,7 @@ function mainView(){
 Object.assign(ACT,{
  go:v=>{G.mode=v;if(v==='career'&&!['play','life','log'].includes(S.tab))S.tab='play';if(v==='mgr')G.mgTop=false;if(v==='squad'){G.sq.slot=null}if(v==='battle'&&G.bt.view!=='host'&&!(G.bt.view==='match'&&G.bt.play&&!G.bt.play.done))G.bt.view='menu';toTop()},
  gacha:v=>{syncInputs();const r=doGacha(+v,false,G.ga.bk||'ich');if(r){G.ga.res=r;G.ga.n++}},
+ gachaMat:()=>{const r=doGacha(1,false,G.ga.bk||'ich',true);if(r){G.ga.res=r;G.ga.n++}},
  gachaFree:()=>{const r=doGacha(10,true,G.ga.bk||'ich');if(r){G.ga.res=r;G.ga.n++}},
  gBanner:v=>{G.ga.bk=v;G.ga.res=null},
  sqTab:v=>{syncInputs();G.sq.tab=v},
@@ -5507,6 +5518,7 @@ function rulesHtml(){
     '通常のガチャ：ピックアップ選手1%・育成素材×5が10%・×2が25%・×1が64%',
     '鎌ポコ＆丸尾ガチャ：2人それぞれ1%（合計2%）',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
+    `素材ガチャ：育成素材を全種類${MATG_COST}個ずつ使うと、好きなガチャを1回引ける。キャラが出る確率は${Math.round(MATG_PU*100)}%`,
     '同じキャラの2枚目は、全種類の育成素材×2に変わる'
   ]))}
   ${sec('スカッド・強化',ul([
