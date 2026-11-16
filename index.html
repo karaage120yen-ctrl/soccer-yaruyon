@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-141041';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-143246';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -701,6 +701,11 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .c2r small{margin-left:6px;color:var(--muted);font-family:var(--num);font-size:13px}
 .c2r .pips{letter-spacing:2px;color:var(--accent);font-size:12px}
 .c2r .opt.sm{padding:4px 0;min-height:0;font-size:16px;line-height:1.4}
+.ntabs .opt{padding:6px 2px;font-size:12px}
+.natgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:340px;overflow:auto;padding:2px;margin-top:6px}
+.natgrid .opt{padding:7px 4px;font-size:12px;line-height:1.3}
+.natgrid .fl{display:block;font-size:18px}
+.natgrid .opt .d{font-size:10px}
 
 </style>
 </head>
@@ -4508,7 +4513,7 @@ function mgSeasonEnd(){
 }
 function mgOffers(){
   const m=MC.m,avg=MKEYS.reduce((s,k)=>s+m.st[k],0)/5,val=avg*.5+MC.rep*.45+14;
-  const cur=MC.club,pool=CLUBS.filter(c=>c.id!==cur&&c.rep<=val+2&&c.rep>=val-16);
+  const cur=MC.club,pool=CLUBS.filter(c=>c.id!==cur&&c.rep<=val+2&&c.rep>=val-16&&!LG[c.lg].ext);
   const w=c=>Math.exp(-Math.abs(c.rep-(val-3))/4);
   const res=[];const P=pool.slice();
   while(res.length<3&&P.length){let x=Math.random()*P.reduce((s,c)=>s+w(c),0),i=0;for(;i<P.length-1;i++){x-=w(P[i]);if(x<=0)break}res.push(P[i].id);P.splice(i,1)}
@@ -6275,11 +6280,13 @@ const POOL_EU=[['フランス',88],['スペイン',87],['イングランド',86]
 const POOL_SA=[['アルゼンチン',88],['ブラジル',87],['ウルグアイ',82],['コロンビア',80],['エクアドル',76],['ペルー',72],['チリ',72],['パラグアイ',71],['ベネズエラ',68],['ボリビア',62]];
 const POOL_AF=[['モロッコ',80],['セネガル',78],['ナイジェリア',76],['エジプト',75],['コートジボワール',75],['アルジェリア',74],['カメルーン',73],['ガーナ',72],['チュニジア',71],['マリ',71],['南アフリカ',68]];
 const POOL_NA=[['メキシコ',78],['アメリカ',78],['カナダ',75],['パナマ',70],['コスタリカ',70],['ジャマイカ',68],['ホンジュラス',66],['エルサルバドル',62]];
-function confPool(p){const c=NATN(p).conf;return c==='欧州'?POOL_EU:c==='南米'?POOL_SA:c==='アフリカ'?POOL_AF:c==='北中米'?POOL_NA:natOf(p)==='jp'?NAT_ASIA:[['日本',76],...NAT_ASIA]}
+function confPool(p){if(natOf(p)==='jp')return NAT_ASIA;const c=NATN(p).conf;
+  const l=NAT_REAL.filter(k=>NATIONS[k].conf===c&&!NATIONS[k].nofifa).map(k=>[NATIONS[k].cty,NATIONS[k].str]).sort((a,b)=>b[1]-a[1]).slice(0,16);
+  return l.length>=8?l:[...l,['日本',76],...NAT_ASIA].slice(0,16)}
 function nameOf(k){const N=NATIONS[k]||NATIONS.jp;if(!N.gn)return {sei:pick(SEI),mei:pick(MEI)};return {sei:pick(N.gn),mei:'・'+pick(N.sn)}}
 const fullName=(k)=>{const x=nameOf(k);return x.sei+x.mei};
 function nameFor(d){const x=nameOf(d.nation||'jp');d.sei=x.sei;d.mei=x.mei;if(d.prev){d.prev.sei=d.sei;d.prev.mei=d.mei}}
-function pickNation(prev){if(prev&&prev.natLock)return prev.nation;return wpick(NAT_KEYS,k=>k==='jp'?4:k==='war'||k==='poor'?.6:1)}
+function pickNation(prev){if(prev&&prev.natLock)return prev.nation;return wpick(NAT_KEYS,k=>k==='jp'?40:k==='war'||k==='poor'?.5:clamp(((NATIONS[k].str||60)-40)/12,.2,4))}
 const ctyKey=cty=>NAT_KEYS.find(k=>NATIONS[k].cty===cty)||(['ベルギー','オランダ'].includes(cty)?'nl':null);
 
 /* ----- 新しいリーグとクラブ ----- */
@@ -6318,11 +6325,13 @@ Object.assign(CITY,{
 ].forEach(([n,lg,r])=>CLUBS.push({id:CLUBS.length,n,lg,rep:cr(r)}));
 const HOME_LG={jp:'J3',br:'BRA',ar:'ARG',es:'ESP',it:'ITA',de:'GER',en:'ENG',nl:'NED',pt:'POR',ng:'NGA',kr:'KOR',us:'USA',war:'ZAR',poor:'TAR'};
 function offerCtyOk(p,cty){return cty===homeCty(p)||(p.flags&&p.flags.refugee&&['ドイツ','オランダ','ベルギー'].includes(cty))}
-function clubOk(p,c){const L=LG[c.lg];if(!L.ext||L.cty===homeCty(p))return true;if(['ZAR','TAR','NGA'].includes(c.lg))return false;return Math.random()<.5}
-function offerW(p,c){const k=natOf(p);if(k==='jp')return 1;const cty=LG[c.lg].cty;if(cty===homeCty(p))return 2.5;if(cty==='日本')return .25;return LG[c.lg].ext?.6:1}
+function clubOk(p,c){const L=LG[c.lg];if(!L.ext||L.cty===homeCty(p))return true;if(['ZAR','TAR'].includes(c.lg))return false;
+  if(L.gen||c.lg==='NGA'){const k=ctyKey(L.cty),N=k&&NATIONS[k];return !!N&&N.conf===NATN(p).conf&&Math.random()<.3}
+  return Math.random()<.5}
+function offerW(p,c){const k=natOf(p);if(k==='jp')return 1;const cty=LG[c.lg].cty;if(cty===homeCty(p))return 2.5;if(cty==='日本')return .25;return LG[c.lg].gen?.2:LG[c.lg].ext?.6:1}
 function visPen(p){const N=NATN(p);if(p.stage==='pro')return 0;return N.poor*10*(p.scout>=40?.5:1)}
 function noTry(p){return NATN(p).poor>=.3}
-function tryClub(p){const lg=HOME_LG[natOf(p)];const l=CLUBS.filter(c=>c.lg===lg).sort((a,b)=>a.rep-b.rep).slice(0,3);return l.length?pick(l):pick(CLUBS.filter(c=>c.lg==='J3'))}
+function tryClub(p){const lg=HOME_LG[natOf(p)]||'J3';const l=CLUBS.filter(c=>c.lg===lg).sort((a,b)=>a.rep-b.rep).slice(0,3);return l.length?pick(l):pick(CLUBS.filter(c=>c.lg==='J3'))}
 
 function c2Make(pl,d){
   const k=d.nation&&NATIONS[d.nation]?d.nation:'jp',N=NATIONS[k];pl.nation=k;
@@ -6330,7 +6339,7 @@ function c2Make(pl,d){
     for(const [s,v] of Object.entries(N.bias)){pl.cap[s]=clamp(pl.cap[s]+v*.5,30,SMAX);if(pl.capLim)pl.capLim[s]=Math.max(pl.capLim[s],Math.round(pl.cap[s]));pl.st[s]=clamp(pl.st[s]+v,25,Math.min(80,pl.cap[s]-4))}
     pl.school=pick(N.youth);pl.hist=[{n:pl.school,y0:2027}];pl.money=Math.round(20*(1-N.poor));
   }
-  if(N.poor||N.war)pl.hope=70;
+  if(N.poor>=.3||N.war)pl.hope=70;
   pl.mates=50;pl.fat=8;pl.oldInj=0;
   const key=POS[pl.pos].key;pl.alloc={[key]:2,[key==='phy'?'spd':'phy']:1};
   pl.rv=mkRival(pl,k);
@@ -6378,14 +6387,14 @@ function c2Season(p,cur,club,first){
   if(p.mates==null)p.mates=50;
   if(Math.random()<.78){const k=ctyKey(L.cty==='*'?homeCty(p):L.cty)||natOf(p);p.posR={n:fullName(k),o:Math.round(clamp(club.rep+rnd(-2,5),35,95)),age:p.stage==='pro'?ri(19,32):p.age+ri(0,1)}}else p.posR=null;
   if(N.war&&cur.teams&&L.cty===N.cty&&Math.random()<.45){const s=ri(1,6),n=ri(2,3);cur.susp={};for(let i=s;i<Math.min(10,s+n);i++)cur.susp[i]=1;cur.notes.push('情勢の悪化で、リーグが一時中断した')}
-  if((N.poor||N.war)&&p.hope==null&&p.stage!=='pro')p.hope=70;
+  if((N.poor>=.3||N.war)&&p.hope==null&&p.stage!=='pro')p.hope=70;
   if(p.stage==='pro'&&p.hope!=null)p.hope=null;
 }
 function natPen(p){const v=p.rv;if(!v||v.nat!==natOf(p)||v.pos!==p.pos)return 0;const d=v.o-ovrOf(p);return d>0?Math.min(3,d/3):0}
 
 /* ----- ライバル年代記 ----- */
 function mkRival(pl,k){
-  const nat=Math.random()<.55?k:pick(NAT_REAL.filter(x=>x!==k));
+  const nat=Math.random()<.55&&!['war','poor'].includes(k)?k:wpick(NAT_REAL.filter(x=>x!==k),x=>clamp((NATIONS[x].str-45)/8,.1,5));
   const pos=Math.random()<.6?pl.pos:pick(['FW','MF','DF','GK'].filter(x=>x!==pl.pos));
   const N=NATIONS[nat];
   return {n:fullName(nat),nat,cty:N.n,pos,o:Math.round(ovrOf(pl)+rnd(-3,3)),pot:ri(84,95),g:0,as:0,caps:0,aw:[],h2h:{w:0,d:0,l:0},cid:null,yth:N.youth?pick(N.youth):pick(SCHOOLS)};
@@ -6398,7 +6407,7 @@ function rivalSeason(p){
   let moved='';
   if(a>=18&&(v.cid==null||Math.random()<.28)){
     const home=NATIONS[v.nat].cty;
-    let pool=CLUBS.filter(c=>c.rep<=v.o+2&&c.rep>=v.o-9&&(a>=21||LG[c.lg].cty===home)&&!['ZAR','TAR'].includes(c.lg));
+    let pool=CLUBS.filter(c=>c.rep<=v.o+2&&c.rep>=v.o-9&&(a>=21||LG[c.lg].cty===home)&&!['ZAR','TAR'].includes(c.lg)&&(!LG[c.lg].gen||LG[c.lg].cty===home));
     const myLg=p.stage==='pro'?CLUBS[p.club].lg:null,same=pool.filter(c=>c.lg===myLg&&c.id!==p.club);
     if(same.length&&Math.random()<.45)pool=same;
     if(!pool.length)pool=CLUBS.filter(c=>LG[c.lg].cty===home);
@@ -6479,10 +6488,12 @@ function c2Roll(p){
   if(p.age>=30&&!p.flags.vetAsk&&Math.random()<.4){p.flags.vetAsk=1;return 'sp:vet'}
   if(p.coach<30&&!off&&Math.random()<.3)return 'sp:coach';
   if(p.posR&&p.posR.o>=ovrOf(p)-2&&!off&&Math.random()<.1)return 'sp:posr';
+  const c3=typeof c3Roll==='function'?c3Roll(p):null;if(c3)return c3;
   if(natOf(p)!=='jp'&&Math.random()<.25){const c=ctx(p);const ids=EV.filter(e=>e.rg&&e.st.includes(p.stage)&&(!e.when||e.when(c))&&(!e.mo||e.mo.some(x=>x>=m&&x<=turnEnd(m)))&&!(p.seen[e.id]!=null&&p.season-p.seen[e.id]<2));if(ids.length)return pick(ids).id}
   return null;
 }
 function spEv2(id,p){
+  const e3=typeof c3Ev==='function'?c3Ev(id,p):null;if(e3)return e3;
   if(id==='sp:clutch')return c2Clutch(p);
   if(id==='sp:vet')return {id,t:'30代の分岐点',x:`${p.age}歳。トップスピードが少しずつ落ちてきたのが自分でもわかる。走り方を変えるか、このまま走り続けるか。`,ch:[
     {l:'経験と頭脳で勝負するスタイルへ',d:'スピードの衰えが半分に・パスとテクニックの限界+',pr:()=>1,ok:{m:'ポジショニングと読みで勝負する。若手が「どうしていつもそこにいるんですか」と聞いてくるようになった。',fx:{vet:1}},ng:{m:'',fx:{}}},
@@ -6518,6 +6529,7 @@ function evOk(e,p){
 
 /* ----- 地域ごとの出来事 ----- */
 const NK=k=>c=>natOf(c.p)===k;
+const WARC=c=>!!NATN(c.p).war,POORC=x=>c=>NATN(c.p).poor>=x;
 const NKS=(ks,f)=>c=>ks.includes(natOf(c.p))&&(!f||f(c));
 const RG_EV=[
  // ブラジル
@@ -6540,10 +6552,10 @@ const RG_EV=[
  {id:'rg_ar_clasico',st:['hs','pro'],when:NK('ar'),t:'宿敵とのダービー',x:'街を二分するダービー。スタンドの紙吹雪で前が見えない。',ch:[
   {l:'闘志をむき出しにする',d:'',pr:c=>.55+(c.p.st.phy-55)/150,ok:{m:'最初のタックルでスタンドに火がついた。チームは勝ち、英雄扱いだ。',fx:{pop:8,coach:5,mates:5}},ng:{m:'熱くなりすぎて足を痛めた。',fx:{inj:3,coach:-4}}},
   {l:'冷静にボールを動かす',d:'',pr:c=>.6+(c.p.st.pas-55)/150,ok:{m:'熱狂の中で、ひとりだけ時間が止まったようにパスをさばいた。',fx:{pas:1,pop:4}},ng:{m:'「腰抜け」と野次られた。',fx:{pop:-3}}}]},
- {id:'rg_ar_mate',st:['hs','uni','pro'],when:NK('ar'),t:'マテ茶の回し飲み',x:'ロッカールームでマテ茶が回ってきた。新入りが受け取るかどうか、みんなが見ている。',ch:[
+ {id:'rg_ar_mate',st:['hs','uni','pro'],when:NKS(['ar','uy','py']),t:'マテ茶の回し飲み',x:'ロッカールームでマテ茶が回ってきた。新入りが受け取るかどうか、みんなが見ている。',ch:[
   {l:'笑って受け取る',d:'',pr:()=>1,ok:{m:'「これでお前も仲間だ」と背中を叩かれた。',fx:{mates:10}},ng:{m:'',fx:{}}},
   {l:'遠慮する',d:'',pr:()=>1,ok:{m:'少し空気が冷えた気がする。',fx:{mates:-4,sta:2}},ng:{m:'',fx:{}}}]},
- {id:'rg_ar_potrero',st:['hs'],when:NK('ar'),t:'ポトレロ（空き地）の掟',x:'石ころだらけの空き地。負けたほうが次の試合を待つルールだ。',ch:[
+ {id:'rg_ar_potrero',st:['hs'],when:NKS(['ar','uy']),t:'ポトレロ（空き地）の掟',x:'石ころだらけの空き地。負けたほうが次の試合を待つルールだ。',ch:[
   {l:'夜まで勝ち続ける',d:'',pr:c=>.5+(c.p.st.tec-55)/120,ok:{m:'日が暮れるまでコートを譲らなかった。',fx:{tec:2,sho:1}},ng:{m:'早々に負けて、ずっと待たされた。',fx:{sta:-6,cond:-3}}},
   {l:'年下にコツを教える',d:'',pr:()=>1,ok:{m:'教えることで、自分の頭も整理された。',fx:{pas:1,cond:4}},ng:{m:'',fx:{}}}]},
  {id:'rg_ar_infl',st:['hs','uni','pro'],when:NK('ar'),t:'物価がどんどん上がる',x:'物価が毎月のように上がり、手元のお金の価値がみるみる下がっていく。',ch:[
@@ -6573,7 +6585,7 @@ const RG_EV=[
  {id:'rg_de_center',st:['hs'],when:NK('de'),t:'育成センターの選抜',x:'地域の育成センターに選ばれた。週2回、プロのコーチが細かく指導してくれる。',ch:[
   {l:'戦術理解を深める',d:'',pr:()=>.75,ok:{m:'ポジショニングの基準がはっきりした。',fx:{pas:1,def:1,scout:5}},ng:{m:'情報量に圧倒された。',fx:{scout:2}}},
   {l:'フィジカル強化に励む',d:'',pr:()=>.75,ok:{m:'体幹トレーニングで当たり負けしなくなった。',fx:{phy:2}},ng:{m:'筋肉痛で1週間動けなかった。',fx:{sta:-6}}}]},
- {id:'rg_de_snow',st:['hs','uni','pro'],mo:[4,5],when:NKS(['de','nl','kr']),t:'雪の中の練習',x:'気温マイナス10度。ピッチは真っ白で、吐く息が凍る。',ch:[
+ {id:'rg_de_snow',st:['hs','uni','pro'],mo:[4,5],when:c=>{const N=NATN(c.p);return ['nordic','east'].includes(N.arch)||N.arch==='power'&&N.conf==='欧州'||['de','nl','kr','kp','mn','kz','ca'].includes(natOf(c.p))},t:'雪の中の練習',x:'気温マイナス10度。ピッチは真っ白で、吐く息が凍る。',ch:[
   {l:'いつも通り全力で',d:'',pr:()=>.65,ok:{m:'寒さに負けない体になってきた。',fx:{phy:1,coach:3}},ng:{m:'凍ったピッチで足をひねった。',fx:{inj:2}}},
   {l:'室内で調整する',d:'',pr:()=>1,ok:{m:'ジムで黙々と体を作った。',fx:{sta:4}},ng:{m:'',fx:{}}}]},
  {id:'rg_de_disc',st:['hs','uni','pro'],when:NK('de'),t:'時間厳守',x:'集合に1分遅れたチームメイトが、その日の練習から外された。ドイツでは規律がすべてだ。',ch:[
@@ -6586,7 +6598,7 @@ const RG_EV=[
  {id:'rg_en_tabloid',st:['pro'],when:NK('en'),t:'タブロイド紙の記者',x:'夜の街で写真を撮られた。明日の一面に何が書かれるかわからない。',ch:[
   {l:'笑顔で取材に応じる',d:'',pr:()=>.5,ok:{m:'「好青年」の見出しが躍った。',fx:{pop:6}},ng:{m:'切り取られた一言が炎上した。',fx:{pop:-6,coach:-3}}},
   {l:'無視して帰る',d:'',pr:()=>.7,ok:{m:'特に記事にはならなかった。',fx:{}},ng:{m:'「傲慢」と書かれた。',fx:{pop:-3}}}]},
- {id:'rg_en_rain',st:['hs','uni','pro'],when:NKS(['en','de','nl']),t:'横殴りの雨',x:'雨と風でボールがまっすぐ転がらない。それでも試合は中止にならない。',ch:[
+ {id:'rg_en_rain',st:['hs','uni','pro'],when:NKS(['en','de','nl','gbs','gbw','gbn','ie','be']),t:'横殴りの雨',x:'雨と風でボールがまっすぐ転がらない。それでも試合は中止にならない。',ch:[
   {l:'体をぶつけて戦う',d:'',pr:()=>.6,ok:{m:'泥だらけで競り合いに勝ち続けた。',fx:{phy:2}},ng:{m:'滑って膝を打った。',fx:{inj:2}}},
   {l:'シンプルにつなぐ',d:'',pr:()=>.7,ok:{m:'難しいピッチほど、基本が生きる。',fx:{pas:1}},ng:{m:'水たまりでボールが止まった。',fx:{}}}]},
  // オランダ・ポルトガル
@@ -6602,16 +6614,16 @@ const RG_EV=[
  {id:'rg_pt_fado',st:['hs','uni','pro'],when:NK('pt'),t:'ファドの夜',x:'港町の小さな店で、ファドの哀しい歌声を聴いた。',ch:[
   {l:'静かに聴き入る',d:'',pr:()=>1,ok:{m:'胸の奥が熱くなった。明日もがんばろう。',fx:{cond:6}},ng:{m:'',fx:{}}}]},
  // ナイジェリア
- {id:'rg_ng_sand',st:['hs'],w:2,when:NK('ng'),t:'砂のピッチ',x:'ボールはすり減り、ゴールは木の枝。裸足の子も多い。でも誰もが全力で走る。',ch:[
+ {id:'rg_ng_sand',st:['hs'],w:2,when:c=>natOf(c.p)==='ng'||NATN(c.p).arch==='afr'&&NATN(c.p).poor>=.3,t:'砂のピッチ',x:'ボールはすり減り、ゴールは木の枝。裸足の子も多い。でも誰もが全力で走る。',ch:[
   {l:'裸足で走り回る',d:'',pr:()=>.7,ok:{m:'砂に足を取られながら走り続けた。脚力がついた。',fx:{spd:2,phy:1}},ng:{m:'石で足の裏を切った。',fx:{inj:2}}},
   {l:'ボールの手入れを学ぶ',d:'',pr:()=>1,ok:{m:'縫い直したボールは、前よりまっすぐ転がった。',fx:{tec:1}},ng:{m:'',fx:{}}}]},
- {id:'rg_ng_power',st:['hs','uni','pro'],when:NKS(['ng','war','poor']),t:'停電の夜',x:'また停電だ。試合の映像を見ようと思っていたのに、街は真っ暗になった。',ch:[
+ {id:'rg_ng_power',st:['hs','uni','pro'],when:c=>NATN(c.p).poor>=.3||WARC(c),t:'停電の夜',x:'また停電だ。試合の映像を見ようと思っていたのに、街は真っ暗になった。',ch:[
   {l:'暗闇で筋トレ',d:'',pr:()=>1,ok:{m:'腕立て、スクワット、腹筋。数えながら眠くなった。',fx:{phy:1}},ng:{m:'',fx:{}}},
   {l:'早めに寝る',d:'',pr:()=>1,ok:{m:'星がいつもよりきれいだった。',fx:{sta:6}},ng:{m:'',fx:{}}}]},
- {id:'rg_ng_fake',st:['hs'],when:NKS(['ng','br','poor']),t:'「欧州のスカウト」を名乗る男',x:'「手数料を払えばヨーロッパのクラブを紹介する」という男が現れた。仲介料は家族の貯金ほどだ。',ch:[
+ {id:'rg_ng_fake',st:['hs'],when:c=>NATN(c.p).poor>=.25,t:'「欧州のスカウト」を名乗る男',x:'「手数料を払えばヨーロッパのクラブを紹介する」という男が現れた。仲介料は家族の貯金ほどだ。',ch:[
   {l:'信じて払う',d:'',pr:()=>.08,ok:{m:'驚いたことに本物だった。連絡先がクラブに渡った。',fx:{scout:20,hope:15}},ng:{m:'男は二度と現れなかった。家族の貯金は消えた。',fx:{money:-30,hope:-15,cond:-8}}},
   {l:'断って本物のテストを待つ',d:'',pr:()=>1,ok:{m:'近所の大人が「正しい判断だ」と言ってくれた。',fx:{hope:3}},ng:{m:'',fx:{}}}]},
- {id:'rg_ng_family',st:['hs','uni','pro'],when:NKS(['ng','br']),t:'大家族の期待',x:'親戚一同が集まり、「お前が一族の希望だ」と肩を叩かれた。',ch:[
+ {id:'rg_ng_family',st:['hs','uni','pro'],when:c=>['アフリカ','南米'].includes(NATN(c.p).conf),t:'大家族の期待',x:'親戚一同が集まり、「お前が一族の希望だ」と肩を叩かれた。',ch:[
   {l:'期待を力に変える',d:'',pr:()=>.6,ok:{m:'背負うものがある人間は強い。',fx:{cond:8,hope:8}},ng:{m:'その夜、眠れなかった。',fx:{cond:-6}}},
   {l:'重圧を打ち明ける',d:'',pr:()=>1,ok:{m:'祖母が「好きなようにやりなさい」と笑った。',fx:{cond:3}},ng:{m:'',fx:{}}}]},
  // 韓国
@@ -6632,44 +6644,44 @@ const RG_EV=[
   {l:'機内でしっかり眠る',d:'',pr:()=>.7,ok:{m:'着いた瞬間から体が動いた。',fx:{sta:4}},ng:{m:'まったく眠れなかった。',fx:{fat:10}}},
   {l:'機内で映像研究',d:'',pr:()=>1,ok:{m:'相手の右SBの癖を見つけた。',fx:{pas:1,fat:6}},ng:{m:'',fx:{}}}]},
  // 紛争の続く国（架空）
- {id:'rg_war_siren',st:['hs','uni','pro'],w:2,when:NK('war'),t:'練習中の警報',x:'遠くで警報が鳴り、練習は中断された。避難所で、みんな黙ってボールを抱えていた。',ch:[
+ {id:'rg_war_siren',st:['hs','uni','pro'],w:2,when:WARC,t:'練習中の警報',x:'遠くで警報が鳴り、練習は中断された。避難所で、みんな黙ってボールを抱えていた。',ch:[
   {l:'仲間を励まし続ける',d:'',pr:()=>1,ok:{m:'小さな声で応援歌を歌った。一人、また一人と声が重なった。',fx:{mates:10,cond:-4,hope:4}},ng:{m:'',fx:{}}},
   {l:'静かに祈る',d:'',pr:()=>1,ok:{m:'朝が来て、警報は止んだ。',fx:{cond:-6}},ng:{m:'',fx:{}}}]},
- {id:'rg_war_pitch',st:['hs','pro'],when:NK('war'),t:'グラウンドが使えない',x:'グラウンドが立ち入り禁止になった。練習できるのは、ひびの入った学校の中庭だけだ。',ch:[
+ {id:'rg_war_pitch',st:['hs','pro'],when:WARC,t:'グラウンドが使えない',x:'グラウンドが立ち入り禁止になった。練習できるのは、ひびの入った学校の中庭だけだ。',ch:[
   {l:'中庭で工夫して練習',d:'',pr:()=>.7,ok:{m:'狭い場所でのボールタッチが、驚くほど上達した。',fx:{tec:1,hope:3}},ng:{m:'段差につまずいて足首をひねった。',fx:{inj:2}}},
   {l:'しばらく休む',d:'',pr:()=>1,ok:{m:'体は休まったが、心は焦るばかりだ。',fx:{sta:6,hope:-6}},ng:{m:'',fx:{}}}]},
- {id:'rg_war_ngo',st:['hs'],when:NKS(['war','poor']),t:'国際NGOのサッカー教室',x:'海外のNGOがサッカー教室を開いた。ボランティアのコーチの中には、元プロもいるらしい。',ch:[
+ {id:'rg_war_ngo',st:['hs'],when:c=>WARC(c)||NATN(c.p).poor>=.5,t:'国際NGOのサッカー教室',x:'海外のNGOがサッカー教室を開いた。ボランティアのコーチの中には、元プロもいるらしい。',ch:[
   {l:'本気でプレーを見せる',d:'',pr:c=>.5+(c.ovr-50)/60,ok:{m:'元プロのコーチが「君の映像を知り合いのクラブに送る」と言った。',fx:{scout:15,hope:15}},ng:{m:'緊張で思うように動けなかった。それでも楽しかった。',fx:{scout:4,hope:4}}},
   {l:'子どもたちに教える側に回る',d:'',pr:()=>1,ok:{m:'小さな子たちの笑顔が、何よりの力になった。',fx:{pas:1,hope:8,pop:2}},ng:{m:'',fx:{}}}]},
- {id:'rg_war_family',st:['hs','uni','pro'],when:NK('war'),t:'家族の安否',x:'故郷の町と連絡が取れなくなった。電話は何日もつながらない。',ch:[
+ {id:'rg_war_family',st:['hs','uni','pro'],when:WARC,t:'家族の安否',x:'故郷の町と連絡が取れなくなった。電話は何日もつながらない。',ch:[
   {l:'練習を休んで連絡を待つ',d:'',pr:()=>.8,ok:{m:'数日後、ようやく電話がつながった。家族は無事だった。',fx:{absent:3,cond:4}},ng:{m:'家族は隣国へ避難したと知った。しばらく会えない。',fx:{absent:3,cond:-8,hope:-6}}},
   {l:'ボールを蹴って気を紛らわす',d:'',pr:()=>.8,ok:{m:'練習の後、無事を知らせるメッセージが届いた。',fx:{cond:2}},ng:{m:'何も手につかなかった。',fx:{cond:-10}}}]},
- {id:'rg_war_flee',st:['hs','uni','pro'],when:NKS(['war'],c=>!c.p.flags.refugee&&c.p.age<=24),t:'国を離れる決断',x:'情勢は悪くなる一方だ。家族は「お前だけでも国外でサッカーを続けなさい」と言う。',ch:[
+ {id:'rg_war_flee',st:['hs','uni','pro'],when:c=>WARC(c)&&!c.p.flags.refugee&&c.p.age<=24,t:'国を離れる決断',x:'情勢は悪くなる一方だ。家族は「お前だけでも国外でサッカーを続けなさい」と言う。',ch:[
   {l:'国外へ渡り、難民として再出発する',d:'欧州のクラブから声がかかりやすくなる',pr:()=>.7,ok:{m:'長い旅の末、ヨーロッパの小さな町にたどり着いた。地元のクラブが練習に参加させてくれた。',fx:{refugee:1,hope:12}},ng:{m:'国境で足止めされ、戻るしかなかった。',fx:{hope:-10,cond:-8,money:-10}}},
   {l:'故郷に残る',d:'',pr:()=>1,ok:{m:'この国でボールを蹴り続けることが、自分の答えだ。',fx:{hope:-4,mates:8,pop:3}},ng:{m:'',fx:{}}}]},
- {id:'rg_war_truce',st:['hs','pro'],when:NK('war'),t:'停戦の日の試合',x:'一時的な停戦が決まり、街の広場で試合が開かれた。何千人もの人が集まった。',ch:[
+ {id:'rg_war_truce',st:['hs','pro'],when:WARC,t:'停戦の日の試合',x:'一時的な停戦が決まり、街の広場で試合が開かれた。何千人もの人が集まった。',ch:[
   {l:'みんなのためにゴールを狙う',d:'',pr:c=>.5+(c.p.st.sho-55)/100,ok:{m:'ゴールが決まった瞬間、広場じゅうが抱き合った。',fx:{pop:12,hope:15,cond:8}},ng:{m:'ゴールは奪えなかった。でも誰も責めなかった。',fx:{hope:5,cond:2}}},
   {l:'全員にボールを回す',d:'',pr:()=>1,ok:{m:'子どもからお年寄りまで、全員がボールに触れた。',fx:{mates:10,hope:10}},ng:{m:'',fx:{}}}]},
- {id:'rg_war_league',st:['pro'],when:NK('war'),t:'リーグ中断',x:'国内リーグが無期限で中断された。給料の支払いも止まった。',ch:[
+ {id:'rg_war_league',st:['pro'],when:WARC,t:'リーグ中断',x:'国内リーグが無期限で中断された。給料の支払いも止まった。',ch:[
   {l:'海外クラブのテストに申し込む',d:'',pr:c=>.3+(c.ovr-55)/60,ok:{m:'映像を送った海外クラブから、返事が届いた。',fx:{scout:18}},ng:{m:'返事は来なかった。',fx:{money:-10}}},
   {l:'再開を信じて待つ',d:'',pr:()=>1,ok:{m:'仲間と自主練を続けた。',fx:{sta:8,money:-15,mates:5}},ng:{m:'',fx:{}}}]},
  // 貧しい国（架空）
- {id:'rg_pr_shoes',st:['hs'],w:2,when:NK('poor'),t:'スパイクがない',x:'1足しかないスパイクの底がはがれた。新しいのを買うお金はない。',ch:[
+ {id:'rg_pr_shoes',st:['hs'],w:2,when:POORC(.5),t:'スパイクがない',x:'1足しかないスパイクの底がはがれた。新しいのを買うお金はない。',ch:[
   {l:'テープで巻いて使い続ける',d:'',pr:()=>.6,ok:{m:'不格好だが、まだ戦える。',fx:{hope:2}},ng:{m:'試合中にテープが切れて転んだ。',fx:{inj:2}}},
   {l:'裸足でプレーする',d:'',pr:()=>.7,ok:{m:'ボールの感触が足の裏に直接伝わる。',fx:{tec:1,spd:1}},ng:{m:'足の裏を痛めた。',fx:{inj:3}}}]},
- {id:'rg_pr_work',st:['hs','uni'],w:2,when:NKS(['poor','war','ng']),t:'家計を支える',x:'父が体を壊し、家族の収入が途絶えた。長男の自分が働くしかない。',ch:[
+ {id:'rg_pr_work',st:['hs','uni'],w:2,when:c=>NATN(c.p).poor>=.35||WARC(c),t:'家計を支える',x:'父が体を壊し、家族の収入が途絶えた。長男の自分が働くしかない。',ch:[
   {l:'昼は働き、夜にボールを蹴る',d:'',pr:()=>1,ok:{m:'くたくたの体で、月明かりの下ボールを蹴った。',fx:{money:12,sta:-10,fat:12,hope:-6}},ng:{m:'',fx:{}}},
   {l:'サッカーを続けさせてほしいと頼む',d:'',pr:()=>.45,ok:{m:'母は「あなたの夢は家族の夢」と言ってくれた。',fx:{hope:8,cond:4}},ng:{m:'家族の暮らしを思うと、何も言えなくなった。',fx:{hope:-14,cond:-8}}}]},
- {id:'rg_pr_hunger',st:['hs'],when:NK('poor'),t:'食べ物が足りない',x:'冬の間、食事は1日2回。体が思うように大きくならない。',ch:[
+ {id:'rg_pr_hunger',st:['hs'],when:POORC(.5),t:'食べ物が足りない',x:'冬の間、食事は1日2回。体が思うように大きくならない。',ch:[
   {l:'食堂を手伝ってまかないをもらう',d:'',pr:()=>1,ok:{m:'温かいスープが体にしみた。',fx:{phy:1,sta:-4,money:3}},ng:{m:'',fx:{}}},
   {l:'がまんして練習を続ける',d:'',pr:()=>.5,ok:{m:'空腹の中でも集中を切らさなかった。',fx:{key:1}},ng:{m:'練習中にふらついた。',fx:{phy:-1,cond:-6,hope:-4}}}]},
- {id:'rg_pr_coach',st:['hs'],when:NK('poor'),t:'村に来た元選手',x:'町からひとりの元選手が村に来て、子どもたちを指導してくれることになった。',ch:[
+ {id:'rg_pr_coach',st:['hs'],when:POORC(.5),t:'村に来た元選手',x:'町からひとりの元選手が村に来て、子どもたちを指導してくれることになった。',ch:[
   {l:'基礎から教わる',d:'',pr:()=>1,ok:{m:'止める、蹴る。当たり前のことの奥深さを知った。',fx:{tec:1,pas:1,hope:8,scout:3}},ng:{m:'',fx:{}}},
   {l:'試合形式で鍛えてもらう',d:'',pr:()=>.7,ok:{m:'「お前は町でも通用する」と言われた。',fx:{sho:1,spd:1,hope:6}},ng:{m:'',fx:{hope:2}}}]},
- {id:'rg_pr_bus',st:['hs'],when:NK('poor'),t:'都会のテストへ',x:'都会のクラブのテストに行くには、バスで丸1日かかる。運賃は家族の1か月分の食費だ。',ch:[
+ {id:'rg_pr_bus',st:['hs'],when:POORC(.5),t:'都会のテストへ',x:'都会のクラブのテストに行くには、バスで丸1日かかる。運賃は家族の1か月分の食費だ。',ch:[
   {l:'借金してでも行く',d:'',pr:c=>.25+(c.ovr-50)/60,ok:{m:'テストに合格の手応え。クラブの人が名前をメモした。',fx:{scout:20,hope:20,money:-10}},ng:{m:'結果は不合格。帰りのバスで、窓の外ばかり見ていた。',fx:{money:-10,hope:-15}}},
   {l:'今回は見送る',d:'',pr:()=>1,ok:{m:'次のチャンスは、いつ来るのだろう。',fx:{hope:-8}},ng:{m:'',fx:{}}}]},
- {id:'rg_pr_scholar',st:['hs'],when:NKS(['poor','war'],c=>(c.p.hope||0)>=40),t:'奨学金の話',x:'海外の財団が、才能ある子どもにサッカー奨学金を出すらしい。選考は一度きりだ。',ch:[
+ {id:'rg_pr_scholar',st:['hs'],when:c=>(WARC(c)||NATN(c.p).poor>=.5)&&(c.p.hope||0)>=40,t:'奨学金の話',x:'海外の財団が、才能ある子どもにサッカー奨学金を出すらしい。選考は一度きりだ。',ch:[
   {l:'選考に挑む',d:'合格すれば日本の大学への留学も選べる',pr:c=>.2+(c.ovr-50)/50,ok:{m:'合格の手紙が届いた。家族みんなで泣いた。',fx:{scholar:1,uni:1,hope:20,scout:10}},ng:{m:'選ばれなかった。でも、挑んだことは誇りだ。',fx:{hope:-8}}},
   {l:'家族のそばにいる',d:'',pr:()=>1,ok:{m:'今はここで、できることをやる。',fx:{cond:3}},ng:{m:'',fx:{}}}]},
  {id:'rg_pr_fest',st:['hs','uni','pro'],when:NKS(['poor','war']),t:'村の祭りの試合',x:'年に一度の祭りで、隣村との試合が開かれる。村じゅうが応援に来る。',ch:[
@@ -6818,12 +6830,19 @@ function campExtra(p){
   ${v?`<div class="kick">ライバル年代記</div><p class="note"><b>${esc(v.n)}</b>（${esc(v.cty)}・${v.pos}）　所属：${esc(rvClub(v))}　総合${v.o}${v.g?`・通算${v.g}得点`:''}${v.caps?`・代表${v.caps}試合`:''}${v.aw.length?`・金球賞${v.aw.length}回`:''}<br>直接対決 ${v.h2h.w}勝${v.h2h.d}分${v.h2h.l}敗</p>`:''}
   ${natOf(p)!=='jp'?`<p class="sub">出身：${N.fl} ${esc(N.n)}　${esc(N.d)}${p.flags.refugee?'（いまは国外で暮らしている）':''}</p>`:''}`;
 }
+const NAT_TABS=[['A','アジア'],['E','欧州'],['F','アフリカ'],['N','北中米'],['S','南米'],['O','オセアニア'],['X','架空']];
 function natPick(d){
-  return `<div class="label">国籍・出身</div><div class="seg c3">${NAT_KEYS.map(k=>{const N=NATIONS[k];return `<button class="opt" aria-pressed="${(d.nation||'jp')===k}" data-act="setNat" data-v="${k}">${N.fl} ${N.n}<span class="d">${N.poor>=.5?'貧困・紛争':N.poor>=.25?'貧しい地区も':N.conf}</span></button>`}).join('')}</div>`;
+  const cur=NATIONS[d.nation||'jp'],tab=d.natTab||cur.cf||'A';
+  const list=NAT_KEYS.filter(k=>(NATIONS[k].cf||'X')===tab).sort((a,b)=>NATIONS[b].str-NATIONS[a].str);
+  return `<div class="label">国籍・出身<span style="float:right;color:var(--muted);font-size:11px">${NAT_KEYS.length}の国と地域</span></div>
+  <div class="seg c4 ntabs">${NAT_TABS.map(([c,n])=>`<button class="opt" aria-pressed="${tab===c}" data-act="natTab" data-v="${c}">${n}</button>`).join('')}</div>
+  <div class="natgrid">${list.map(k=>{const N=NATIONS[k];return `<button class="opt" aria-pressed="${(d.nation||'jp')===k}" data-act="setNat" data-v="${k}"><span class="fl">${N.fl}</span>${N.n}<span class="d">${'★'.repeat(clamp(Math.round((N.str-30)/12),1,5))}${N.war?'・紛争':N.poor>=.5?'・貧困':N.poor>=.3?'・貧しさ':''}</span></button>`}).join('')}</div>
+  <button class="linkbtn center" data-act="natRand">ランダムに選ぶ</button>`;
 }
 function natInfo(d){
   const N=NATIONS[d.nation||'jp'],b=Object.entries(N.bias).map(([k,v])=>`${lbl(k)}${v>0?'+':''}${v}`).join(' ');
-  return `<p class="note">出身：<b>${N.fl} ${esc(N.n)}</b>　${esc(N.d)}${b?`<br><small>地域の特色：${b}</small>`:''}${N.poor>=.3?'<br><b style="color:var(--down)">この地域では、プロになれないまま夢をあきらめることもある。</b>':''}</p>`;
+  const ex=[N.arch&&typeof ARCH_N!=='undefined'?ARCH_N[N.arch]:'',N.sport?`人気スポーツ：${N.sport}`:'',N.nofifa?'FIFA未加盟':''].filter(Boolean).join('・');
+  return `<p class="note">出身：<b>${N.fl} ${esc(N.n)}</b>（${esc(N.conf)}）　${esc(N.d)}${b?`<br><small>地域の特色：${ex?esc(ex)+'／':''}${b}</small>`:''}${N.poor>=.3?'<br><b style="color:var(--down)">この地域では、プロになれないまま夢をあきらめることもある。</b>':''}</p>`;
 }
 function rules2(sec,ul){
   return sec('育成：人生のドラマ',ul([
@@ -6846,6 +6865,8 @@ function locH(h){
 
 /* ----- 操作 ----- */
 Object.assign(ACT,{
+ natTab:v=>{S.draft.natTab=v},
+ natRand:()=>{syncNames();const d=S.draft;d.natLock=0;d.nation=pickNation(null);d.natTab=NATIONS[d.nation].cf;d.natLock=1;nameFor(d);d.prev=makePlayer(d);d.prev.sei=d.sei;d.prev.mei=d.mei},
  setNat:v=>{syncNames();const d=S.draft;d.nation=v;d.natLock=1;nameFor(d);d.prev=makePlayer(d);d.prev.sei=d.sei;d.prev.mei=d.mei},
  allocUp:v=>{const p=S.p;p.alloc=p.alloc||{};if(restOf(p)>0)p.alloc[v]=(p.alloc[v]||0)+1},
  allocDn:v=>{const p=S.p;p.alloc=p.alloc||{};if(p.alloc[v])p.alloc[v]--},
@@ -6868,6 +6889,337 @@ Object.assign(ACT,{
  giveUp:()=>{const p=S.p,N=NATN(p);p.fate={ty:'dream',why:N.war?'故郷の情勢と家族の暮らしを前に、プロの夢をあきらめた':'家族を支えるため、プロの夢をあきらめた'};retire();toTop()},
  afterPick:v=>{const s=S.summary;if(!s||s.after)return;s.after=v;s.epi=epilogue(S.p,s,v)},
 });
+
+/* ========== 世界の国々（国連加盟国＋サッカーの独自代表） ========== */
+const CONF_INFO={A:['アジア','アジア杯','ACL',67],E:['欧州','欧州選手権','UCL',72],F:['アフリカ','アフリカ杯','CAF',71],N:['北中米','ゴールドカップ','CCC',64],S:['南米','コパ・アメリカ','LIB',68],O:['オセアニア','オセアニア杯',null,60]};
+const ARCH={
+ tech:{tec:3,spd:1,def:-2,phy:-2},tiki:{pas:3,tec:2,phy:-3},cat:{def:3,pas:1,spd:-2,tec:-1},power:{phy:3,def:2,tec:-2,pas:-1},pace:{spd:3,phy:2,tec:-2,pas:-1},
+ afr:{spd:4,phy:3,tec:-2,pas:-3},afrN:{tec:3,spd:2,phy:-2,def:-1},grit:{def:2,phy:2,sho:1,tec:-2,spd:-1},balkan:{tec:3,sho:2,def:-2,spd:-1},
+ asiaE:{spd:2,pas:1,tec:1,phy:-3},gulf:{tec:2,spd:2,phy:-1,def:-2},asiaW:{phy:2,spd:1,tec:1,pas:-2,def:-1},sasia:{spd:2,sho:1,phy:-1,def:-1},
+ andes:{phy:4,spd:1,tec:-1,pas:-2},carib:{spd:5,phy:1,def:-3,pas:-2},pacific:{phy:5,def:1,tec:-3,pas:-2},nordic:{phy:3,def:2,sho:1,tec:-3,spd:-1},
+ east:{phy:2,def:2,pas:1,tec:-2,spd:-2},micro:{pas:1,def:1,spd:-1,phy:-1}};
+const ARCH_N={tech:'技巧派',tiki:'パスサッカー',cat:'堅守',power:'フィジカルと組織',pace:'スピードと推進力',afr:'身体能力',afrN:'北アフリカの技巧',grit:'闘争心',balkan:'バルカンの技巧',asiaE:'敏しょう性',gulf:'湾岸の個人技',asiaW:'中東の激しさ',sasia:'南アジアの俊敏さ',andes:'高地の心肺',carib:'カリブの爆発力',pacific:'太平洋の体の強さ',nordic:'北欧の高さと強さ',east:'東欧の規律',micro:'小国の粘り'};
+const NPOOL={
+ la:[['ルイス','カルロス','ホセ','ディエゴ','ホルヘ','アンドレス','ミゲル','フアン','ケビン','ブライアン','エディソン','フランシスコ'],['ロドリゲス','ゴメス','ペレス','サンチェス','ラミレス','トーレス','フローレス','バルガス','カストロ','モラレス','エレーラ','メディナ']],
+ fr:[['ルカ','ユーゴ','テオ','ノア','ナタン','アントワーヌ','キリアン','バンジャマン','ジュール','マキシム'],['マルタン','ベルナール','デュボワ','トマ','ロベール','リシャール','プティ','デュラン','ルロワ','モロー']],
+ nord:[['エリク','ラース','ヨハン','オスカル','マグヌス','ヘンリク','ビョルン','オーレ','アクセル','スヴェン'],['ハンセン','ヨハンセン','ニルセン','アンデション','ラーション','ペーション','ヨンソン','ラスムセン','ベルグ','リンド']],
+ fin:[['ミッコ','テーム','ヨーナス','ラウリ','アレクシ','ヴァルッテリ','オンニ','エーロ'],['コルホネン','ヴィルタネン','マキネン','ニエミネン','ハメライネン','ラハティ','ヘイッキネン','コスキネン']],
+ slv:[['アレクサンドル','ドミトリー','セルゲイ','アンドリー','イヴァン','ミハイル','ヴィクトル','パヴェル','ユーリー','マクシム'],['イワノフ','ペトレンコ','コヴァレンコ','スミルノフ','ボンダレンコ','クズネツォフ','モロゾフ','メルニク','ソコロフ','パヴロフ']],
+ wsl:[['ヤクブ','トマシュ','パヴェウ','ミハウ','ルカーシュ','ペトル','マレク','オンドジェイ','ダヴィド','フィリップ'],['ノヴァク','コヴァルスキ','ヴィシニェフスキ','ドヴォジャーク','スヴォボダ','シマンスキ','ノヴォトニー','ヴォイチク','フサーク','カミンスキ']],
+ bal:[['ルカ','マルコ','ステファン','ネマニャ','イヴァン','ミラン','ドゥシャン','アンテ','ヨシプ','ミロシュ'],['ヨヴィッチ','ペトロヴィッチ','ニコリッチ','コヴァチッチ','イリッチ','ミトロヴィッチ','ホルヴァト','バビッチ','マルコヴィッチ','クネジェヴィッチ']],
+ gr:[['ヨルゴス','ディミトリス','コスタス','ニコス','ヤニス','パナギオティス','アレクサンドロス','クリストス'],['パパドプロス','ゲオルギウ','コンスタンティヌ','ニコライディス','パパス','カラマニス','ヴラホス','ミハイリディス']],
+ alb:[['アルディアン','ベキム','ドリトン','エルミル','アルバン','ヴァロン','フロリアン','エンディ'],['ベリシャ','クラスニキ','ガシ','ホジャ','シャラ','ゼケリ','ムスリウ','ラマ']],
+ ro:[['アンドレイ','ミハイ','ラドゥ','イオヌツ','ボグダン','ヴラド','ステファン','コスミン'],['ポペスク','イオネスク','ポップ','スタン','ドゥミトル','コンスタンティン','ラドゥ','モルドヴァン']],
+ hu:[['ドミニク','ペーテル','アーダーム','バーリント','ラースロー','ジョルト','ミラン','ベンツェ'],['ナジ','コヴァーチ','トート','サボー','ホルヴァート','ヴァルガ','キシュ','モルナール']],
+ blt:[['マンタス','ドマンタス','アルトゥルス','カーリス','マルティン','ラウリ','ヨナス','ローベルツ'],['カザウスカス','ペトラウスカス','ベルジンシュ','オゾリンシュ','タム','サル','ヤンソンス','ヴァシリャウスカス']],
+ tr:[['メフメト','エムレ','ブラク','アルダ','ケレム','オウズ','ジェンギズ','ハカン','ユスフ','バルシュ'],['ユルマズ','カヤ','デミル','シャヒン','チェリク','アイドゥン','オズトゥルク','アルスラン','ドアン','クルチ']],
+ cau:[['ギオルギ','ダヴィト','レヴァン','アルメン','ナレク','ティグラン','ニカ','ザウリ'],['ベリゼ','ギオルガゼ','ペトロシャン','ハチャトリャン','グリゴリャン','カパナゼ','ロルトキパニゼ','サルキシャン']],
+ heb:[['ヨシ','エラン','アヴィ','ダン','オメル','ノアム','エイタン','リオル'],['コーエン','レヴィ','ミズラヒ','ペレツ','ビトン','フリードマン','アズライ','シャロン']],
+ ar:[['モハメド','アハメド','ユセフ','オマル','カリム','ハリド','サレム','アリ','イブラヒム','ハムザ','ファイサル','ナビール'],['アル＝ハッサン','ベンアリ','マンスール','アブダラ','サイード','ナセル','ハッダード','ファラジ','アル＝ドサリ','ベンナセル','ハムダン','ユーニス']],
+ per:[['アリ','メフディ','レザ','サマン','アミール','モルテザ','ホセイン','ミラド'],['ラヒミ','アフマディ','ホセイニ','カリミ','モハマディ','タヘリ','ノーリ','ジャファリ']],
+ cas:[['アジズ','ルスタム','ディルショド','ヌルラン','アスカル','ティムール','エルドル','バウルジャン'],['ユスポフ','カリモフ','アブドゥラエフ','ヌルマガンベトフ','サディコフ','トゥルスノフ','イスマイロフ','ジュマバエフ']],
+ sa:[['ラフル','アルジュン','スニル','ヴィクラム','アミット','イムラン','ラジ','サヒル','アニル','ディネシュ'],['シン','クマール','シャルマ','カーン','パテル','ラオ','グプタ','チョードリー','ペレラ','ダス']],
+ zh:[['ワン','リー','チャン','リウ','チェン','ヤン','ジャオ','ウー','ジョウ','スン'],['ハオ','ウェイ','レイ','ジエ','ヨン','ミン','ジュン','タオ','チェン','ボー']],
+ mn:[['バトバヤル','ガンボルド','エンフボルド','ツォグト','テムーレン','ボルド','ナランバートル'],['ドルジ','バータル','ガンゾリグ','ツェンド','バヤル','オチル','ダワー']],
+ vi:[['グエン','チャン','レ','ファム','ホアン','ブイ','ドー','ヴー','ダン','フイン'],['ヴァン・ハウ','クアン・ハイ','ティエン・リン','ドゥク・チン','ヴァン・ラム','ミン・ヴオン','ホアン・ドゥク','タン・チュン']],
+ th:[['チャナティップ','ティーラシン','スパチョーク','エカニット','ティーラトン','アディサク','ピーラポン','ソムチャイ'],['ソングラシン','ダンダ','サラチャート','パンヤ','ヨンソーン','ウォンサー','ブンマー','シーナコン']],
+ ms:[['アフマド','ムハンマド','リズキー','エギー','ファイサル','ハキム','サフワン','アリフ','ハリス','イルファン'],['プラタマ','サプトラ','ハリム','ラフマン','イスマイル','ヌグロホ','スタルジョ','アジズ','ハッサン','ウィジャヤ']],
+ ph:[['ジョン','マーク','ミゲル','パオロ','ネイル','ジェームズ','ジェラルド','ケヴィン'],['サントス','レイエス','クルス','ガルシア','メンドーサ','バウティスタ','ヴィラヌエバ','デラクルス']],
+ sea:[['アウン','チョー','ソピア','ヴィサル','ソムサック','ポウ','ラタナ','ゾー'],['ミン','トゥン','チャン','ソク','ポンサヴァン','ウー','ケオ','ナイン']],
+ pac:[['セミ','ヴィリアメ','トマシ','イオセファ','ロイ','テヴィタ','ナサニエル','ジョエリ','サイモニ','ペニ'],['ナイヴァル','トゥイロマ','ファレアオ','カウファナ','タウファ','ラトゥ','マタギ','ナウラ','ヴニポラ','タギ']],
+ wa:[['クワメ','コフィ','クワベナ','ヤウ','エマニュエル','モハメド','チディ','サミュエル','アイザック','ジョセフ'],['メンサー','アサモア','オフォリ','ボアテング','アイェウ','パートイ','クエイ','オウス','ドゥマ','サッキー']],
+ fa:[['ママドゥ','イドリッサ','サディオ','セク','アブドゥライ','イスマイラ','ジャン','パプ','ヤシン','セドリック'],['ジャロ','ディアッラ','トラオレ','シセ','ンディアイ','コネ','カマラ','クリバリ','ソウ','エンボマ']],
+ ea:[['ブライアン','デニス','ジョセフ','エマニュエル','サイモン','ムサ','ハッサン','ピーター'],['オティエノ','オマリ','ワンジャラ','キプロノ','ムワンギ','ンダヤ','オケロ','ムトニ']],
+ hn:[['アベベ','ゲタネ','ヨハネス','アブディ','モハメド','ダウィト','ハゴス','ユスフ'],['ゲブレ','ハイレ','テスファイ','アブディラヒ','ウォルデ','メコネン','ヌール','アデン']],
+ saf:[['シフィウェ','テンバ','ブヴマ','パトソン','テンダイ','トコ','ルンガ','ケネディ'],['ンコシ','ドラミニ','ムテンブ','バンダ','ムウェネ','ジタ','モヨ','ペテルセン']],
+ car:[['レオン','デショーン','ケマー','ジャマール','アンドレ','トレヴォン','ダミオン','カリーム'],['ウィリアムズ','ブラウン','キャンベル','トンプソン','ベイリー','グラント','ジョセフ','チャールズ']],
+ cr:[['ジャン','ピエール','ジョニー','フランツ','デュケンス','ウィルド','ネルソン'],['ジャン＝バティスト','ピエール','ルイ','ジョセフ','エティエンヌ','ベルフォール','セネ']],
+};
+const POOL_FROM={pt:'pt',es:'es',it:'it',de:'de',en:'en',nl:'nl',ko:'kr',ng:'ng'};
+const CLUB_TPL={la:['デポルティボ・{c}','アトレティコ・{c}','クルブ・{c}','{c}FC'],es:['デポルティボ・{c}','アトレティコ・{c}','レアル・{c}','{c}CF'],pt:['スポルティング・{c}','{c}EC','アトレティコ・{c}','{c}FC'],fr:['オリンピック・{c}','AS{c}','スタッド・{c}','{c}FC'],fa:['AS{c}','ASEC・{c}','スタッド・{c}','{c}FC'],
+ ar:['アル・{c}','{c}SC','アル・ナスル・{c}','{c}クラブ'],per:['エステグラル・{c}','{c}FC','セパハン・{c}','{c}クラブ'],en:['{c}・ユナイテッド','{c}・シティ','{c}・ローヴァーズ','{c}FC'],car:['{c}・ユナイテッド','{c}・スターズ','{c}FC','{c}・ウォリアーズ'],
+ de:['{c}SV','FC{c}','ボルシア・{c}','{c}・ユナイテッド'],slv:['ディナモ・{c}','スパルタク・{c}','ロコモティフ・{c}','{c}FC'],bal:['ディナモ・{c}','ツルヴェナ・{c}','ハイドゥク・{c}','{c}FC'],it:['ACカルチョ・{c}','{c}FC','スポルティーバ・{c}','{c}カルチョ'],
+ zh:['{c}FC','{c}・ドラゴンズ','{c}・タイガース','{c}シティ'],ko:['{c}FC','{c}・タイガース','{c}・ユナイテッド','{c}シティ']};
+const NAT_DATA=`
+af|アフガニスタン|A|50|3|0|sasia|per|カブール|ヘラート|ボラニ|クリケット|高地の国土。困難の中で若い世代がボールを追う
+au|オーストラリア|A|74|0|0|power|en|シドニー|メルボルン|ミートパイ|ラグビー|ラグビーやオージーフットボールと人気を分け合う
+bh|バーレーン|A|61|0|0|gulf|ar|マナーマ|リファー|マチブース||小さな島国だが育成に投資している
+bd|バングラデシュ|A|44|2|0|sasia|sa|ダッカ|チッタゴン|ビリヤニ|クリケット|サッカー熱は高いが国民的スポーツはクリケット
+bt|ブータン|A|36|2|0|andes|sa|ティンプー|パロ|エマダツィ|弓術|国技は弓術。標高2000mを超えるピッチ
+bn|ブルネイ|A|40|0|0|asiaE|ms|バンダルスリブガワン|クアラブライト|アンブヤット||裕福な小国。代表チームは発展途上
+kh|カンボジア|A|44|2|0|asiaE|sea|プノンペン|シェムリアップ|アモック||サッカー熱が急上昇中
+cn|中国|A|64|1|0|power|zh|北京|上海|小籠包|卓球|巨大な市場。国家プロジェクトで育成を強化
+tw|チャイニーズ・タイペイ|A|46|0|0|asiaE|zh|台北|高雄|牛肉麺|野球|国民的スポーツは野球
+in|インド|A|54|2|0|sasia|sa|デリー|コルカタ|カレー|クリケット|クリケット大国。コルカタはサッカーの街
+id|インドネシア|A|60|1|0|asiaE|ms|ジャカルタ|スラバヤ|ナシゴレン|バドミントン|スタジアムの熱狂はアジア屈指
+ir|イラン|A|74|1|0|asiaW|per|テヘラン|タブリーズ|ケバブ|レスリング|アジア屈指の強豪。テヘランダービーは10万人
+iq|イラク|A|68|2|0|asiaW|ar|バグダッド|バスラ|マスグーフ||困難を越えてアジア王者に輝いた歴史を持つ
+jo|ヨルダン|A|67|1|0|asiaW|ar|アンマン|ザルカ|マンサフ||粘り強さで台頭した中東の新勢力
+kp|北朝鮮|A|55|2|0|power|ko|平壌|咸興|冷麺||規律と運動量。国際舞台に出る機会は限られる
+kw|クウェート|A|58|0|0|gulf|ar|クウェートシティ|アフマディ|マクブース||湾岸の古豪
+kg|キルギス|A|54|2|0|power|cas|ビシュケク|オシュ|ラグマン|馬上競技|山岳の国。遊牧の伝統が息づく
+la|ラオス|A|40|2|0|asiaE|sea|ビエンチャン|ルアンパバーン|ラープ|セパタクロー|メコン川沿いの小さなリーグ
+lb|レバノン|A|56|2|1|asiaW|ar|ベイルート|トリポリ|フムス|バスケットボール|バスケも人気。情勢に揺れるリーグ
+my|マレーシア|A|56|1|0|asiaE|ms|クアラルンプール|ジョホールバル|ナシレマ|バドミントン|熱いサポーターの「ハリマウ・マラヤ」
+mv|モルディブ|A|40|1|0|asiaE|ar|マレ|アッドゥ|マスフニ||島々の国。砂浜でボールを蹴る
+mn|モンゴル|A|38|2|0|power|mn|ウランバートル|エルデネト|ボーズ|相撲|草原の国。相撲とレスリングが人気
+mm|ミャンマー|A|46|2|1|asiaE|sea|ヤンゴン|マンダレー|モヒンガー|セパタクロー|情勢不安の中でもリーグを続ける
+np|ネパール|A|42|3|0|andes|sa|カトマンズ|ポカラ|ダルバート|クリケット|ヒマラヤの高地で鍛える心肺
+om|オマーン|A|62|0|0|gulf|ar|マスカット|サラーラ|シュワ||堅実な守備の湾岸国
+pk|パキスタン|A|40|2|0|sasia|sa|イスラマバード|カラチ|ビリヤニ|クリケット|世界のサッカーボールの多くを作る国
+ps|パレスチナ|A|58|2|1|asiaW|ar|ラマッラ|ガザ|マクルーバ||困難の中でもボールを蹴り続ける
+ph|フィリピン|A|50|2|0|asiaE|ph|マニラ|セブ|アドボ|バスケットボール|バスケが国民的。海外ルーツの選手も多い
+qa|カタール|A|69|0|0|gulf|ar|ドーハ|アルワクラ|マクブース||W杯開催国。豪華な育成施設がある
+sa|サウジアラビア|A|70|0|0|gulf|ar|リヤド|ジッダ|カブサ||世界のスターが集まる豪華リーグ
+sg|シンガポール|A|46|0|0|asiaE|ms|シンガポール|ジュロン|チキンライス||小さな都市国家。学業との両立が当たり前
+lk|スリランカ|A|36|2|0|sasia|sa|コロンボ|キャンディ|カリー|クリケット|クリケットの島。サッカーは少数派
+sy|シリア|A|60|2|1|asiaW|ar|ダマスカス|アレッポ|フムス||情勢に揺れながらも代表は粘り強い
+tj|タジキスタン|A|56|2|0|power|per|ドゥシャンベ|フジャンド|プロフ||パミール高原のふもとで育つ
+th|タイ|A|60|1|0|asiaE|th|バンコク|チェンマイ|トムヤムクン|ムエタイ|東南アジアの強豪。技巧派が多い
+tl|東ティモール|A|34|2|0|asiaE|pt|ディリ|バウカウ|バタルダ||アジアで最も若い国のひとつ
+tm|トルクメニスタン|A|52|1|0|power|cas|アシガバート|トルクメナバート|プロフ||砂漠の国。白い大理石の都
+ae|UAE|A|66|0|0|gulf|ar|アブダビ|ドバイ|マチブース||世界中から指導者が集まる
+uz|ウズベキスタン|A|69|2|0|power|cas|タシケント|サマルカンド|プロフ||W杯初出場を果たした中央アジアの新星
+vn|ベトナム|A|58|2|0|asiaE|vi|ハノイ|ホーチミン|フォー||東南アジアの雄。熱狂的なファン
+ye|イエメン|A|46|3|1|asiaW|ar|サナア|アデン|サルタ||紛争の中、ボールが子どもたちの希望
+jp|日本|A|76|0|0|asiaE|jp|東京|大阪|おにぎり|野球|
+kr|韓国|A|75|0|0|power|ko|ソウル|釜山|キムチチゲ|野球|
+al|アルバニア|E|66|1|0|balkan|alb|ティラナ|ドゥラス|ビュレク||粘り強い守備と熱いサポーター
+ad|アンドラ|E|38|0|0|micro|es|アンドララベリャ|エスカルデス|エスクデーリャ|スキー|ピレネーの小国。選手の多くは本業を持つ
+am|アルメニア|E|60|1|0|balkan|cau|エレバン|ギュムリ|ホロヴァツ|チェス|チェスの国。頭脳派のプレーメーカー
+at|オーストリア|E|79|0|0|power|de|ウィーン|ザルツブルク|シュニッツェル|スキー|ハイプレスの育成先進国
+az|アゼルバイジャン|E|56|1|0|power|tr|バクー|ガンジャ|プロフ||カスピ海の国
+by|ベラルーシ|E|56|1|0|east|slv|ミンスク|ゴメリ|ドラニキ|アイスホッケー|アイスホッケーも盛んな東欧の国
+be|ベルギー|E|82|0|0|tech|nl|ブリュッセル|アントワープ|ワッフル|自転車|小国ながら黄金世代を生む育成力
+ba|ボスニア・ヘルツェゴビナ|E|64|1|0|balkan|bal|サラエボ|モスタル|チェヴァピ||長身のストライカーを生む
+bg|ブルガリア|E|60|1|0|east|bal|ソフィア|プロフディフ|ショプスカサラダ||かつて世界4強に入った古豪
+hr|クロアチア|E|81|0|0|balkan|bal|ザグレブ|スプリト|ペカ|水球|人口400万でW杯決勝へ。技巧派の宝庫
+cy|キプロス|E|54|0|0|tech|gr|ニコシア|リマソール|ハルミ||地中海の島国
+cz|チェコ|E|72|0|0|power|wsl|プラハ|ブルノ|グラーシュ|アイスホッケー|伝統の中盤力
+dk|デンマーク|E|79|0|0|nordic|nord|コペンハーゲン|オーフス|スモーブロー|ハンドボール|組織力で欧州を制した国
+ee|エストニア|E|48|0|0|nordic|blt|タリン|タルトゥ|黒パン||バルト海の小国
+fi|フィンランド|E|64|0|0|nordic|fin|ヘルシンキ|タンペレ|サーモンスープ|アイスホッケー|冬は屋内ドームで練習する
+fr|フランス|E|88|0|0|pace|fr|パリ|マルセイユ|クロワッサン|ラグビー|多彩なルーツの才能が集まる育成大国
+ge|ジョージア|E|66|1|0|tech|cau|トビリシ|バトゥミ|ハチャプリ|ラグビー|ドリブラーを生む技巧の国
+de|ドイツ|E|85|0|0|power|de|ベルリン|ミュンヘン|ソーセージ||
+gr|ギリシャ|E|70|0|0|cat|gr|アテネ|テッサロニキ|スブラキ|バスケットボール|堅守速攻で欧州を制した歴史
+hu|ハンガリー|E|72|0|0|tech|hu|ブダペスト|デブレツェン|グヤーシュ|水球|かつての「マジック・マジャール」
+is|アイスランド|E|63|0|0|nordic|nord|レイキャビク|アークレイリ|ラムのスープ|ハンドボール|人口約38万。屋内施設で育つ
+ie|アイルランド|E|68|0|0|power|en|ダブリン|コーク|アイリッシュシチュー|ゲーリックフットボール|ゲーリックフットボールも国民的
+il|イスラエル|E|63|0|1|tech|heb|エルサレム|テルアビブ|ファラフェル|バスケットボール|情勢に揺れながら欧州で戦う
+it|イタリア|E|83|0|0|cat|it|ローマ|ミラノ|パスタ||
+xk|コソボ|E|60|1|0|balkan|alb|プリシュティナ|プリズレン|フリヤ||欧州で最も新しい国のひとつ。海外育ちの選手も多い
+lv|ラトビア|E|50|1|0|east|blt|リガ|ダウガフピルス|灰色エンドウ豆|アイスホッケー|バルトの粘り
+li|リヒテンシュタイン|E|34|0|0|micro|de|ファドゥーツ|シャーン|ケーゼクノーフレ|スキー|人口4万の小国。代表選手も本業を持つ
+lt|リトアニア|E|50|1|0|east|blt|ヴィリニュス|カウナス|ツェペリナイ|バスケットボール|国民的スポーツはバスケ
+lu|ルクセンブルク|E|54|0|0|micro|fr|ルクセンブルク|エシュ|ジュッド|自転車|多言語の小国。近年じわじわ強くなっている
+mt|マルタ|E|44|0|0|micro|it|バレッタ|ビルキルカラ|パスティッツィ||地中海の島。プレミアリーグ中継が大人気
+md|モルドバ|E|46|2|0|east|ro|キシナウ|バルツィ|ママリーガ||ワインの国
+mc|モナコ|E|28|0|0|micro|fr|モナコ|モンテカルロ|バルバジュアン|F1|代表はFIFA未加盟。クラブで夢を追う
+me|モンテネグロ|E|60|1|0|balkan|bal|ポドゴリツァ|ニクシッチ|プルシュト|水球|山岳の小国。長身選手が多い
+nl|オランダ|E|84|0|0|tiki|nl|アムステルダム|ロッテルダム|ハーリング||
+mk|北マケドニア|E|58|1|0|balkan|bal|スコピエ|ビトラ|タフチェ・グラフチェ|ハンドボール|技巧派のアタッカーを生む
+no|ノルウェー|E|76|0|0|nordic|nord|オスロ|ベルゲン|サーモン|スキー|フィジカル型のストライカーを輩出
+pl|ポーランド|E|74|0|0|power|wsl|ワルシャワ|クラクフ|ピエロギ|バレーボール|点取り屋の国
+pt|ポルトガル|E|85|0|0|tech|pt|リスボン|ポルト|バカリャウ||
+ro|ルーマニア|E|68|1|0|tech|ro|ブカレスト|クルジュ|サルマーレ||黄金世代の記憶が残る技巧の国
+ru|ロシア|E|68|1|0|east|slv|モスクワ|サンクトペテルブルク|ボルシチ|アイスホッケー|国際大会への出場停止が続いている
+sm|サンマリノ|E|26|0|0|micro|it|サンマリノ|セラヴァッレ|ピアディーナ||世界最弱とも呼ばれる代表。1点が歴史になる
+gbs|スコットランド|E|70|0|0|power|en|グラスゴー|エディンバラ|ハギス|ラグビー|オールドファームの熱狂
+gbw|ウェールズ|E|68|0|0|power|en|カーディフ|スウォンジー|カウル|ラグビー|ラグビーの国から生まれるスター
+gbn|北アイルランド|E|60|0|0|power|en|ベルファスト|デリー|アルスターフライ||小さな国の大きな声援
+rs|セルビア|E|74|1|0|balkan|bal|ベオグラード|ノヴィサド|チェヴァプチチ|バスケットボール|「永遠のダービー」の国
+sk|スロバキア|E|68|0|0|power|wsl|ブラチスラヴァ|コシツェ|ハルシュキ|アイスホッケー|堅実な中堅国
+si|スロベニア|E|68|0|0|tech|bal|リュブリャナ|マリボル|ポティツァ|スキー|名GKを生む小国
+es|スペイン|E|87|0|0|tiki|es|マドリード|バルセロナ|パエリア||
+se|スウェーデン|E|76|0|0|nordic|nord|ストックホルム|ヨーテボリ|ミートボール|アイスホッケー|長身で技術もある北欧の雄
+ch|スイス|E|79|0|0|power|de|チューリッヒ|ジュネーブ|フォンデュ|スキー|多言語の育成文化
+tr|トルコ|E|76|1|0|tech|tr|イスタンブール|アンカラ|ケバブ||スタジアムの轟音は欧州屈指
+ua|ウクライナ|E|72|1|1|east|slv|キーウ|リヴィウ|ボルシチ||戦時下でもリーグを続けている
+va|バチカン|E|18|0|0|micro|it|バチカン|サンピエトロ|ピッツァ||FIFA未加盟。聖職者たちのリーグがある世界最小の国
+kz|カザフスタン|E|58|1|0|power|cas|アスタナ|アルマトイ|ベシュバルマク||欧州連盟に所属する中央アジアの国
+en|イングランド|E|86|0|0|pace|en|ロンドン|マンチェスター|フィッシュ&チップス|クリケット|
+ar|アルゼンチン|S|88|1|0|tech|la|ブエノスアイレス|ロサリオ|アサード||
+bo|ボリビア|S|58|2|0|andes|la|ラパス|サンタクルス|サルテーニャ||標高3600mの首都。ホームは要塞
+br|ブラジル|S|87|1|0|tech|pt|リオデジャネイロ|サンパウロ|フェイジョアーダ||
+cl|チリ|S|72|1|0|grit|la|サンティアゴ|バルパライソ|エンパナーダ||闘志あふれるプレス
+co|コロンビア|S|80|1|0|tech|la|ボゴタ|メデジン|アレパ|自転車|南米の技巧派。熱いサポーター
+ec|エクアドル|S|76|1|0|pace|la|キト|グアヤキル|セビーチェ||高地キトで鍛える走力
+py|パラグアイ|S|71|1|0|cat|la|アスンシオン|シウダーデルエステ|チパ||粘り強い守備の伝統
+pe|ペルー|S|70|1|0|tech|la|リマ|クスコ|セビーチェ|バレーボール|技巧派の古豪
+uy|ウルグアイ|S|82|0|0|grit|la|モンテビデオ|サルト|チビート||人口350万でW杯2度優勝。闘魂の国
+ve|ベネズエラ|S|68|2|0|pace|la|カラカス|マラカイボ|アレパ|野球|野球大国から台頭した新興勢力
+ag|アンティグア・バーブーダ|N|38|1|0|carib|car|セントジョンズ|オールセインツ|ファンジ|クリケット|カリブの小さな島
+bs|バハマ|N|28|0|0|carib|car|ナッソー|フリーポート|コンク|陸上|陸上が強い島国
+bb|バルバドス|N|34|1|0|carib|car|ブリッジタウン|スパイツタウン|フライングフィッシュ|クリケット|クリケットの島
+bz|ベリーズ|N|38|2|0|carib|la|ベルモパン|ベリーズシティ|ライス&ビーンズ||カリブと中米の交差点
+ca|カナダ|N|76|0|0|pace|en|トロント|バンクーバー|プーティン|アイスホッケー|アイスホッケー大国から急成長
+cr|コスタリカ|N|70|1|0|tech|la|サンホセ|リモン|ガジョピント|サーフィン|W杯8強の経験を持つ中米の雄
+cu|キューバ|N|44|2|0|pace|la|ハバナ|サンティアゴデクーバ|ロパビエハ|野球|野球大国
+dm|ドミニカ国|N|32|1|0|carib|car|ロゾー|ポーツマス|カラルー|クリケット|カリブの火山島
+do|ドミニカ共和国|N|44|1|0|pace|la|サントドミンゴ|サンティアゴ|マングー|野球|メジャーリーガーの宝庫
+sv|エルサルバドル|N|58|2|0|tech|la|サンサルバドル|サンタアナ|ププサ||中米の小国。サッカー熱は高い
+gd|グレナダ|N|36|1|0|carib|car|セントジョージズ|グレンビル|オイルダウン|クリケット|スパイスの島
+gt|グアテマラ|N|60|2|0|tech|la|グアテマラシティ|ケツァルテナンゴ|ペピアン||高地の国
+gy|ガイアナ|N|42|1|0|carib|car|ジョージタウン|リンデン|ペッパーポット|クリケット|南米にある英語圏の国
+ht|ハイチ|N|56|3|1|carib|cr|ポルトープランス|カパイシャン|グリオ||情勢不安の中で愛され続けるサッカー
+hn|ホンジュラス|N|62|2|0|pace|la|テグシガルパ|サンペドロスーラ|バレアーダ||俊足のアタッカーを生む
+jm|ジャマイカ|N|66|1|0|carib|car|キングストン|モンテゴベイ|ジャークチキン|陸上|短距離大国のスピード
+mx|メキシコ|N|78|1|0|tech|la|メキシコシティ|グアダラハラ|タコス|ルチャ・リブレ|北中米の盟主。アステカの熱狂
+ni|ニカラグア|N|46|2|0|pace|la|マナグア|レオン|ガジョピント|野球|野球の国
+pa|パナマ|N|70|1|0|pace|la|パナマシティ|コロン|サンコーチョ|野球|W杯出場を果たした運河の国
+kn|セントクリストファー・ネイビス|N|36|1|0|carib|car|バセテール|チャールズタウン|ゴートウォーター|クリケット|カリブの小国
+lc|セントルシア|N|32|1|0|carib|car|カストリーズ|ヴューフォール|グリーンフィグ|クリケット|火山と海の島
+vc|セントビンセント・グレナディーン|N|34|1|0|carib|car|キングスタウン|ジョージタウン|焼きパンの実|クリケット|小さな島々の国
+sr|スリナム|N|56|1|0|carib|nl|パラマリボ|ニッケリー|ロティ||オランダで活躍する選手のルーツ
+tt|トリニダード・トバゴ|N|56|1|0|carib|car|ポートオブスペイン|サンフェルナンド|ダブルス|クリケット|カリブの古豪
+us|アメリカ|N|78|0|0|pace|en|ニューヨーク|ロサンゼルス|ハンバーガー|アメフト|
+fj|フィジー|O|50|2|0|pacific|pac|スバ|ラウトカ|ロボ料理|ラグビー|ラグビー大国。体の強さは世界級
+ki|キリバス|O|22|3|0|pacific|pac|タラワ|キリスィマスィ|ココナッツ||FIFA未加盟。海面上昇と闘う島国
+mh|マーシャル諸島|O|20|2|0|pacific|pac|マジュロ|イバイ|パンノキ||代表チームが生まれたばかりの島国
+fm|ミクロネシア連邦|O|22|2|0|pacific|pac|パリキール|ウェノ|パンノキ||島々をまたぐ小さなリーグ
+nr|ナウル|O|18|1|0|pacific|pac|ヤレン|アイウォ|ココナッツ|オージーフットボール|世界で3番目に小さな国
+nz|ニュージーランド|O|66|0|0|power|en|オークランド|ウェリントン|ラム肉|ラグビー|オセアニアの王者。ラグビー王国
+pw|パラオ|O|20|1|0|pacific|pac|マルキョク|コロール|タロイモ|野球|野球が人気の島国
+pg|パプアニューギニア|O|42|3|0|pacific|pac|ポートモレスビー|ラエ|ムームー|ラグビー|ラグビーリーグが国民的
+ws|サモア|O|36|2|0|pacific|pac|アピア|サレロロガ|パルサミ|ラグビー|ラグビーの島
+sb|ソロモン諸島|O|50|3|0|pacific|pac|ホニアラ|アウキ|ポイ|フットサル|フットサルが強い島国
+to|トンガ|O|32|2|0|pacific|pac|ヌクアロファ|ネイアフ|ルー|ラグビー|ラグビーの国の小さなサッカー界
+tv|ツバル|O|18|2|0|pacific|pac|フナフティ|ヴァイトゥプ|プラカ||FIFA未加盟。国土が最も低い国のひとつ
+vu|バヌアツ|O|42|3|0|pacific|pac|ポートビラ|ルーガンビル|ラップラップ||ビーチサッカーでも知られる島国
+dz|アルジェリア|F|76|1|0|afrN|ar|アルジェ|オラン|クスクス||欧州育ちの技巧派も多い北アフリカの強豪
+ao|アンゴラ|F|60|2|0|afr|pt|ルアンダ|ベンゲラ|ムアンバ|バスケットボール|ポルトガル語圏の大国
+bj|ベナン|F|56|2|0|afr|fa|ポルトノボ|コトヌー|アマラ||西アフリカの小国
+bw|ボツワナ|F|50|1|0|afr|saf|ハボローネ|フランシスタウン|セスワ||安定した国の小さなリーグ
+bf|ブルキナファソ|F|66|3|1|afr|fa|ワガドゥグー|ボボデュラッソ|トー||情勢不安の中でアフリカ上位を保つ
+bi|ブルンジ|F|46|3|0|afr|ea|ギテガ|ブジュンブラ|ブロシェット||湖のほとりの小国
+cv|カーボベルデ|F|66|2|0|tech|pt|プライア|ミンデロ|カチューパ||小さな島国からW杯へ
+cm|カメルーン|F|72|2|0|afr|fa|ヤウンデ|ドゥアラ|ンドレ||「不屈のライオン」
+cf|中央アフリカ|F|46|3|1|afr|fa|バンギ|ベルベラティ|キャッサバ||情勢不安が続くアフリカの中心
+td|チャド|F|36|3|0|afr|fa|ンジャメナ|ムンドゥ|ブール||砂漠の国
+km|コモロ|F|50|3|0|afr|fa|モロニ|ムツァムドゥ|ランガトリ||インド洋の島国。海外ルーツの選手が多い
+cg|コンゴ共和国|F|52|2|0|afr|fa|ブラザビル|ポワントノワール|サカサカ||大河のほとりの国
+cd|コンゴ民主共和国|F|68|3|1|afr|fa|キンシャサ|ルブンバシ|フフ||人口が多く身体能力の高い選手の宝庫
+ci|コートジボワール|F|75|2|0|afr|fa|アビジャン|ブアケ|アチェケ||アフリカ王者。「象軍団」
+dj|ジブチ|F|32|2|0|afr|hn|ジブチ|アリサビエ|スクダカリス||紅海の入口の小国
+eg|エジプト|F|75|2|0|afrN|ar|カイロ|アレクサンドリア|コシャリ|スカッシュ|アフリカ最多優勝。カイロダービーは熱狂
+gq|赤道ギニア|F|52|1|0|afr|es|マラボ|バタ|スッケ||スペイン語圏のアフリカの国
+er|エリトリア|F|34|3|0|afr|hn|アスマラ|マッサワ|インジェラ|自転車|自転車競技が大人気
+sz|エスワティニ|F|38|2|0|afr|saf|ムババーネ|マンジニ|シシュワラ||山がちな小国
+et|エチオピア|F|48|3|1|afr|hn|アディスアベバ|ディレダワ|インジェラ|陸上|長距離走の名門
+ga|ガボン|F|58|1|0|afr|fa|リーブルビル|ポールジャンティ|ニェンブエ||熱帯雨林の国
+gm|ガンビア|F|54|3|0|afr|wa|バンジュール|セレクンダ|ドモダ||アフリカ大陸で最も小さな国のひとつ
+gh|ガーナ|F|70|2|0|afr|wa|アクラ|クマシ|ジョロフライス||「ブラックスターズ」。アフリカの技巧
+gn|ギニア|F|60|3|0|afr|fa|コナクリ|カンカン|フフ||才能あふれる若手が欧州へ渡る
+gw|ギニアビサウ|F|48|3|0|afr|pt|ビサウ|バファタ|カルドジ||ポルトガルで活躍する選手のルーツ
+ke|ケニア|F|52|2|0|afr|ea|ナイロビ|モンバサ|ウガリ|陸上|長距離走の国
+ls|レソト|F|36|2|0|andes|saf|マセル|テヤテヤネン|パパ||国土すべてが標高1000m以上
+lr|リベリア|F|46|3|0|afr|wa|モンロビア|ガンタ|ジョロフライス||元世界最優秀選手が大統領になった国
+ly|リビア|F|58|1|1|afrN|ar|トリポリ|ベンガジ|バジーン||国内情勢に揺れるリーグ
+mg|マダガスカル|F|52|3|0|afr|fa|アンタナナリボ|トゥアマシナ|ロマザヴァ||独自の生態系を持つ島国
+mw|マラウイ|F|42|3|0|afr|saf|リロングウェ|ブランタイア|ンシマ||「アフリカの温かい心」
+ml|マリ|F|70|3|1|afr|fa|バマコ|シカソ|ティエブジェン||育成年代の世界大会で躍進
+mr|モーリタニア|F|54|2|0|afrN|ar|ヌアクショット|ヌアディブ|ティエブジェン||サハラの国
+mu|モーリシャス|F|36|1|0|carib|sa|ポートルイス|キュールピップ|ドーホル||インド洋の楽園
+ma|モロッコ|F|82|1|0|afrN|ar|ラバト|カサブランカ|タジン||W杯4強。アフリカ最強国
+mz|モザンビーク|F|52|3|0|afr|pt|マプト|ベイラ|マタパ||ポルトガル語圏の「黒豹」の国
+na|ナミビア|F|50|1|0|afr|saf|ウィントフック|ワルビスベイ|カパナ||砂漠と海の国
+ne|ニジェール|F|42|3|0|afr|fa|ニアメ|ザンデール|ジェルマ||サヘルの国
+ng|ナイジェリア|F|76|2|0|afr|ng|ラゴス|カノ|ジョロフライス||
+rw|ルワンダ|F|46|3|0|afr|ea|キガリ|フイエ|ブロシェット||「千の丘の国」
+st|サントメ・プリンシペ|F|30|2|0|afr|pt|サントメ|サントアントニオ|カルル||赤道直下の小さな島国
+sn|セネガル|F|78|2|0|afr|fa|ダカール|ティエス|チェブジェン||「テランガのライオン」。欧州で活躍する選手多数
+sc|セーシェル|F|28|0|0|carib|fr|ヴィクトリア|アンスロワイヤル|カレー||インド洋の小さな島国
+sl|シエラレオネ|F|48|3|0|afr|wa|フリータウン|ボー|キャッサバリーフ||情熱的なサッカー文化
+so|ソマリア|F|30|3|1|afr|hn|モガディシュ|ハルゲイサ|ラホー||紛争の中で国内リーグが再開した
+za|南アフリカ|F|66|1|0|afr|saf|ヨハネスブルク|ケープタウン|ブラーイ|ラグビー|アフリカ初のW杯開催国
+ss|南スーダン|F|36|3|1|afr|ea|ジュバ|ワウ|キスラ||2011年に生まれた新しい国
+sd|スーダン|F|50|3|1|afr|ar|ハルツーム|ポートスーダン|フール||紛争の中でも代表は戦い続ける
+tz|タンザニア|F|52|3|0|afr|ea|ドドマ|ダルエスサラーム|ウガリ||キリマンジャロのふもとのリーグ
+tg|トーゴ|F|52|3|0|afr|fa|ロメ|ソコデ|フフ||西アフリカの小国
+tn|チュニジア|F|72|1|0|afrN|ar|チュニス|スファックス|クスクス||組織的な北アフリカの強豪
+ug|ウガンダ|F|56|3|0|afr|ea|カンパラ|グル|マトケ||「アフリカの真珠」
+zm|ザンビア|F|58|2|0|afr|saf|ルサカ|キトウェ|ンシマ||アフリカ王者に輝いた奇跡の世代
+zw|ジンバブエ|F|54|3|0|afr|saf|ハラレ|ブラワヨ|サザ|クリケット|情熱的なファンの国`;
+const NO_FIFA=['mc','va','ki','tv','fm','pw','mh','nr'];
+const HASH=s=>[...s].reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7);
+function flagOf(k){if(k==='en')return '🏴󠁧󠁢󠁥󠁮󠁧󠁿';if(k==='gbs')return '🏴󠁧󠁢󠁳󠁣󠁴󠁿';if(k==='gbw')return '🏴󠁧󠁢󠁷󠁬󠁳󠁿';if(k==='gbn')return '🇬🇧';return String.fromCodePoint(...[...k.toUpperCase()].map(c=>127397+c.charCodeAt(0)))}
+const NAT_ORDER=[];
+NAT_DATA.trim().split('\n').forEach(line=>{
+  const [k,n,cf,str,lv,war,arch,pool,c1,c2,food,sport,desc]=line.split('|');const s=+str,CI=CONF_INFO[cf];
+  const POOR=[0,.12,.35,.65][+lv],ex=NATIONS[k];
+  const b={...(ARCH[arch]||{})};
+  if(!ex){const h=HASH(k),k1=KEYS[h%6],k2=KEYS[(h>>3)%6];b[k1]=(b[k1]||0)+1;if(k2!==k1)b[k2]=(b[k2]||0)-1}
+  const P=POOL_FROM[pool]&&NATIONS[POOL_FROM[pool]]?NATIONS[POOL_FROM[pool]]:null,np=NPOOL[pool];
+  const g={n,cty:n,fl:flagOf(k),team:n+'代表',conf:CI[0],cup:CI[1],str:s,call:s>80?s-5:s>70?s-3:s-2,
+    wcq:NO_FIFA.includes(k)||k==='ru'?0:clamp(sig((s-CI[3])/2.6),.01,.99),poor:POOR,war:+war,bias:b,arch,pool,cf,c1,c2,food,sport:sport||null,
+    d:desc||'',gn:np?np[0]:P?P.gn:null,sn:np?np[1]:P?P.sn:null,sf:['zh','vi','ko','mn'].includes(pool)?1:0,
+    youth:[`${c1}のユースアカデミー`,`${c2}の少年クラブ`,POOR>=.35?`${c2}の草サッカーチーム`:`${c1}の名門ユース`],nofifa:NO_FIFA.includes(k)?1:0};
+  if(ex){NATIONS[k]={...g,...ex,fl:k==='en'?g.fl:ex.fl,arch,pool,cf,c1,c2,food,sport:sport||null,nofifa:0}}
+  else NATIONS[k]=g;
+  NAT_ORDER.push(k);
+});
+['war','poor'].forEach(k=>{Object.assign(NATIONS[k],{cf:'X',arch:'grit',pool:null,c1:k==='war'?'首都':'高原の町',c2:k==='war'?'国境の町':'谷の村',food:k==='war'?'平たいパン':'バター茶',sport:null});NAT_ORDER.push(k)});
+NAT_KEYS.splice(0,NAT_KEYS.length,...NAT_ORDER);
+NAT_REAL.splice(0,NAT_REAL.length,...NAT_ORDER.filter(k=>!['war','poor'].includes(k)));
+/* ----- フランス1部と各国の国内リーグ ----- */
+LG.FRA={n:'フランス1部',m:34,t:18,mean:73,cty:'フランス',sc:23,as:12,base:16000,cup:'フランス杯',cont:'UCL',spots:3};
+CITY['フランス']=['ナント','レンヌ','ボルドー','リール','ストラスブール','ニース','モンペリエ','ランス','トゥールーズ','ル・アーヴル','アンジェ','ロリアン','オセール','メス'];
+[['パリ・ルミエール',90],['マルセイユ・ポルト',82],['リヨン・ソワ',80],['モナコ・ロシェ',80],['リール・ドーグ',78],['ニース・ソレイユ',76],['レンヌ・ルージュ',75],['ランス・ソワール',72]].forEach(([n,r])=>CLUBS.push({id:CLUBS.length,n,lg:'FRA',rep:cr(r)}));
+HOME_LG.fr='FRA';HOME_LG.be='BEL';HOME_LG.gb='ENG';
+const GEN_SKIP=['jp','br','ar','es','it','de','en','nl','pt','ng','kr','us','fr','be','war','poor'];
+for(const k of NAT_ORDER){
+  if(GEN_SKIP.includes(k))continue;const N=NATIONS[k],key='L_'+k;
+  const mean=clamp(Math.round(N.str-16+(N.arch==='gulf'?4:0)),30,68);
+  const base=N.arch==='gulf'?3000+(mean-50)*150:[Math.max(300,800+(mean-50)*80),400,120,35][[0,.12,.35,.65].indexOf(N.poor)]||100;
+  const CI=CONF_INFO[N.cf];
+  LG[key]={n:N.n+(N.arch==='micro'||N.str<40?'リーグ':'1部'),m:30,t:12,mean,cty:N.n,sc:14+Math.round((mean-40)/5),as:8,base:Math.round(base),cup:N.n+'杯',ext:1,gen:1};
+  if(CI&&CI[2]&&mean>=(CI[2]==='UCL'?60:50)){LG[key].cont=CI[2];LG[key].spots=1}
+  CITY[N.n]=[N.c1,N.c2,'北部の町','南部の町','東部の町','西部の町','港町','中部の町','新市街','旧市街','高原の町','川沿いの町'].map((c,i)=>i<2?c:N.c1+'・'+c.replace('の町',''));
+  const tp=CLUB_TPL[N.pool]||CLUB_TPL[{ko:'ko'}[N.pool]]||['{c}FC','{c}・ユナイテッド','スポルティング{c}','{c}シティ'];
+  [[N.c1,tp[0],6],[N.c1,tp[1],3],[N.c2,tp[2],0],[N.c2,tp[3],-3]].forEach(([c,t,o])=>CLUBS.push({id:CLUBS.length,n:t.replace('{c}',c),lg:key,rep:cr(mean+o)}));
+  HOME_LG[k]=key;
+}
+/* ----- 国ごとの出来事（食べ物・国民的スポーツ・ダービー・地域の気候） ----- */
+const C3_SEEN=(p,id)=>p.seen[id]!=null&&p.season-p.seen[id]<2;
+function c3Roll(p){
+  const N=NATN(p),off=OFF(p.month),c=[];
+  if(N.food&&!C3_SEEN(p,'sp:food'))c.push('sp:food');
+  if(N.sport&&p.stage!=='pro'&&!C3_SEEN(p,'sp:sport'))c.push('sp:sport');
+  if(!off&&N.c1&&N.c2&&!C3_SEEN(p,'sp:derby')&&(p.stage!=='pro'||(CLUBS[p.club]&&LG[CLUBS[p.club].lg].cty===N.cty)))c.push('sp:derby');
+  const cl=C3_CLIMATE[N.arch];if(cl&&!C3_SEEN(p,'sp:clim'))c.push('sp:clim');
+  if(N.arch==='micro'&&p.stage!=='pro'&&!C3_SEEN(p,'sp:micro'))c.push('sp:micro');
+  return c.length&&Math.random()<.16?pick(c):null;
+}
+const C3_CLIMATE={
+ andes:['高地の空気','標高の高いグラウンドでは、少し走っただけで息が上がる。慣れない相手チームは真っ青だ。',['高地で走り込む','心肺がさらに強くなる',{phy:2,fat:8}],['ペース配分を覚える','',{key:1}]],
+ carib:['ビーチでボール遊び','白い砂浜で、子どもたちが裸足でボールを追いかけている。誘われて輪に入った。',['ビーチで本気の勝負','砂の上で足腰が鍛えられる',{spd:1,phy:1,cond:5}],['子どもたちに技を見せる','',{tec:1,pop:2}]],
+ nordic:['長い冬','日が昇るのは昼前、沈むのは午後3時。屋外のピッチは雪に埋もれた。',['屋内ドームで技術練習','',{tec:2}],['雪の中を走る','',{phy:1,fat:6}]],
+ pacific:['ラグビーとの二刀流','島ではラグビーの方が人気だ。「タックルの練習にも来いよ」と誘われた。',['ラグビー部にも顔を出す','当たりに強くなる',{phy:2,fat:8}],['サッカーに集中する','',{key:1}]],
+ gulf:['真夏の酷暑','気温45度。練習は日が沈んでからの夜だけになった。',['夜の練習に全力を注ぐ','',{key:1,sta:-4}],['エアコンの効いた室内で筋トレ','',{phy:1}]],
+ asiaE:['スコール','突然のスコールでピッチが水浸しになった。ボールが止まる。',['水たまりでパス練習','',{pas:1,tec:1}],['雨宿りしながら戦術談義','',{mates:6}]],
+ sasia:['モンスーンの季節','雨季に入り、グラウンドはぬかるみだらけだ。',['泥の中でボールを蹴る','',{phy:1,tec:1}],['屋根の下で体幹トレーニング','',{phy:1}]],
+ east:['凍てつくピッチ','気温マイナス15度。芝は凍りつき、ボールは石のように硬い。',['いつも通り全力で','',{phy:1,coach:3}],['室内で調整','',{sta:4}]],
+ afrN:['砂漠の風','サハラから吹く砂嵐で、練習は中断された。',['砂の中で走り込む','',{phy:1,spd:1,fat:6}],['映像で戦術を学ぶ','',{pas:1}]],
+ balkan:['ストリートの技','古い団地の中庭で、年上の連中と日が暮れるまでボールを蹴った。',['ドリブル勝負を挑む','',{tec:2}],['シュート勝負を挑む','',{sho:2}]],
+};
+function c3Ev(id,p){
+  const N=NATN(p);
+  if(id==='sp:food')return {id,t:`${N.food}の味`,x:`遠征前の夜、家族が${N.n}の家庭料理「${N.food}」を作ってくれた。湯気の向こうで、みんなが笑っている。`,ch:[
+    {l:'おかわりする',d:'',pr:()=>1,ok:{m:'お腹も心も満たされた。明日もがんばれる。',fx:{cond:8,sta:4}},ng:{m:'',fx:{}}},
+    {l:'家族と夜遅くまで語り合う',d:'',pr:()=>1,ok:{m:'小さいころの話で大笑いした。',fx:p.hope!=null?{cond:5,hope:6}:{cond:6}},ng:{m:'',fx:{}}}]};
+  if(id==='sp:sport')return {id,t:`国民的スポーツ「${N.sport}」`,x:`${N.n}でいちばん人気があるのは${N.sport}だ。${N.sport}のチームから「うちに来ないか」と誘われた。サッカーより注目されるし、お金にもなるらしい。`,ch:[
+    {l:'サッカー一本で行く',d:'',pr:()=>1,ok:{m:'迷いを振り切った。サッカーで一番になる。',fx:{key:1,cond:4}},ng:{m:'',fx:{}}},
+    {l:`しばらく${N.sport}もやってみる`,d:'体の使い方が変わる',pr:()=>.7,ok:{m:`${N.sport}で覚えた体の使い方が、サッカーにも生きた。`,fx:{phy:2,spd:1,fat:8}},ng:{m:'どっちつかずで、サッカーの感覚が鈍った。',fx:{cond:-5}}}]};
+  if(id==='sp:derby')return {id,t:`${N.c1}対${N.c2}`,x:`${N.n}で最も熱い一戦、${N.c1}と${N.c2}の対決。街じゅうが二色に染まる。`,ch:[
+    {l:'先制ゴールを狙う',d:'',pr:c=>.45+(c.p.st.sho-60)/90,ok:{m:'開始10分でネットを揺らした。翌日の地元紙は自分の写真で埋まった。',fx:{pop:7,sho:1}},ng:{m:'気負いすぎてシュートは空を切った。',fx:{cond:-4}}},
+    {l:'球際で一歩も引かない',d:'',pr:c=>.5+(c.p.st.phy-60)/100,ok:{m:'体を張ったプレーにスタンドが沸いた。',fx:{coach:5,mates:5}},ng:{m:'熱くなってイエローカードをもらった。',fx:{coach:-3}}}]};
+  if(id==='sp:clim'){const C=C3_CLIMATE[N.arch];if(!C)return null;return {id,t:C[0],x:C[1],ch:[C[2],C[3]].map(([l,d,fx])=>({l,d,pr:()=>1,ok:{m:'積み重ねが、少しずつ力になっていく。',fx}, ng:{m:'',fx:{}}}))}}
+  if(id==='sp:micro')return {id,t:'本業との両立',x:`${N.n}では、代表選手でさえ昼間は別の仕事をしている。自分も週5日、街の店で働きながらボールを蹴っている。`,ch:[
+    {l:'仕事の前に朝練する',d:'',pr:()=>.7,ok:{m:'朝6時のグラウンド。眠いが、体は確実に強くなっている。',fx:{key:1,sta:-6,money:5}},ng:{m:'寝不足でミスが増えた。',fx:{cond:-5,money:5}}},
+    {l:'仕事を減らしてサッカーに賭ける',d:'',pr:()=>.6,ok:{m:'収入は減ったが、練習時間が倍になった。',fx:{key:1,tec:1,money:-5}},ng:{m:'家計が苦しくなった。',fx:{money:-10,cond:-3}}}]};
+  return null;
+}
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
