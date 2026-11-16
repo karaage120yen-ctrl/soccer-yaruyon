@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-112248';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-112458';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3193,7 +3193,7 @@ const GIFTS=[
  {id:'g100b',coins:GACHA_COST*100,n:'100連分',until:'2026-11-15T18:25:00Z'},
  {id:'g100c',coins:GACHA_COST*100,n:'100連分',until:'2026-11-15T18:25:00Z'},
  {id:'g100d',coins:GACHA_COST*100,n:'100連分（30分限定）',until:'2026-11-16T11:49:00Z'},
- {id:'tkS1',ticket:'spS',n:'育成S以上確定チケット1枚'}];
+ {id:'tkS1',ticket:'spS',n:'育成S以上確定チケット1枚',until:'2026-11-16T11:24:00Z'}];
 const giftOpen=g=>!g.until||Date.now()<Date.parse(g.until);
 const GIFT_OPEN=GIFTS.some(giftOpen);
 function applyGifts(){if(typeof M==='undefined'||!M)return;if(!M.gifts)M.gifts={};const got=[];
