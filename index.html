@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-112458';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-112703';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -673,6 +673,8 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .prow.on{outline:2px solid #e2462b}
 .prow .pf{width:36px;height:36px;flex:none;display:inline-block;overflow:hidden;border-radius:6px}
 .prow .pf .sprw,.prow .pf svg,.prow .pf img{width:36px!important;height:36px!important;display:block}
+
+.prow.lock{opacity:.55;cursor:not-allowed}
 
 </style>
 </head>
@@ -5714,14 +5716,15 @@ function tkBlock(d){
    ${d.tkG?'':'<button class="btn red" data-act="tkOn">チケットを使う</button>'}</div>`;
 }
 /* ---------- 育成キャラの交換：コードで友達にあげる ---------- */
+const inSquad=id=>M.squad.slots.includes(id)||M.squad.bench.includes(id)||M.squad.mg===id;
 const giftable=()=>M.roster.filter(c=>c.from==='育成').concat(M.mgrs||[]);
 async function tradeMake(id){
   const c=M.roster.find(x=>x.id===id)||(M.mgrs||[]).find(x=>x.id===id);if(!c)throw new Error('キャラが見つからない');
+  if(inSquad(id))throw new Error('スカッドで使っているキャラはあげられない。先にスカッドから外してね');
   const o={gift:1,id:uidGen('gf'),t:Date.now(),from:(teamCalc().name||'だれか'),c:JSON.parse(JSON.stringify(c))};
   const code=await b64z(JSON.stringify(o));
   // 手放す：スカッド・ベンチ・監督からも外す
   M.roster=M.roster.filter(x=>x.id!==id);M.mgrs=(M.mgrs||[]).filter(x=>x.id!==id);
-  M.squad.slots=M.squad.slots.map(x=>x===id?null:x);M.squad.bench=M.squad.bench.map(x=>x===id?null:x);if(M.squad.mg===id)M.squad.mg=null;
   M.sent=[{name:c.name,code,t:Date.now()}].concat(M.sent||[]).slice(0,5);metaSave();
   return {code,name:c.name};
 }
@@ -5737,14 +5740,14 @@ async function tradeTake(code){
 function tradeHtml(){
   const T=G.tr||(G.tr={}),list=giftable();
   return `<div class="kick">キャラの交換<span class="r">育成した選手・監督をあげる</span></div>
-  <p class="note">あげたいキャラを選んでコードを作り、LINEなどで送る。相手が下の「受け取る」に貼ると、そのキャラが相手のものになる。<b>あげたキャラは自分の手元からいなくなる。</b>コード1つにつき受け取れるのは1回だけ。</p>
+  <p class="note">あげたいキャラを選んでコードを作り、LINEなどで送る。相手が下の「受け取る」に貼ると、そのキャラが相手のものになる。<b>あげたキャラは自分の手元からいなくなる。</b>スカッド（スタメン・ベンチ・監督）に入っているキャラはあげられない。コード1つにつき受け取れるのは1回だけ。</p>
   ${T.msg?`<div class="toast"><b>${esc(T.msg)}</b></div>`:''}
   ${T.code?`<div class="label">「${esc(T.name)}」のプレゼントコード</div><textarea class="code" id="trout" readonly>${esc(T.code)}</textarea>
     <div class="seg c2"><button class="opt" data-act="copyFrom" data-v="trout">コピーする</button><a class="opt" href="https://line.me/R/share?text=${encodeURIComponent('サッカーやるよんのキャラをあげる！「対戦」ではなく「スカッド→交換→受け取る」に貼ってね\n'+T.code)}" target="_blank" rel="noopener">LINEで送る</a></div>`:''}
   <div class="label">あげるキャラを選ぶ（${list.length}人）</div>
-  ${list.length?`<div class="plist">${list.map(c=>{const sel=T.sel===c.id,inSq=M.squad.slots.includes(c.id)||M.squad.bench.includes(c.id)||M.squad.mg===c.id;
-    return `<button class="prow ${sel?'on':''}" data-act="trSel" data-v="${c.id}"><span class="pf">${sprOf(c,c.kind==='mg'?'mg':undefined)}</span><span class="po">${c.kind==='mg'?'監督':c.pos}</span><b>${esc(c.name)}</b><span class="sub">${c.grade?`評価${c.grade}・`:''}${c.giftFrom?`${esc(c.giftFrom)}からもらった・`:''}${inSq?'スカッドに入っている':''}</span><span class="num">${c.kind==='mg'?'':cardOvr(c)}</span></button>
-      ${sel?`<div class="trconf"><p>${esc(c.name)}をあげる？ コードを作った時点で手元からいなくなる${inSq?'（スカッドからも外れる）':''}。</p><div class="seg c2"><button class="opt" data-act="trMake" data-v="${c.id}">コードを作ってあげる</button><button class="opt" data-act="trSel" data-v="">やめる</button></div></div>`:''}`}).join('')}</div>`:'<p class="note">育成した選手・監督がまだいない。ガチャで出たキャラはあげられない。</p>'}
+  ${list.length?`<div class="plist">${list.map(c=>{const sel=T.sel===c.id,inSq=inSquad(c.id);
+    return `<button class="prow ${sel?'on':''} ${inSq?'lock':''}" data-act="trSel" data-v="${c.id}" ${inSq?'disabled aria-disabled="true"':''}><span class="pf">${sprOf(c,c.kind==='mg'?'mg':undefined)}</span><span class="po">${c.kind==='mg'?'監督':c.pos}</span><b>${esc(c.name)}</b><span class="sub">${inSq?'🔒 スカッドで使用中（外すと交換できる）':`${c.grade?`評価${c.grade}`:''}${c.giftFrom?`・${esc(c.giftFrom)}からもらった`:''}`}</span><span class="num">${c.kind==='mg'?'':cardOvr(c)}</span></button>
+      ${sel&&!inSq?`<div class="trconf"><p>${esc(c.name)}をあげる？ コードを作った時点で手元からいなくなる。</p><div class="seg c2"><button class="opt" data-act="trMake" data-v="${c.id}">コードを作ってあげる</button><button class="opt" data-act="trSel" data-v="">やめる</button></div></div>`:''}`}).join('')}</div>`:'<p class="note">育成した選手・監督がまだいない。ガチャで出たキャラはあげられない。</p>'}
   <div class="label">もらったコードを貼って受け取る</div><textarea class="code" id="trin" placeholder="KJ1:..."></textarea>
   <div class="stack" style="margin-top:8px"><button class="btn red" data-act="trTake">受け取る</button></div>
   ${(M.sent||[]).length?`<details class="betteam"><summary>最近あげたキャラのコード（送り忘れたとき用）</summary>${M.sent.map((s,i)=>`<div class="label">${esc(s.name)}</div><textarea class="code" id="trs${i}" readonly>${esc(s.code)}</textarea><button class="opt" data-act="copyFrom" data-v="trs${i}">コピー</button>`).join('')}</details>`:''}`;
