@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-013727';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-021916';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -504,6 +504,16 @@ textarea.code{width:100%;min-height:90px;font:12px/1.4 var(--num);background:var
 .lgal figure{margin:0;scroll-snap-align:start}
 .lgal figcaption{font-size:12px;text-align:center;margin-top:4px}
 .gr .gfa{width:56px;margin:0 auto 4px}
+.iview{margin-top:16px}
+.ivbox{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
+.ivart{position:relative}
+.ivart img{display:block;width:100%;height:auto;image-rendering:pixelated}
+.ivname{position:absolute;left:0;right:0;bottom:0;padding:10px 14px;background:linear-gradient(90deg,rgba(255,81,38,.92),rgba(255,81,38,.6) 70%,transparent);color:#fff}
+.ivname b{display:block;font-family:var(--display);font-size:22px;letter-spacing:.04em}
+.ivname span{font-size:12px;opacity:.95}
+.ivqa{padding:12px 14px 6px}
+.ivqa .q{margin:8px 0 2px;font-size:12px;color:var(--muted)}
+.ivqa .a{margin:0 0 6px;font-size:15px;line-height:1.6}
 
 </style>
 </head>
@@ -1054,7 +1064,7 @@ function sprOf(c,kind){
 
 /* ========== ガチャキャラの全身ドット絵（80×100）。骨格（関節の位置）からポーズを描く ========== */
 // 座標は 80×100 のマス目で書き、実際は 2 倍（160×200）の細かいドットで描く
-const FA_S=2,FA_W=160,FA_H=200;
+let FA_S=2;const FA_W=160,FA_H=200;
 function faBuf(){const B=new Array(FA_W*FA_H).fill(null);const o={B,
   setB(x,y,c){x=Math.round(x);y=Math.round(y);if(x>=0&&x<FA_W&&y>=0&&y<FA_H&&c)B[y*FA_W+x]=c},
   getB(x,y){return x>=0&&x<FA_W&&y>=0&&y<FA_H?B[y*FA_W+x]:null},
@@ -1164,9 +1174,9 @@ function faPerson(P,k,o){
   if(o.hs==='afro')faCircle(P,hx-f*.5,hy-1.6,hr+2.8,o.hair);
   if(o.hs==='long')[-1,0,1].forEach(i=>faCap(P,[hx-f*2,hy-2+i],[hx-f*(6+i),hy+7+i*1.5],2.2,1,i?shd(o.hair,.85):o.hair));
   // 頭：あごのある形
-  faCircle(P,hx,hy,hr,sk);faCap(P,[hx,hy+1],[hx+f*1.6,hy+hr+.6],hr*.78,2.1,sk);
+  faCircle(P,hx,hy,hr,sk);faCap(P,[hx,hy+1],[hx+(o.frontal?0:f*1.6),hy+hr+.6],hr*.78,2.1,sk);
   faHair(P,hx,hy,hr,o,f);
-  faFace(P,hx,hy,hr,o,f,sk);
+  if(o.frontal)faFaceFront(P,hx,hy,hr,o,sk);else faFace(P,hx,hy,hr,o,f,sk);
   if(o.band)faCap(P,[hx-hr-.3,hy-2.3],[hx+hr+.3,hy-2.3],.9,.9,o.band);
   if(o.head)o.head(P,k,hx,hy,hr);
   arm(sN,k.eN,k.hN,0,o.openN);
@@ -1190,7 +1200,9 @@ function faHair(P,hx,hy,hr,o,f){
 }
 // 顔：目・眉・鼻・口・あごの影（2倍のマスで細かく）
 function faFace(P,hx,hy,hr,o,f,sk){
-  const X=Math.round(hx*FA_S),Y=Math.round(hy*FA_S),b=(dx,dy,c)=>P.setB(X+dx*f,Y+dy,c),sd=shd(sk,.78),sd2=shd(sk,.66),hi=lit(sk,.3);
+  const X=Math.round(hx*FA_S),Y=Math.round(hy*FA_S),q=FA_S/2,sd=shd(sk,.78),sd2=shd(sk,.66),hi=lit(sk,.3);
+  // 大きく描くときは、目や口も同じ割合で大きく
+  const b=(dx,dy,c)=>{const x0=Math.round(X+dx*f*q),y0=Math.round(Y+dy*q),n=Math.max(1,Math.round(q));for(let a=0;a<n;a++)for(let bb=0;bb<n;bb++)P.setB(x0+a,y0+bb,c)};
   // 耳
   for(let y=-1;y<=3;y++){b(-5,y,sd);b(-4,y,y===1?sd2:sd)}
   // ほお骨の光、目のくぼみ
@@ -1207,6 +1219,27 @@ function faFace(P,hx,hy,hr,o,f,sk){
   else{for(let x=5;x<=8;x++)b(x,5,mc);b(6,6,sd)}
   // あごの影
   for(let x=-2;x<=5;x++)b(x,9,sd);for(let x=-3;x<=1;x++)b(x,7,sd)
+}
+// 正面の顔（インタビュー用）
+function faFaceFront(P,hx,hy,hr,o,sk){
+  const X=Math.round(hx*FA_S),Y=Math.round(hy*FA_S),q=FA_S/2,sd=shd(sk,.8),sd2=shd(sk,.66),hi=lit(sk,.32);
+  const b=(dx,dy,c)=>{const x0=Math.round(X+dx*q),y0=Math.round(Y+dy*q),n=Math.max(1,Math.round(q));for(let a=0;a<n;a++)for(let bb=0;bb<n;bb++)P.setB(x0+a,y0+bb,c)};
+  for(let y=-1;y<=3;y++){b(-9,y,sd);b(8,y,sd)}b(-9,1,sd2);b(8,1,sd2);// 耳
+  for(let y=-2;y<=8;y++){b(-7,y,shd(sk,.88));b(6,y,shd(sk,.84))}// 顔の横の影
+  const eb=o.hs==='bald'?shd(sk,.5):shd(o.hair,.7);
+  [-1,1].forEach(sx=>{const ex=sx<0?-5:2;
+    for(let x=0;x<3;x++)b(ex+x,-4-(o.angry?(sx<0?x:2-x)*.4:0),eb);
+    if(o.sleepy||o.down){for(let x=0;x<3;x++)b(ex+x,-1,'#2a1a10');b(ex+1,0,sd)}
+    else{b(ex,-2,'#ffffff');b(ex+1,-2,o.eye||'#24160c');b(ex+2,-2,'#ffffff');b(ex+1,-1,o.eye||'#24160c');b(ex,-1,'#f0e6dc');b(ex+2,-1,'#f0e6dc');b(ex+1,-3,'#1b120c');b(ex,-3,'#1b120c');b(ex+2,-3,'#1b120c');b(ex+1,-2,o.eye||'#24160c');P.setB(Math.round(X+(ex+1)*q),Math.round(Y-2*q),'#ffffff')}});
+  // 鼻
+  b(0,-1,hi);b(0,0,hi);b(-1,2,sd);b(1,2,sd2);b(0,3,sd2);b(-1,3,sd);
+  // 口
+  const mc=o.mouth||'#8a3a2a';
+  if(o.open){for(let x=-2;x<=2;x++){b(x,5,mc);b(x,6,'#5a1a1a')}for(let x=-1;x<=1;x++)b(x,6,'#ffffff');b(-3,4,mc);b(3,4,mc)}
+  else if(o.down){for(let x=-2;x<=2;x++)b(x,6,mc);b(-3,7,mc);b(3,7,mc)}
+  else{for(let x=-2;x<=2;x++)b(x,6,mc);b(-3,5,mc);b(3,5,mc)}
+  // ほお・あご
+  b(-5,2,hi);b(4,2,sd);for(let x=-3;x<=3;x++)b(x,9,sd);b(0,8,hi);
 }
 function numBig(P,n,x,y,c){String(n).split('').forEach((d,i)=>DIG3[d].forEach((r,yy)=>r.split('').forEach((v,xx)=>{if(v==='1')for(let a=0;a<2;a++)for(let bb=0;bb<2;bb++)P.setB(Math.round((x+i*3.6)*FA_S)+xx*2+a,Math.round(y*FA_S)+yy*2+bb,c)})))}
 const DIG3={0:['111','101','101','101','111'],1:['010','110','010','010','111'],2:['111','001','111','100','111'],3:['111','001','111','001','111'],4:['101','101','111','001','001'],5:['111','100','111','001','111'],6:['111','100','111','101','111'],7:['111','001','010','010','010'],8:['111','101','111','101','111'],9:['111','101','111','001','111']};
@@ -1324,6 +1357,98 @@ function fullArtURL(id){
   return FA_CACHE[id]=cv.toDataURL('image/png');
 }
 function fullArt(id,cls){const u=fullArtURL(id);return u?`<img class="fart${cls?' '+cls:''}" src="${u}" alt="" width="${FA_W}" height="${FA_H}">`:''}
+
+/* ========== 試合後のヒーローインタビュー ========== */
+const IV_HS={short:'short',spiky:'spiky',long:'long',buzz:'buzz',mohawk:'mohawk',afro:'afro',side:'side',bangs:'bangs',bald:'bald',curly:'short'};
+// 名前から見た目を決める（顔の絵と同じ髪型・肌・髪の色）
+function ivLook(name,pos){
+  const r=rng(hashS('pl:'+name+'|'+(pos||''))),pk=a=>a[Math.floor(r()*a.length)];
+  const hs=pk(['short','spiky','long','buzz','mohawk','afro','side','bangs','short','spiky','curly']);
+  const kit=pk(KIT[pos]||KIT.MF);let skin=pk(SKIN32);const hair=pk(HAIR32);
+  if(hs==='afro'&&skin===SKIN32[0])skin=pk(SKIN32.slice(2));
+  return {skin,hair,hs:IV_HS[hs],jersey:kit[0],trim:kit[1],num:1+Math.floor(r()*29),band:r()<.2?pk(['#ffffff','#e2462b','#111111','#2f6fd6']):null};
+}
+const IV_BYNAME=()=>{const m={};[ICHIKAWA,SHANCHI,MAO,INKANSU].forEach(c=>{m[c.name]=c.id});return m};
+// インタビューの姿勢（腰から上を大きく）。座標は 50×62 のマス（3.2倍で描く）
+const IVP={
+  win:J([25,14],[25,21],[31,24],[19,24],[37,15],[36,5],[14,33],[16,42],[25,52],[29,52],[21,52],[30,66],[30,80],[33,82],[20,66],[20,80],[17,82]),
+  draw:J([25,14],[25,21],[31,24],[19,24],[35,18],[29,10],[14,33],[17,43],[25,52],[29,52],[21,52],[30,66],[30,80],[33,82],[20,66],[20,80],[17,82]),
+  lose:J([25,16],[25,22],[31,25],[19,25],[34,35],[31,45],[16,35],[19,45],[25,53],[29,53],[21,53],[30,66],[30,80],[33,82],[20,66],[20,80],[17,82]),
+};
+const IV_CACHE={};
+function ivArt(look,mood,team,key){
+  if(typeof document==='undefined')return '';
+  const ck=key+'|'+mood+'|'+team;if(IV_CACHE[ck])return IV_CACHE[ck];
+  const cv=document.createElement('canvas');cv.width=FA_W;cv.height=FA_H;const g=cv.getContext('2d');
+  const TC=team?['#16264a','#2f6fd6']:['#3a1010','#e2462b'];
+  // 背景：インタビューボード（ゲームのロゴを並べた壁）
+  g.fillStyle=TC[0];g.fillRect(0,0,FA_W,FA_H);
+  for(let y=-10;y<FA_H;y+=28)for(let x=-10;x<FA_W;x+=36){const ox=x+((y/28)%2?18:0);
+    g.fillStyle='rgba(255,255,255,.9)';g.beginPath();g.arc(ox+8,y+8,5,0,Math.PI*2);g.fill();g.fillStyle='#111';g.fillRect(ox+7,y+7,3,3);g.fillRect(ox+4,y+6,2,2);g.fillRect(ox+11,y+9,2,2);
+    g.fillStyle=TC[1];g.fillRect(ox+15,y+5,12,3);g.fillStyle='rgba(255,255,255,.55)';g.fillRect(ox+15,y+10,9,2)}
+  // フラッシュ
+  const r=rng(hashS(ck));for(let i=0;i<6;i++){const x=r()*FA_W,y=r()*FA_H*.6;const gr=g.createRadialGradient(x,y,0,x,y,14);gr.addColorStop(0,'rgba(255,255,255,.8)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(x-14,y-14,28,28)}
+  const P=faBuf(),S0=FA_S;FA_S=3.2;FA_RIM=lit(TC[1],.5);
+  const o=Object.assign({shorts:'#ffffff',socks:look.jersey,boots:'#222'},look,{face:1,frontal:1,open:mood==='win'?1:0,openN:mood==='draw'?1:0,down:mood==='lose'?1:0,angry:0});
+  if(mood==='lose')o.front=(P2)=>{// 肩にタオル
+    faCap(P2,[19,21.5],[31,21.5],2.1,2.1,'#eef3f7');faCap(P2,[20,22],[19.5,36],1.9,1.8,'#eef3f7');faCap(P2,[30,22],[30.5,35],1.9,1.8,'#dfe6ec');faCap(P2,[19.5,33],[19.5,34],1.95,1.95,'#5aa0e6');faCap(P2,[30.5,32],[30.5,33],1.95,1.95,'#5aa0e6')};
+  faPerson(P,IVP[mood],o);
+  FA_RIM=null;
+  // 汗
+  [[14,10],[12,15],[36,9]].forEach(([x,y],i)=>{faCircle(P,x,y,.45,'#bfe6ff');P.set(x,y-.4,'#ffffff')});
+  faOutline(P,'#16100c');FA_S=S0;
+  // マイク（右から）
+  const mic=(g2)=>{// 記者の手とマイク（口もとに向ける）
+    g2.fillStyle='#f0c49a';g2.fillRect(138,96,22,13);g2.fillStyle='#d4a47a';g2.fillRect(138,105,22,4);
+    g2.save();g2.translate(140,100);g2.rotate(-.95);g2.fillStyle='#202020';g2.fillRect(-46,-3,48,7);g2.fillStyle='#3a3a3a';g2.fillRect(-46,-3,48,2);g2.restore();
+    g2.fillStyle=TC[1];g2.save();g2.translate(118,76);g2.rotate(-.95);g2.fillRect(-6,-6,12,12);g2.fillStyle='#ffffff';g2.fillRect(-4,-1,8,2);g2.restore();
+    g2.fillStyle='#7a7a7a';g2.beginPath();g2.arc(108,60,9,0,Math.PI*2);g2.fill();g2.fillStyle='#b8b8b8';g2.beginPath();g2.arc(106,58,6.5,0,Math.PI*2);g2.fill();
+    g2.fillStyle='#5a5a5a';for(let a=-8;a<=8;a+=3)for(let b=-8;b<=8;b+=3)if(a*a+b*b<58)g2.fillRect(108+a,60+b,1,1);g2.fillStyle='#ffffff';g2.fillRect(103,54,2,2)};
+  const im=g.getImageData(0,0,FA_W,FA_H);
+  for(let i=0;i<P.B.length;i++){const c=P.B[i];if(!c)continue;const [rr,gg,b]=hx(c);im.data[i*4]=rr;im.data[i*4+1]=gg;im.data[i*4+2]=b;im.data[i*4+3]=255}
+  g.putImageData(im,0,0);mic(g);
+  // 下を暗く（名前の帯を読みやすく）
+  const gr=g.createLinearGradient(0,FA_H*.7,0,FA_H);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.55)');g.fillStyle=gr;g.fillRect(0,0,FA_W,FA_H);
+  return IV_CACHE[ck]=cv.toDataURL('image/png');
+}
+/* 試合の中身からインタビューを作る */
+function ivData(X,res){
+  if(!res.mvp)return null;
+  const s=res.mvp.s,T=s===0?X.A:X.B,name=res.mvp.n,me=res.sc[s],op=res.sc[1-s];
+  const pkW=res.pk&&me===op?res.pk[s]>res.pk[1-s]:null,mood=me>op||pkW?'win':me<op?'lose':'draw';
+  const pl=(T.pl||[]).find(p=>p.n===name)||{},role=pl.role||'MF';
+  const goals=res.ev.filter(e=>e.ty==='goal'&&!e.pk&&e.s===s&&e.tx.includes(name)).length;
+  const asts=res.ev.filter(e=>e.ty==='goal'&&!e.pk&&e.s===s&&!e.tx.startsWith(name)&&e.tx.includes(name+'の')).length;
+  const sk=res.ev.find(e=>e.ty==='skill'&&e.s===s&&e.tx.startsWith(name));
+  const r=rng((res.seed||1)^hashS(name)),pk=a=>a[Math.floor(r()*a.length)];
+  const team=T.name||'チーム',opp=(s===0?X.B:X.A).name||'相手';
+  const QA=[];
+  QA.push(['今日の試合を振り返っていかがですか？',
+    mood==='win'?pk([`最高です！ ${team}のみんなで取った勝利です！`,`しびれる試合でした。勝ててほっとしています！`,`今日はチーム全員が戦っていました。最高の気分です！`]):
+    mood==='draw'?pk([`勝ちたかったですね…。でも最後まで粘れたのは大きいです。`,`${opp}は強かった。次は必ず勝ちます。`]):
+    pk([`悔しいです。でも、下を向いている暇はありません。`,`今日の負けを、次につなげます。`,`力不足でした。もっと練習します。`])]);
+  if(res.pk&&me===op)QA.push(['PK戦までもつれ込みました。',pkW?pk(['心臓が止まるかと思いました（笑）。決めてくれた仲間に感謝です！','GKを信じていました。最高のチームです！']):pk(['PKは運もある。でも、それも実力のうちだと思います。','蹴った仲間を責めるつもりはありません。全員で受け止めます。'])]);
+  if(goals>=2)QA.push([`${goals}ゴールの大活躍でした！`,pk(['ボールが足に吸いついてくる感じでした。今日は何を蹴っても入る気がしました！','仲間がいいボールをくれたので、決めるだけでした。'])]);
+  else if(goals===1)QA.push(['見事なゴールでした。',pk(['狙い通りのコースでした。あの瞬間のために練習してきました！','体が勝手に動きました。決まってよかったです！'])]);
+  else if(asts)QA.push(['アシストで勝利に貢献しました。',pk(['点を取った仲間がすごい。僕は渡しただけです。','パスがつながる瞬間が一番好きなんです。'])]);
+  else if(role==='GK'||role==='DF')QA.push(['守備での貢献が光りました。',pk(['ゴール前は絶対に通さない、と決めていました。','守り切ることが、自分の仕事ですから。'])]);
+  else QA.push(['今日のプレーの手応えは？',pk(['走り切れたことは評価したいです。','チームのためにできることを全部やりました。'])]);
+  if(sk)QA.push(['あの場面、何を思っていましたか？',name.includes('MAO')?'「俺の邪魔はさせない！！」――それだけです。':name.includes('イチカワ')?'キャプテンとして、絶対に俺が守るんだと。アッセンブル！！':name.includes('シャン')?'後半は誰も通さない。それが帝国です。':name.includes('陰関数')?'最初の45分で全部決める。それが僕のやり方です。':'仲間を信じていました。']);
+  QA.push(['最後にファンのみなさんへ！',mood==='lose'?pk(['次は必ず笑顔にします。応援よろしくお願いします！','また応援してもらえるように、強くなって戻ってきます。']):pk(['今日もありがとうございました！ 次も一緒に戦いましょう！','みなさんの声が力になりました。また会いましょう！'])]);
+  // 見た目：ガチャキャラは固有、それ以外は名前から
+  const gid=IV_BYNAME()[name];let look,key;
+  if(gid&&FA[gid]){const o=FA[gid].o;look={skin:o.skin,hair:o.hair,hs:o.hs,jersey:o.jersey,trim:o.trim,num:o.num,band:o.band,armF:o.arm||o.armF};key='g:'+gid}
+  else{const c=s===X.side?M.roster.find(c=>c.name===name):null;look=ivLook(name,(c&&c.pos)||role);key='p:'+name+'|'+role}
+  const stats=[];if(goals)stats.push(`${goals}ゴール`);if(asts)stats.push(`${asts}アシスト`);if(sk)stats.push('スキル発動');
+  return {name,team,mood,QA,look,key,team01:s,role,stats,mine:s===X.side};
+}
+function interviewHtml(X,res){
+  const d=ivData(X,res);if(!d)return '';
+  const art=ivArt(d.look,d.mood,d.team01,d.key);
+  return `<section class="iview"><div class="kick">ヒーローインタビュー<span class="r">${d.mine?'自分のチーム':'相手チーム'}</span></div>
+  <div class="ivbox">${art?`<div class="ivart"><img src="${art}" alt=""><div class="ivname"><b>${esc(d.name)}</b><span>${esc(d.team)}・${d.role}${d.stats.length?'・'+d.stats.join('・'):''}</span></div></div>`:''}
+  <div class="ivqa">${d.QA.map(([q,a])=>`<p class="q">― ${esc(q)}</p><p class="a">「${esc(a)}」</p>`).join('')}</div></div></section>`;
+}
 
 /* ========== 試合シーン（ドット絵アニメ）。#scn というcanvasがあれば描く ========== */
 const SCW=160,SCH=90;
@@ -3994,6 +4119,7 @@ function matchHtml(){
   <ul class="bevs" id="bevs">${evs}</ul>
   <div id="bend" class="${done?'':'hide'}">
    <div class="verdict big ${mine>op||pkW===true?'ok':mine<op?'ng':'safe'}"><span class="vbig">${o}</span><span class="sub">${mine}-${op}${pkTx}・MVP ${res.mvp?esc(res.mvp.n):'—'}</span></div>
+   ${done?interviewHtml(X,res):''}
    <table class="st"><tbody><tr><th>ボール支配率</th><td class="n">${res.poss[0]}% - ${res.poss[1]}%</td></tr><tr><th>シュート</th><td class="n">${res.sh[0]} - ${res.sh[1]}</td></tr><tr><th>獲得コイン</th><td class="n"><b class="gold">+${X.rw?X.rw.coins:0}</b></td></tr></tbody></table>
    ${X.kind==='code'&&X.reply?`<div class="toast"><b>結果コードを相手に送り返そう。</b>相手が貼り付けると、同じ試合が見られて報酬ももらえる。</div><textarea class="code" id="rpout" readonly>${esc(X.reply)}</textarea><div class="stack" style="margin-top:8px"><button class="btn red" data-act="copyFrom" data-v="rpout">結果コードをコピー</button></div>`:''}
    ${X.own?'<p class="note">自分の対戦コードなので報酬はない。</p>':''}${X.watch?'<p class="note">ほかの人どうしの試合なので観戦のみ。</p>':''}
