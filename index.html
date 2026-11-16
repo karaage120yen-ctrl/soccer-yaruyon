@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-073559';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-074128';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3060,7 +3060,7 @@ const RENKEI_SKILL={n:'連携してしなきゃいけないやん？',q:'連携�
 // GKの能力：spd=反応 tec=キャッチ sho=セービング pas=キック phy=体格 def=判断
 const BATSUMARU={id:'batsumaru',kind:'pl',name:'バツ丸尾君',pos:'GK',style:'85歳の守護神',special:'oibore',from:'ガチャ',
  st:{spd:77,tec:90,sho:85,pas:40,phy:67,def:80}};
-const OIBORE_SKILL={n:'おいぼれでも経験はあるんじゃよ',q:'おいぼれでも経験はあるんじゃよ',d:'ピンチ（決定機・PK）のとき1回だけ、判断が180になり、ほかの能力−30。終わると元に戻るが腰痛に。5%の確率でぎっくり腰になり、次の1試合に出られない'};
+const OIBORE_SKILL={n:'おいぼれでも経験はあるんじゃよ',q:'おいぼれでも経験はあるんじゃよ',d:'ピンチ（決定機・PK）のとき1回だけ、判断が180になり、ほかの能力−30。終わると元に戻るが腰痛に。5%の確率でぎっくり腰になり、その試合はもう出られない（控えGKに交代）'};
 const GIKKURI_P=.05;
 const GORIMORI={id:'gorimori',kind:'pl',name:'ゴリ森 フィジー',pos:'DF',style:'森の番人',special:'uhho',from:'ガチャ',
  st:{spd:60,tec:52,sho:43,pas:58,phy:95,def:80}};
@@ -3079,6 +3079,7 @@ let M=metaDefault();
 function metaFix(m){const d=metaDefault();m=Object.assign(d,m||{});m.mats=Object.assign(d.mats,m.mats||{});m.squad=Object.assign(metaDefault().squad,m.squad||{});
  if(!Array.isArray(m.squad.slots))m.squad.slots=Array(11).fill(null);while(m.squad.slots.length<11)m.squad.slots.push(null);m.squad.slots=m.squad.slots.slice(0,11);
  if(!Array.isArray(m.squad.bench))m.squad.bench=Array(5).fill(null);while(m.squad.bench.length<5)m.squad.bench.push(null);m.squad.bench=m.squad.bench.slice(0,5);if(m.squad.maoSub===undefined)m.squad.maoSub=true;
+ (m.roster||[]).forEach(c=>{if(c&&c.id==='lg_kame')c.name='アームストロングかめを';if(c&&c.gikkuri)c.gikkuri=0});
  const lgId=id=>typeof id==='string'&&id.startsWith('lg_');m.squad.slots=m.squad.slots.map(id=>lgId(id)?null:id);m.squad.bench=m.squad.bench.map(id=>lgId(id)?null:id);return m}
 function metaLoadLocal(){try{const d=JSON.parse(localStorage.getItem(META_KEY)||'null');if(d)M=metaFix(d)}catch(e){}_metaLast=JSON.stringify(Object.assign({},M,{t:0}))}
 let _metaLast='';
@@ -3172,7 +3173,7 @@ const LEG_SPECIAL={mameo:'全能力 初期+2／育成終了時に守備+3',inu:'
 const GLEGS=[
  {id:'lg_mameo',kind:'pl',name:'カカオ・マメオ',pos:'MF',style:'チョコの魔術師',legend:true,sup:'mameo',pu:true,from:'ガチャ',st:{spd:80,tec:84,sho:78,pas:86,phy:74,def:88}},
  {id:'lg_inu',kind:'pl',name:'かわいいいぬ',pos:'FW',style:'わんわんダッシュ',legend:true,sup:'inu',pu:true,from:'ガチャ',st:{spd:97,tec:78,sho:80,pas:70,phy:68,def:50}},
- {id:'lg_kame',kind:'pl',name:'アームストロングカメ',pos:'DF',style:'鉄の甲羅',legend:true,sup:'kame',pu:true,from:'ガチャ',st:{spd:45,tec:70,sho:55,pas:74,phy:95,def:94}},
+ {id:'lg_kame',kind:'pl',name:'アームストロングかめを',pos:'DF',style:'鉄の甲羅',legend:true,sup:'kame',pu:true,from:'ガチャ',st:{spd:45,tec:70,sho:55,pas:74,phy:95,def:94}},
  {id:'lg_kyuko',kind:'pl',name:'一限休講',pos:'MF',style:'二度寝の達人',legend:true,sup:'kyuko',pu:true,from:'ガチャ',st:{spd:70,tec:82,sho:72,pas:84,phy:88,def:70}},
  {id:'lg_yahho',kind:'pl',name:'やっほー',pos:'FW',style:'勝負師',legend:true,sup:'yahho',pu:true,from:'ガチャ',st:{spd:84,tec:80,sho:88,pas:76,phy:74,def:52}},
  {id:'lg_mateo',kind:'pl',name:'マテオ・メツシ君',pos:'FW',style:'神の継承者（11歳）',legend:true,sup:'mateo',pu:true,from:'ガチャ',st:{spd:82,tec:88,sho:80,pas:78,phy:52,def:40}},
@@ -3378,6 +3379,9 @@ function tbCheck(X){if(!X.tb)return false;const s0=X.seg*5,s1=s0+5;
       if(X.human===i){X.pend={ty:'tabako',m:Math.max(1,t),n:p.n,i};return true}
       tbDecide(X,i,X.r()<.55,Math.max(1,t))}}
   return false}
+function oibBack(X,d,m){const Y=X.T[d],g=Y.pl.find(p=>p.role==='GK'&&p.oib);if(!g||X.r()>=GIKKURI_P)return;
+  const f=filler('GK'),fr=Math.round(cardOvr(f,'GK')*10)/10,old=g.n;shiftTeam(Y,'GK',fr-g.r);Y.out=(Y.out||[]).concat([{...g}]);Object.assign(g,{n:'控えGK',r:fr,oib:0});X.gikkuri=X.gikkuri||[false,false];X.gikkuri[d]=old;
+  X.ev.push({m,s:d,ty:'down',tx:`${old}がぎっくり腰！ この試合はもう出られない。控えGKが入る`})}
 function oibFire(X,d,m){if(!X.oib||!X.oib[d]||X.oibUsed[d])return false;X.oibUsed[d]=true;const g=(X.T[d].pl.find(p=>p.role==='GK')||{n:'GK'}).n;
   X.ev.push({m,s:d,ty:'skill',tx:`${g}「${OIBORE_SKILL.q}」 判断180！ ほかの能力は−30`});return true}
 function mRun(X){
@@ -3459,7 +3463,7 @@ function mBig(X,info,a,d){
   if(hit&&uhhoBlock(X,1-i,n,m)){X.lastBig.read=true}
   else if(hit){X.lastBig.goal=true;X.sc[i]++;X.gl[i][n]=(X.gl[i][n]||0)+1;X.ev.push({m,s:i,ty:'goal',tx:read?`読まれていたが、${n}が力でねじ込んだ！`:`${gk}の読みの逆を突いた！ ${n}が決めた！`,sc:X.sc.slice()})}
   else X.ev.push({m,s:i,ty:'save',tx:ob?`${gk}が85年の経験で読み切った！ 神がかりのセーブ！`:read?`${gk}が完全に読み切った！ ${n}のシュートを止めた`:`${n}のシュートはわずかに枠の外…`});
-  if(ob)X.ev.push({m,s:1-i,ty:'down',tx:`${gk}「あいたたた…腰が…」 能力は元に戻ったが腰痛に`});
+  if(ob){X.ev.push({m,s:1-i,ty:'down',tx:`${gk}「あいたたた…腰が…」 能力は元に戻ったが腰痛に`});oibBack(X,1-i,m)}
 }
 // 後半の選手交代（human側だけ）。コンディションは試合前に決まったものを引き継ぐ
 function mResub(X,sq,swaps){
@@ -3481,7 +3485,7 @@ function mFinish(X){
   const pkw=X.pk?(X.pk.g[0]>X.pk.g[1]?0:1):-1;
   [0,1].forEach(i=>{const win=sc[i]>sc[1-i]||pkw===i?1.5:sc[i]===sc[1-i]?.5:0;T[i].pl.concat(T[i].out||[]).forEach(p=>{const v=(X.gl[i][p.n]||0)*3+(X.as[i][p.n]||0)*2+win+p.r/100;if(v>best){best=v;mvp={n:p.n,s:i}}})});
   const ev=X.ev.slice().sort((a,b)=>a.m-b.m||(a.ty==='ft'||a.ty==='pk'?1:0)-(b.ty==='ft'||b.ty==='pk'?1:0));
-  X.res={sc:sc.slice(),ev,sh:X.sh.slice(),poss:[Math.round(X.posA/18*100),100-Math.round(X.posA/18*100)],mvp,seed:X.seed,cond:X.cond,pk:X.pk?X.pk.g.slice():null,gl:X.gl,as:X.as,oib:X.oibUsed?X.oibUsed.slice():[false,false]};
+  X.res={sc:sc.slice(),ev,sh:X.sh.slice(),poss:[Math.round(X.posA/18*100),100-Math.round(X.posA/18*100)],mvp,seed:X.seed,cond:X.cond,pk:X.pk?X.pk.g.slice():null,gl:X.gl,as:X.as,oib:X.oibUsed?X.oibUsed.slice():[false,false],gikk:X.gikkuri||null};
   X.done=true;X.pend=null;
 }
 // PK戦：5人ずつ、決まらなければサドンデス。キッカーはシュートの高い順
@@ -3495,9 +3499,10 @@ function mPkNext(X){
   X.pend={ty:'pk',m:90,s,n:k.n,sho:k.sho,gk,role:s===X.human?'kick':'save'};
 }
 function mPk(X,kick,dive){
-  const P=X.pend,s=P.s;let hit=kick!==dive?.86+(P.sho-75)*.003:(kick===1?.18:.28);if(oibFire(X,1-s,90))hit*=.3;
+  const P=X.pend,s=P.s;let hit=kick!==dive?.86+(P.sho-75)*.003:(kick===1?.18:.28);const obk=oibFire(X,1-s,90);if(obk)hit*=.3;
   const goal=X.r()<clamp(hit,.1,.95);X.pk.n[s]++;if(goal)X.pk.g[s]++;X.lastPk={s,kick,dive,goal};
   X.ev.push({m:90,s,ty:goal?'goal':'save',pk:1,tx:`PK ${X.pk.g[0]}-${X.pk.g[1]}：${P.n}が${PK_OPT[kick]}へ。${P.gk}は${PK_OPT[dive]}へ跳んだ。${goal?'決めた！':kick!==dive?'外した…':'止めた！'}`,sc:X.sc.slice()});
+  if(obk)oibBack(X,1-s,90);
   X.pend=null;mPkNext(X);
 }
 // 選んだ内容で場面を進める
@@ -3537,8 +3542,7 @@ function battleReward(kind,res,side,lvIdx){
 // 試合のあと：ぎっくり腰の判定（出場停止は次の1試合）
 function postMatch(res,side){
   M.roster.forEach(c=>{if(c.gikkuri>0)c.gikkuri--});
-  if(res&&res.oib&&res.oib[side]){const gk=cardById((M.squad.slots||[])[0]);const c=gk&&gk.special==='oibore'?gk:M.roster.find(x=>x.special==='oibore'&&M.squad.slots.includes(x.id));
-    if(c&&Math.random()<GIKKURI_P){c.gikkuri=1;res.gikkuri=c.name;if(typeof G!=='undefined')G.toastMsg=`😱 ${c.name}がぎっくり腰！ 次の1試合は出場停止`}}
+  if(res&&res.gikk&&res.gikk[side])res.gikkuri=res.gikk[side];
 }
 function recordBattle(key,kind,res,side,opp,lvIdx){
   if(M.claimed[key])return M.claimed[key];
@@ -4810,7 +4814,7 @@ function matchHtml(){
   <ul class="bevs" id="bevs">${evs}</ul>
   <div id="bend" class="${done?'':'hide'}">
    ${X.kind==='bet'?`<div class="verdict big safe"><span class="vbig">${res.sc[0]}-${res.sc[1]}</span><span class="sub">MVP ${res.mvp?esc(res.mvp.n):'—'}</span></div>${done?betResultHtml(X):''}`:`<div class="verdict big ${mine>op||pkW===true?'ok':mine<op?'ng':'safe'}"><span class="vbig">${o}</span><span class="sub">${mine}-${op}${pkTx}・MVP ${res.mvp?esc(res.mvp.n):'—'}</span></div>`}
-   ${X.sp==='lgd'&&X.rw?`<div class="toast"><b>${X.rw.o===0?`伝説を倒した！ ${X.rw.coins.toLocaleString('ja-JP')}コイン獲得`:'伝説の壁は厚かった…'}</b></div>`:''}${res.gikkuri?`<div class="toast"><b>😱 ${esc(res.gikkuri)}がぎっくり腰！</b>次の1試合は出場停止。</div>`:''}
+   ${X.sp==='lgd'&&X.rw?`<div class="toast"><b>${X.rw.o===0?`伝説を倒した！ ${X.rw.coins.toLocaleString('ja-JP')}コイン獲得`:'伝説の壁は厚かった…'}</b></div>`:''}${res.gikkuri?`<div class="toast"><b>😱 ${esc(res.gikkuri)}がぎっくり腰！</b>この試合の途中から控えGKに交代した。</div>`:''}
    ${done?interviewHtml(X,res):''}
    <table class="st"><tbody><tr><th>ボール支配率</th><td class="n">${res.poss[0]}% - ${res.poss[1]}%</td></tr><tr><th>シュート</th><td class="n">${res.sh[0]} - ${res.sh[1]}</td></tr>${X.kind==='bet'?'':`<tr><th>獲得コイン</th><td class="n"><b class="gold">+${X.rw?X.rw.coins:0}</b></td></tr>`}</tbody></table>
    ${X.kind==='code'&&X.reply?`<div class="toast"><b>結果コードを相手に送り返そう。</b>相手が貼り付けると、同じ試合が見られて報酬ももらえる。</div><textarea class="code" id="rpout" readonly>${esc(X.reply)}</textarea><div class="stack" style="margin-top:8px"><button class="btn red" data-act="copyFrom" data-v="rpout">結果コードをコピー</button></div>`:''}
@@ -5250,7 +5254,7 @@ function pkHtml(){
   const S=PKG.s,done=P.phase==='done';
   return `<div class="kick">フリックPK対戦<span class="r">vs ${esc(S?S.opp.name:'')}</span></div>
   <div id="pkhost" class="pkhost"></div>
-  ${done?`<div class="verdict big ${P.win?'ok':'ng'}"><span class="vbig">${P.win?'勝利！':'敗戦…'}</span><span class="sub">PK ${S.g[0]}-${S.g[1]}・${P.coins}コイン獲得</span></div>${P.gikkuri?`<div class="toast"><b>😱 ${esc(P.gikkuri)}がぎっくり腰！</b>次の1試合は出場停止。</div>`:''}
+  ${done?`<div class="verdict big ${P.win?'ok':'ng'}"><span class="vbig">${P.win?'勝利！':'敗戦…'}</span><span class="sub">PK ${S.g[0]}-${S.g[1]}・${P.coins}コイン獲得</span></div>${P.gikkuri?`<div class="toast"><b>😱 ${esc(P.gikkuri)}がぎっくり腰！</b>途中から控えGKが守った。</div>`:''}
    <div class="stack"><button class="btn red" data-act="pkAgain">もう一度（コンディションが変わる）</button><button class="btn ghost" data-act="btMenu">対戦メニューへ</button></div>`
    :`<p class="sub center">蹴るとき：ボールから上へフリック／守るとき：跳ぶ方向へフリック</p><button class="linkbtn center" data-act="pkQuit">試合をやめる（負け扱い）</button>`}`;
 }
@@ -5263,7 +5267,7 @@ function pkStart(){
   const opp=pkOppTeam(L);
   PKG.s={opp,my,gk,g:[0,0],n:[0,0],log:[[],[]],first:Math.random()<.5?0:1,mode:'intro',t0:performance.now(),msg:{tx:'コイントス…',t0:performance.now(),col:'#ffffff'},ball:{x:BALL0.x,y:BALL0.y,r:11},kp:{set:false,dx:0,dh:0,rot:0},ripple:null,oibUsed:false,shake:0};
   const S=PKG.s;S.turn=S.first;S.myName=teamCalc().name||'あなた';S.looks={};S.msg={tx:S.first===0?'先攻はあなた！':'先攻は相手',t0:performance.now(),col:'#ffd23a'};
-  P.phase='play';P.coins=0;P.win=null;P.gikkuri=null;
+  P.phase='play';P.coins=0;P.win=null;P.gikkuri=null;M.roster.forEach(c=>{if(c.gikkuri>0)c.gikkuri=0});
   if(!PKG.cv)pkMakeCanvas();
   setTimeout(()=>pkNext(),1100);
 }
@@ -5365,7 +5369,9 @@ function pkResolve(now){
   S.res={goal,saved,post,t0:now};S.n[s]++;if(goal)S.g[s]++;S.log[s].push(goal);
   if(goal){S.ripple={x:bx,y:by,t0:now};S.shake=now}
   const me=s===0;S.msg={tx:goal?(me?'GOAL!':'決められた…'):saved?(me?'止められた！':'SAVE!'):post?'ポスト！':(me?'枠外…':'外れた！'),t0:now,col:goal===me?'#ffd23a':'#ff6a6a',big:1};
-  if(S.oibNow&&s===1)setTimeout(()=>{if(PKG.s===S)S.msg={tx:'「あいたたた…腰が…」',t0:performance.now(),col:'#ffd0a0'}},700);
+  if(S.oibNow&&s===1){const gik=Math.random()<GIKKURI_P;setTimeout(()=>{if(PKG.s!==S)return;
+    if(gik){S.msg={tx:'ぎっくり腰！',t0:performance.now(),col:'#ff6a6a',sub:`${S.gk.n}はもう出られない。控えGKに交代`};G.pk.gikkuri=S.gk.n;S.gk={n:'控えGK',st:{spd:58,tec:58,sho:58,pas:50,phy:60,def:56},cond:2}}
+    else S.msg={tx:'「あいたたた…腰が…」',t0:performance.now(),col:'#ffd0a0'}},700)}
   S.mode='result';setTimeout(()=>{if(PKG.s===S)pkNext()},1500);
 }
 function pkEnd(){
@@ -5373,7 +5379,6 @@ function pkEnd(){
   P.phase='done';P.win=win;P.coins=win?L.rw[0]:L.rw[1];M.coins+=P.coins;M.rec[win?'w':'l']++;
   M.hist.unshift({t:Date.now(),kind:'pk',opp:L.n,gf:S.g[0],ga:S.g[1],o:win?0:2,pk:null});M.hist=M.hist.slice(0,15);
   M.roster.forEach(c=>{if(c.gikkuri>0)c.gikkuri--});
-  if(S.oibUsed&&S.gk.c&&Math.random()<GIKKURI_P){S.gk.c.gikkuri=1;P.gikkuri=S.gk.c.name}
   S.msg={tx:win?'勝利！':'敗戦…',t0:performance.now(),col:win?'#ffd23a':'#9fd0ff',big:1};
   metaSave();if(typeof render==='function')render();
 }
