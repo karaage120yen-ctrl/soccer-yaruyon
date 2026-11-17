@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-080620';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-081514';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -725,6 +725,10 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .stabar{display:block;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-top:4px;width:100%}
 .stabar i{display:block;height:100%;border-radius:2px}
 .slot .stabar.sl{position:absolute;left:8%;right:8%;bottom:-6px;height:3px;margin:0;width:auto}
+.autobtn{position:fixed;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:76px;height:50px;padding:0 14px;border-radius:25px;white-space:nowrap;border:2px solid var(--gold);background:rgba(16,16,16,.92);color:var(--gold);font:inherit;box-shadow:0 4px 16px rgba(0,0,0,.5);cursor:pointer}
+.autobtn b{font-size:13px;line-height:1.1}.autobtn span{font-size:9px;opacity:.8;margin-top:2px}
+.autobtn.on{background:var(--gold);color:#1a1408;animation:apPulse 1.4s ease-in-out infinite}
+@keyframes apPulse{50%{box-shadow:0 0 0 6px rgba(215,180,74,.25)}}
 
 </style>
 </head>
@@ -6163,6 +6167,7 @@ function rulesHtml(){
     '鎌ポコ＆丸尾ガチャ：2人それぞれ1%（合計2%）',
     '政夫＆犬ガチャ：毎週火曜日（日本時間）の1日だけ登場。ピックアップ1%。タッグキャラなので、政夫を配置すると犬も一緒に出場する',
     'レジェンド降臨ガチャ「ドクター うさぎ」：1か月に3日だけ登場（2026年11月は17日から。ほかの日はランダム）。ピックアップ1%。MF・FW・GKのどこに置いても能力が下がらない。降臨日はゲームを開くと毎回5,000コインもらえる',
+    'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる',
     '体力ゲージ：選手は対戦や試合のたびに体力が減る（フィジカルが高いほど減りにくい）。1時間で12ずつ回復。体力60未満だと能力が下がり、試合中に体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
     `素材ガチャ：育成素材を全種類${MATG_COST}個ずつ使うと、好きなガチャを1回引ける。キャラが出る確率は${Math.round(MATG_PU*100)}%`,
@@ -8039,7 +8044,7 @@ function staSeg(X){
     const m=X.seg*5;
     if(p.ms<45&&!p.ms1){p.ms1=1;staPen(Y,p,-3);X.ev.push({m,s:t,ty:'down',tx:`${p.n}の足が止まってきた（体力${Math.round(p.ms)}・能力−3）`})}
     if(p.ms<20&&!p.ms2){p.ms2=1;staPen(Y,p,-4);X.ev.push({m,s:t,ty:'down',tx:`${p.n}はもう限界だ…（体力${Math.round(p.ms)}・能力さらに−4）`})}
-    if(p.ms<50&&!injOut(X,p)&&X.r()<(50-p.ms)/800)mInjure(X,t,p,m+2);
+    if(p.ms<45&&!injOut(X,p)&&X.r()<(45-p.ms)/1800)mInjure(X,t,p,m+2);
   }));
 }
 function staCarry(X,h,old,S){const mp={};old.pl.forEach(p=>mp[p.n]=p);S.pl.forEach(p=>{const o=mp[p.n];if(o&&o.ms!=null){p.ms=o.ms;if(o.ms1){p.ms1=1;staPen(S,p,-3)}if(o.ms2){p.ms2=1;staPen(S,p,-4)}}else if(p.ms==null)p.ms=p.sta==null?100:p.sta})}
@@ -8118,6 +8123,102 @@ const DOC_GIFT=5000;
 {const _ag=applyGifts;applyGifts=function(){_ag();if(typeof M==='undefined'||!M||!docOn())return;const n=jstNow(),k=`doc${n.getUTCFullYear()}-${n.getUTCMonth()+1}-${n.getUTCDate()}`;
   M.gifts=M.gifts||{};if(M.gifts[k])return;M.gifts[k]=Date.now();M.coins+=DOC_GIFT;metaSave();
   if(typeof G!=='undefined'){G.toastMsg=`🎁 レジェンド降臨記念！ ${DOC_GIFT.toLocaleString('ja-JP')}コインを受け取った`;try{render()}catch(e){}setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},5000)}}}
+
+/* ========== オート（育成・試合） ========== */
+const AP={cr:false,bt:0,miss:0,t:null};// bt: 0=オフ 1=オート 2=高速オート
+try{const v=+localStorage.getItem('kj_autobt');if(v===1||v===2)AP.bt=v}catch(e){}
+const apEl=sel=>{const r=document.querySelector('#app');if(!r)return null;return [...document.querySelectorAll(sel)].find(b=>!b.disabled&&b.offsetParent!==null&&!b.closest('#tabs'))||null};
+const apAll=sel=>[...document.querySelectorAll(sel)].filter(b=>!b.disabled&&b.offsetParent!==null&&!b.closest('#tabs'));
+const apClick=sel=>{const b=typeof sel==='string'?apEl(sel):sel;if(!b)return false;b.click();return true};
+function apToast(t){G.toastMsg=t;try{render()}catch(e){}clearTimeout(apToast._t);apToast._t=setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},3500)}
+
+/* ----- 育成：選択肢の良し悪しを点数にする ----- */
+const AP_W={spd:3,tec:3,sho:3,pas:3,phy:3,def:3,all:15,key:5,pop:.4,coach:.4,mates:.25,cond:.3,sta:.2,scout:.3,hope:.2,fam:.15,love:.2,money:.03,inj:-6,fat:-.15,
+  nlg:20,marry:15,breakup:-15,partner:6,kid:4,uni:2,scholar:4,armyEx:10,clutch:2,absent:-2};
+function apFx(fx){let s=0;for(const k in fx||{}){const w=AP_W[k];if(w==null)continue;const v=fx[k];s+=typeof v==='number'?v*w:v?w:0}return s}
+function apChoose(){
+  const p=S.p,id=S.evq&&S.evq[S.evi];let e=null;try{e=id&&getEv(id)}catch(err){}
+  const bs=apAll('[data-act=choose]');if(!bs.length)return false;
+  if(!e||!e.ch)return apClick(bs[0]);
+  const c=ctx(p);let best=null,bv=-1e9;
+  bs.forEach(b=>{const ch=e.ch[+b.dataset.v];if(!ch)return;let pr=1;try{pr=prOf(ch,c)}catch(err){}
+    const v=pr*apFx(ch.ok&&ch.ok.fx)+(1-pr)*apFx(ch.ng&&ch.ng.fx)+Math.random()*.5;if(v>bv){bv=v;best=b}});
+  return apClick(best||bs[0]);
+}
+function apAct(){
+  const p=S.p,off=OFF(p.month),sta=p.sta==null?60:p.sta,hurt=(p.inj||0)>0;
+  const ok=id=>apEl(`[data-act=pickAct][data-v=${id}]`);
+  let id;
+  if(hurt||sta<40)id='rest';
+  else if(off)id=p.money>=900&&ok('abroadtrain')?'abroadtrain':'selftrain';
+  else id=sta>=80?'extra':sta>=55?'train':'video';
+  const b=ok(id)||ok('train')||ok('rest')||apAll('[data-act=pickAct]')[0];if(!b)return false;
+  if(!(S.act&&S.act.id===b.dataset.v)){b.click();return true}
+  if(S.act.id==='trip'&&S.act.trip==null){const t=apAll('[data-act=pickTrip]');if(t.length){t[0].click();return true}}
+  return apClick('[data-act=confirmAct]');
+}
+function apOffer(){
+  const X=S.offers,p=S.p,o=ovrOf(p),bs=apAll('[data-act=pickOffer]');
+  if(bs.length&&X&&X.list){let best=null,bv=-1e9;bs.forEach(b=>{const of=X.list[+b.dataset.v];if(!of)return;const c=CLUBS[of.club];
+      const v=c.rep-Math.max(0,c.rep-(o+4))*2.5+(of.renew?1:0)+Math.log10(Math.max(1,of.sal))*2;if(v>bv){bv=v;best=b}});return apClick(best||bs[0])}
+  return apClick('[data-act=pickUni]')||apClick('[data-act=abroadTest]')||apClick('[data-act=hsAgain]');
+}
+function apCareer(){
+  if(G.mode!=='career'||!S.p)return;
+  if(['retired','title','create'].includes(S.screen)){AP.cr=false;apToast(S.screen==='retired'?'引退したのでオートを止めた':'オートを止めた');return}
+  if(typeof CUT!=='undefined'&&CUT){cutSkip();return}
+  if(S.p.dog&&S.p.dog.alive&&!S.p.dog.n){if(!S.p.dog._sug)apClick('[data-act=dogRand]');apClick('[data-act=dogOk]');return}
+  if(S.modal)return;
+  if(S.tab!=='play'){S.tab='play';render();return}
+  let done=false;
+  switch(S.screen){
+    case 'camp':done=apClick('[data-act=toMonth]');break;
+    case 'month':done=apAct();break;
+    case 'event':done=apChoose()||apClick('[data-act=nextEvent]');break;
+    case 'mres':done=apClick('[data-act=afterMonth]');break;
+    case 'report':done=apClick('[data-act=toOffers]');break;
+    case 'offers':done=apOffer();break;
+    case 'neg':done=apClick('[data-act=negBase]');break;
+  }
+  if(!done)done=['nextEvent','afterMonth','toMonth','toOffers','dogOk','negBase'].some(a=>apClick(`[data-act=${a}]`));
+  if(done){AP.miss=0;return}
+  if(++AP.miss>8){AP.cr=false;AP.miss=0;apToast('ここは自分で選んでね（オートを止めた）')}
+}
+
+/* ----- 試合：決定機・ケガ・ハーフタイムを自動で ----- */
+function apBattle(){
+  const B=G.bt;if(G.mode!=='battle'||B.view!=='match'||!B.play||B.play.done)return;
+  if(typeof isPaused==='function'&&isPaused(B)){if(AP.bt===2)B.play.pauseUntil=Date.now()-1;return}
+  const L=B.match&&B.match.live;
+  if(L&&L.pend&&!L.done&&matchMin()>=L.pend.m){
+    const P=L.pend;
+    if(P.ty==='ht'){apClick('[data-act=ixGo]');return}
+    if(P.ty==='inj'){
+      const bs=L.curSq||M.squad,T=teamCalc(bs),pl=T.pl.find(p=>p.n===P.n),role=pl&&pl.role,F=FORMS[bs.form]||FORMS['433'];
+      const k=T.pl.findIndex(p=>p.n===P.n),rl=role||(k>=0&&F.s[k]?F.s[k][0]:null);
+      let best=null,bv=-1;apAll('[data-act=ixInjSub]').forEach(b=>{const c=cardById((bs.bench||[])[+b.dataset.v]);if(!c)return;const v=cardOvr(c,rl||c.pos)*(rl?fitMul(c.pos,rl):1);if(v>bv){bv=v;best=b}});
+      if(!apClick(best))apClick('[data-act=ixInjWait]');return}
+    if(P.ty==='tabako'){apClick('[data-act=ixPick][data-v="1"]')||apClick('[data-act=ixPick]');return}
+    const o=apAll('[data-act=ixPick]');if(o.length){o[Math.floor(Math.random()*o.length)].click();return}
+    return;
+  }
+  if(AP.bt===2)apClick('[data-act=btSkip]');
+}
+function apTick(){try{if(AP.cr)apCareer();if(AP.bt)apBattle()}catch(e){console.warn('auto',e)}}
+if(typeof window!=='undefined')AP.t=setInterval(apTick,280);
+
+/* ----- ボタン ----- */
+ACT.autoCr=()=>{AP.cr=!AP.cr;AP.miss=0;apToast(AP.cr?'育成オート：自動で進めるよ。もう一度押すと止まる':'育成オートを止めた')};
+ACT.autoBt=()=>{AP.bt=(AP.bt+1)%3;try{localStorage.setItem('kj_autobt',String(AP.bt))}catch(e){}apToast(['試合オートを止めた','試合オート：決定機・交代・ハーフタイムを自動で選ぶ','高速オート：決定機も自動で、試合結果まで一気に進める'][AP.bt])};
+function apMount(){
+  let b=document.getElementById('autobtn');
+  const cr=G.mode==='career'&&typeof inCareer==='function'&&inCareer(),bt=G.mode==='battle'&&G.bt&&G.bt.view==='match';
+  if(!cr&&!bt){if(b)b.remove();return}
+  if(!b){b=document.createElement('button');b.id='autobtn';document.body.appendChild(b)}
+  const on=cr?AP.cr:AP.bt>0;b.dataset.act=cr?'autoCr':'autoBt';b.className='autobtn'+(on?' on':'');
+  b.innerHTML=cr?(AP.cr?'<b>オート中</b><span>止める</span>':'<b>オート</b><span>育成</span>'):(['<b>オート</b><span>試合</span>','<b>オート中</b><span>次は高速</span>','<b>高速オート</b><span>止める</span>'][AP.bt]);
+}
+{const _render=render;render=function(){_render();try{apMount()}catch(e){}}}
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
