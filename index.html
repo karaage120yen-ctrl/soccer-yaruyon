@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-075448';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-080511';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -8050,9 +8050,9 @@ const DOCTOR={id:'doctor',kind:'pl',name:'ドクター うさぎ',pos:'MF',pos2:
 const DOC_SK=[
  {n:'ヤハ',d:'ケガをした味方を試合中3回まで治して復活させる。治った選手は体力が全回復し、調子が一段階上がる'},
  {n:'ウラ',d:'試合開始時、調子が不調・絶不調ではない味方の調子を一段階上げる'},
- {n:'プルャ‼︎',d:'おじいちゃん系キャラ（バツ丸尾君・政夫）の全能力+50。ささちーのタバコ休憩が3回減る。MAOの「俺の邪魔はさせない！！」が能力を下げずにもう一度打てる（2回目は下がる）'}];
+ {n:'プルャ‼︎',d:'おじいちゃん系キャラ（政夫）の全能力+50（バツ丸尾君は対象外）。ささちーのタバコ休憩が3回減る。MAOの「俺の邪魔はさせない！！」が能力を下げずにもう一度打てる（2回目は下がる）'}];
 const DOC_SKILL={n:'ヤハ／ウラ／プルャ‼︎',q:'ヤハ！',d:DOC_SK.map(s=>`「${s.n}」${s.d}`).join('　')};
-const isGramps=c=>!!c&&(['batsumaru','masao'].includes(c.id)||['oibore','inu'].includes(c.special));
+const isGramps=c=>!!c&&(c.id==='masao'||c.special==='inu');
 const fitOf=(c,role)=>c&&c.pos2&&c.pos2.includes(role)?1:fitMul(c.pos,role);
 function docStart(X,seed){
   X.yaha=[0,0];X.maoTw=[0,0];
