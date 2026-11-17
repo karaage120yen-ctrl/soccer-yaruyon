@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-085744';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-090506';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -760,6 +760,7 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .zkt{display:flex;flex-direction:column;gap:2px;min-width:0}
 .evlg{float:right;width:84px;margin:0 0 6px 10px}.evlg.sup .stb{background:radial-gradient(ellipse at 50% 40%,#6a3a8a,#1a0e24 75%);box-shadow:0 0 0 2px #c060e0}
 @media (max-width:360px){.zukan.zg{grid-template-columns:1fr}}
+.mini b.sup2{color:var(--up)}
 
 </style>
 </head>
@@ -5330,13 +5331,13 @@ const G={mode:'career',mdraft:null,mgTop:false,sq:{tab:'form',slot:null,card:nul
 const MODES=[['career','育成'],['mgr','監督'],['gacha','ガチャ'],['squad','スカッド'],['battle','対戦'],['rec','記録']];
 const PLAY_MS=16000;
 const coinPill=()=>`<span class="coin" aria-label="コイン ${M.coins}">${M.coins.toLocaleString('ja-JP')}<small>コイン</small></span>`;
-const statRow=(c,k)=>`<span>${cardLbl(c,k)}<b class="${effSt(c,k)>=95?'hi':''}">${effSt(c,k)}</b></span>`;
+const statRow=(c,k)=>{const v=typeof dispSt==='function'?dispSt(c,k):effSt(c,k),up=v>effSt(c,k);return `<span>${cardLbl(c,k)}<b class="${v>=95?'hi':''} ${up?'sup2':''}">${v}</b></span>`};
 function cardMini(c){
   if(isMgr(c))return `<div class="mini m5">${MKEYS.map(k=>statRow(c,k)).join('')}</div>`;
   return `<div class="mini">${KEYS.map(k=>statRow(c,k)).join('')}</div>`;
 }
 function cardTile(c,opts={}){
-  const mg=isMgr(c),o=mg?mgrOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
+  const mg=isMgr(c),o=mg?mgrOvr(c):typeof dispOvr==='function'?dispOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
   const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:c.special==='kpass'?`<span class="sk">${KPASS_SKILL.n}</span>`:c.special==='doctor'?`<span class="sk">ヤハ・ウラ・プルャ‼︎</span>`:c.special==='santa'?`<span class="sk">${SANTA_SKILL.n}</span>`:c.special==='renkei'?`<span class="sk">${RENKEI_SKILL.n}</span>`:c.special==='oibore'?`<span class="sk">${OIBORE_SKILL.n}</span>`:c.special==='uhho'?`<span class="sk">${UHHO_SKILL.n}</span>`:c.special==='tabako'?`<span class="sk">${TABAKO_SKILL.n}</span>`:c.special==='inu'?`<span class="sk">タッグ・${INU_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
   const sxTag=typeof sxOf==='function'?sxOf(c).map(k=>`<span class="sk sxk">${esc(SX[k].n)}</span>`).join(''):'';
   return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${standArt3(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos+(c.pos2?'/'+c.pos2.join('/'):'')}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${c.title?`<b style="color:var(--gold)">${esc(c.title)}</b>・`:''}${c.height?c.height+'cm・':''}${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span>${!mg&&!isLegSup(c)&&typeof staBar==='function'?staBar(c):''}</div></div>${tag||sxTag||c.gikkuri>0?`<div class="tags">${tag}${sxTag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
@@ -5415,7 +5416,7 @@ function pickerHtml(){
     return `<div class="kick">ベンチ${bi+1}に入れる<span class="r">交代要員</span></div>${list.length?`<div class="plist">${cur?'<button class="prow" data-act="sqSet" data-v="">外す</button>':''}${list.map(({c,v})=>{const inXI=M.squad.slots.includes(c.id),ib=M.squad.bench.indexOf(c.id);return `<button class="prow" aria-pressed="${cur===c.id}" data-act="sqSet" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${inXI?'スタメンからベンチへ移す':ib>=0&&ib!==bi?'別のベンチ枠にいる（入れ替え）':'ベンチ入り'}</span><span class="num">${v}</span></button>`}).join('')}</div>`:'<p class="note">まだマイ選手がいない。</p>'}`;
   }
   const role=slotLabel(i),cur=M.squad.slots[i];
-  const list=M.roster.filter(c=>!isMgr(c)&&!isLegSup(c)).map(c=>({c,v:Math.round(cardOvr(c,role)*fitMul(c.pos,role))})).sort((a,b)=>b.v-a.v);
+  const list=M.roster.filter(c=>!isMgr(c)&&!isLegSup(c)).map(c=>({c,v:Math.round((typeof dispOvr==='function'?dispOvr(c,role):cardOvr(c,role))*(typeof fitOf==='function'?fitOf(c,role):fitMul(c.pos,role)))})).sort((a,b)=>b.v-a.v);
   return `<div class="kick">${role}の枠に入れる<span class="r">ポジション違いは能力が下がる</span></div>${list.length?`<div class="plist">${cur?'<button class="prow" data-act="sqSet" data-v="">外して空きにする</button>':''}${list.map(({c,v})=>{const at=M.squad.slots.indexOf(c.id);return `<button class="prow" aria-pressed="${cur===c.id}" data-act="sqSet" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${c.pos!==role?`${role}だと${Math.round(fitMul(c.pos,role)*100)}%`:'適正ポジション'}${at>=0&&at!==i?'・別の枠にいる（入れ替え）':''}</span><span class="num">${v}</span></button>`}).join('')}</div>`:'<p class="note">まだマイ選手がいない。育成モードで選手を引退まで育てるか、ガチャでキャプテンイチカワを引こう。空きの枠には控え選手（総合60前後）が入る。</p>'}`;
 }
 H.squad=()=>{
@@ -8667,6 +8668,15 @@ function sxSave(X,d,m,p){if(!X.sxSv||p<.3)return p;const L=X.sxSv[d].find(s=>s.l
     if(v==='messi')p.title='アルゼンチンの神の子';
     return ['特殊能力',SX[v].n+(v==='messi'?'・称号「アルゼンチンの神の子」':''),1]}
   return _a2(p,k,v)}}
+
+/* ========== スカッドの表示：スキルで上がった状態の能力（試合の途中で上がるものは含めない） ========== */
+let DISPC=null;
+function dispMap(){if(DISPC)return DISPC;DISPC=new Map();try{const sq=M.squad,F=FORMS[sq.form]||FORMS['433'],T=teamCalc(sq);
+  F.s.forEach((s,i)=>{const c=cardById(sq.slots[i]),p=T.pl[i];if(c&&p&&!p.filler&&p.st)DISPC.set(c.id,p.st)})}catch(e){}return DISPC}
+function dispSt(c,k){if(!c||isMgr(c))return effSt(c,k);const st=dispMap().get(c.id);if(st&&st[k]!=null)return Math.min(99,Math.round(st[k]));
+  return Math.min(99,effSt(c,k)+(typeof sxSt==='function'?sxSt([{c,role:c.pos}],c,k):0))}
+function dispOvr(c,role){if(!c||isMgr(c))return isMgr(c)?mgrOvr(c):0;const st={};KEYS.forEach(k=>st[k]=dispSt(c,k));return cardOvr({st,plus:{},pos:role||c.pos},role||c.pos)}
+{const _r=render;render=function(){DISPC=null;return _r()}}
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
