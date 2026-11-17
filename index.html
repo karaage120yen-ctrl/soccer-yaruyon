@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-084823';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-085744';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -753,6 +753,13 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .zk.sup{border-color:#c060e0}.zk.sup.on{background:linear-gradient(135deg,rgba(192,96,224,.18),rgba(215,180,74,.12))}.zk.sup small{color:#d890f0}
 .sxe{display:block;font-style:normal;font-size:11px;color:#d890f0;margin-top:4px}
 .sk.sxk{background:rgba(192,96,224,.2);color:#e0b0f8;border-color:#c060e0}
+.zukan.zg .zk{flex-direction:row;gap:10px;align-items:flex-start;padding:10px}
+.zka{flex:none;width:58px}.zka .stb{border-radius:8px}
+.zka.sil .stb{background:#0e0f12}.zka.sil img,.zka.sil svg,.zka.sil .st3s{filter:brightness(0) opacity(.55)}
+.zk.sup .zka .stb{background:radial-gradient(ellipse at 50% 40%,#6a3a8a,#1a0e24 75%)}
+.zkt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.evlg{float:right;width:84px;margin:0 0 6px 10px}.evlg.sup .stb{background:radial-gradient(ellipse at 50% 40%,#6a3a8a,#1a0e24 75%);box-shadow:0 0 0 2px #c060e0}
+@media (max-width:360px){.zukan.zg{grid-template-columns:1fr}}
 
 </style>
 </head>
@@ -5071,7 +5078,7 @@ H.event=()=>{
   }
   const band=e.legend?`<div class="lgband"><span>LEGEND</span><span>「${esc(e.legend.nick)}」${e.legend.pos}・${esc(e.legend.cty)}</span></div>`:e.fam?`<div class="lgband fam"><span>FAMILY</span><span>家族・プライベート</span></div>`:e.id&&String(e.id).startsWith('sp:')?`<div class="lgband"><span>SPECIAL</span><span>特別な出来事</span></div>`:'';
   return `${pcard(p,'compact')}<div class="kick">${calYear(p)}年${MONTHS[p.month]}–${MONTHS[turnEnd(p.month)]}月の出来事</div>
-  <div class="evcard ${e.legend||String(e.id).startsWith('sp:')?'legend':e.fam?'famcard':''}">${band}<h2>${esc(e.t)}</h2><p>${esc(e.x)}</p></div>${evScene(e,R)}${body}`;
+  <div class="evcard ${e.legend||String(e.id).startsWith('sp:')?'legend':e.fam?'famcard':''}">${band}${e.legend&&typeof legArt==='function'?`<div class="evlg ${e.legend.sup?'sup':''}">${legArt(e.legend)}</div>`:''}<h2>${esc(e.t)}</h2><p>${esc(e.x)}</p></div>${evScene(e,R)}${body}`;
 };
 
 H.report=()=>{
@@ -8322,6 +8329,38 @@ function apMount(){
   b.innerHTML=cr?(AP.cr?'<b>オート中</b><span>止める</span>':'<b>オート</b><span>育成</span>'):(['<b>オート</b><span>試合</span>','<b>オート中</b><span>次は高速</span>','<b>高速オート</b><span>止める</span>'][AP.bt]);
 }
 {const _render=render;render=function(){_render();try{apMount()}catch(e){}}}
+
+/* ========== レジェンド図鑑の立ち絵（国ごとの肌の色・代表カラーで描き分け） ========== */
+const LG_KIT={'日本':['#1a3f8f','#ffffff',0],'韓国':['#d02a2a','#1a1a1a',0],'中国':['#d02a2a','#f2c400',0],'モンゴル':['#c8102e','#0066b3',0],
+ 'ノルウェー':['#c8102e','#ffffff',1],'スウェーデン':['#f2c400','#1a5fb4',1],'フィンランド':['#ffffff','#1a3f8f',1],'オランダ':['#ff7a00','#ffffff',1],'ドイツ':['#f2f2f2','#111111',1],
+ 'イングランド':['#f2f2f2','#1a2a5a',1],'アイルランド':['#1a8a3a','#ffffff',1],'ポーランド':['#f2f2f2','#c8102e',1],'ロシア':['#f2f2f2','#1a3f8f',1],'チェコ':['#c8102e','#1a3f8f',1],
+ 'ハンガリー':['#c8102e','#2a8a3a',1],'ルーマニア':['#f2c400','#1a3f8f',1],'セルビア':['#c8102e','#ffffff',1],'クロアチア':['#e8e8e8','#d02a2a',1],'ベルギー':['#c8102e','#f2c400',1],
+ 'フランス':['#1a3f8f','#ffffff',5],'オーストラリア':['#f2c400','#1a7a3a',1],'ニュージーランド':['#f2f2f2','#111111',2],'アメリカ':['#f2f2f2','#1a3f8f',5],'イタリア':['#1a5fb4','#ffffff',1],
+ 'スペイン':['#c8102e','#f2c400',1],'ポルトガル':['#8a1020','#1a7a3a',2],'ブラジル':['#f2c400','#1a7a3a',3],'アルゼンチン':['#8ac8f0','#ffffff',1],'ウルグアイ':['#5ab0e8','#111111',1],
+ 'メキシコ':['#1a7a3a','#ffffff',2],'コロンビア':['#f2c400','#1a3f8f',3],'ペルー':['#f2f2f2','#c8102e',2],'チリ':['#c8102e','#1a3f8f',2],'パラグアイ':['#c8102e','#ffffff',2],
+ 'サウジアラビア':['#1a7a3a','#ffffff',2],'エジプト':['#c8102e','#111111',2],'モロッコ':['#a8102a','#1a7a3a',2],'トルコ':['#c8102e','#ffffff',2],'イラン':['#f2f2f2','#c8102e',2],
+ 'ガーナ':['#f2f2f2','#111111',4],'マリ':['#f2c400','#1a7a3a',4],'カメルーン':['#1a7a3a','#c8102e',4],'セネガル':['#f2f2f2','#1a7a3a',4],'ネパール':['#c8102e','#1a3f8f',2]};
+// 肌の色の範囲（SKIN32 のインデックス）
+const LG_SKIN=[[0,1],[0,1,2],[1,2,3],[1,2,3,4],[3,4,5],[0,1,2,3,4,5]];
+const LG_GKK=[['#1a1a1a','#f2c400'],['#2a8a4a','#ffffff'],['#f2c400','#111111'],['#7a3ad0','#ffffff'],['#ff5a2a','#111111']];
+function legLook(L){
+  const r=rng(hashS('legend:'+L.id+L.n)),pk=a=>a[Math.floor(r()*a.length)],K=LG_KIT[L.cty]||['#e2462b','#ffffff',5];
+  const base=ivLook('lgd:'+L.n,L.pos),skin=SKIN32[pk(LG_SKIN[K[2]])];
+  const hair=K[2]<=1?pk(HAIR32):pk(['#1b120c','#33221a','#141414','#5a3a1e']);
+  const gk=L.pos==='GK'?pk(LG_GKK):null;
+  return {key:'lgd:'+L.id,rare:true,o:{skin,hair,hs:base.hs,jersey:gk?gk[0]:K[0],trim:gk?gk[1]:K[1],num:L.pos==='GK'?1:pk([4,5,6,7,8,9,10,11,14,17,23]),band:L.sup&&r()<.4?'#ffffff':base.band,arm:L.sup?'#f2c400':null,smile:r()<.6,angry:!L.sup&&r()<.15},
+    pose:L.sup?pk(['fist','ball','hips']):pk(['cross','hips','ball','cross']),boots:L.sup?pk(['#ffd23a','#f4f4f4','#ff5a2a']):pk(['#1a1a1a','#1a1a1a','#f4f4f4'])};
+}
+{const _sl=standLook;standLook=function(c,kind){if(c&&c.lgId!=null&&LEGENDS[c.lgId])return legLook(LEGENDS[c.lgId]);return _sl(c,kind)}}
+const legArt=L=>standArt3({lgId:L.id,name:L.n,pos:L.pos,kind:'pl'},'pl');
+
+/* ----- 図鑑：絵つきで並べる ----- */
+zukan=function(){const met=legendsMet(),sup=LEGENDS.filter(L=>L.sup),nor=LEGENDS.filter(L=>!L.sup);
+  const card=L=>{const on=met.includes(L.id),S0=L.sup&&typeof SX!=='undefined'?SX[L.sk]:null;
+    return `<div class="zk ${on?'on':''} ${L.sup?'sup':''}"><div class="zka ${on?'':'sil'}">${legArt(L)}</div><div class="zkt"><small>${L.sup?'超レジェンド・':''}${on?`「${esc(L.nick)}」`:'未遭遇'}</small><b>${on?esc(L.n):'？？？'}</b><span class="sub">${L.pos}${L.pos2?'/'+L.pos2:''}・${esc(L.cty)}</span>${on?`<q>${esc(L.tip)}</q>`:''}${on&&S0?`<em class="sxe">特殊能力「${esc(S0.n)}」</em>`:''}</div></div>`};
+  const ms=sup.filter(L=>met.includes(L.id)).length,mn=nor.filter(L=>met.includes(L.id)).length;
+  return `<div class="kick">超レジェンド図鑑<span class="r">${ms} / ${sup.length}</span></div><p class="note">育成でまれに出会える15人。教わると特殊能力が身につく。</p><div class="zukan zg">${sup.map(card).join('')}</div>
+  <div class="kick">レジェンド図鑑<span class="r">${mn} / ${nor.length}</span></div><p class="note">プレー中に出会った伝説の名選手がここに載る。出会えるかは確率しだい。</p><div class="zukan zg">${nor.map(card).join('')}</div>`};
 
 /* ========== デイリーミッション・図鑑と実績・週間ランキング・カップ戦・ケミストリー・季節イベント・実況 ========== */
 const jstD=()=>new Date(Date.now()+9*3600e3);
