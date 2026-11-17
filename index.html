@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-094832';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-095029';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -771,6 +771,7 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .slot{width:19%;min-width:56px;padding:3px 2px 4px}
 .slot b{font-size:17px;line-height:1.1}
 .slot .simg{width:28px;height:28px}
+.plh{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:700;color:var(--gold);letter-spacing:.08em;padding:10px 4px 4px;border-bottom:1px solid var(--line)}.plh span{color:var(--muted);font-weight:400}
 
 </style>
 </head>
@@ -5424,11 +5425,11 @@ function pickerHtml(){
   if(typeof i==='string'&&i[0]==='b'){
     const bi=+i.slice(1),cur=M.squad.bench[bi];
     const list=M.roster.filter(c=>!isMgr(c)&&!isLegSup(c)&&!M.squad.slots.includes(c.id)&&!M.squad.bench.some((id,j)=>id===c.id&&j!==bi)).map(c=>({c,v:typeof dispOvr==='function'?dispOvr(c):cardOvr(c)})).sort((a,b)=>b.v-a.v);
-    return `<div class="kick">ベンチ${bi+1}に入れる<span class="r">交代要員</span></div>${list.length?`<div class="plist">${cur?'<button class="prow" data-act="sqSet" data-v="">外す</button>':''}${list.map(({c,v})=>{const inXI=M.squad.slots.includes(c.id),ib=M.squad.bench.indexOf(c.id);return `<button class="prow" aria-pressed="${cur===c.id}" data-act="sqSet" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${inXI?'スタメンからベンチへ移す':ib>=0&&ib!==bi?'別のベンチ枠にいる（入れ替え）':'ベンチ入り'}</span><span class="num">${v}</span></button>`}).join('')}</div>`:'<p class="note">まだマイ選手がいない。</p>'}`;
+    return `<div class="kick">ベンチ${bi+1}に入れる<span class="r">交代要員</span></div>${list.length?`<div class="plist">${cur?'<button class="prow" data-act="sqSet" data-v="">外す</button>':''}${grpRows(list,({c,v})=>{const inXI=M.squad.slots.includes(c.id),ib=M.squad.bench.indexOf(c.id);return `<button class="prow" aria-pressed="${cur===c.id}" data-act="sqSet" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${inXI?'スタメンからベンチへ移す':ib>=0&&ib!==bi?'別のベンチ枠にいる（入れ替え）':'ベンチ入り'}</span><span class="num">${v}</span></button>`})}</div>`:'<p class="note">まだマイ選手がいない。</p>'}`;
   }
   const role=slotLabel(i),cur=M.squad.slots[i];
   const list=M.roster.filter(c=>!isMgr(c)&&!isLegSup(c)).map(c=>({c,v:Math.round((typeof dispOvr==='function'?dispOvr(c,role):cardOvr(c,role))*(typeof fitOf==='function'?fitOf(c,role):fitMul(c.pos,role)))})).sort((a,b)=>b.v-a.v);
-  return `<div class="kick">${role}の枠に入れる<span class="r">ポジション違いは能力が下がる</span></div>${list.length?`<div class="plist">${cur?'<button class="prow" data-act="sqSet" data-v="">外して空きにする</button>':''}${list.map(({c,v})=>{const at=M.squad.slots.indexOf(c.id);return `<button class="prow" aria-pressed="${cur===c.id}" data-act="sqSet" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${c.pos!==role?`${role}だと${Math.round(fitMul(c.pos,role)*100)}%`:'適正ポジション'}${at>=0&&at!==i?'・別の枠にいる（入れ替え）':''}</span><span class="num">${v}</span></button>`}).join('')}</div>`:'<p class="note">まだマイ選手がいない。育成モードで選手を引退まで育てるか、ガチャでキャプテンイチカワを引こう。空きの枠には控え選手（総合60前後）が入る。</p>'}`;
+  return `<div class="kick">${role}の枠に入れる<span class="r">ポジション違いは能力が下がる</span></div>${list.length?`<div class="plist">${cur?'<button class="prow" data-act="sqSet" data-v="">外して空きにする</button>':''}${grpRows(list,({c,v})=>{const at=M.squad.slots.indexOf(c.id);return `<button class="prow" aria-pressed="${cur===c.id}" data-act="sqSet" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${c.pos===role?'適正ポジション':(typeof fitOf==='function'?fitOf(c,role):fitMul(c.pos,role))>=1?`${role}でも能力が下がらない`:`${role}だと${Math.round(fitMul(c.pos,role)*100)}%`}${at>=0&&at!==i?'・別の枠にいる（入れ替え）':''}</span><span class="num">${v}</span></button>`})}</div>`:'<p class="note">まだマイ選手がいない。育成モードで選手を引退まで育てるか、ガチャでキャプテンイチカワを引こう。空きの枠には控え選手（総合60前後）が入る。</p>'}`;
 }
 H.squad=()=>{
   const t=G.sq.tab,T=teamCalc();
@@ -5436,7 +5437,9 @@ H.squad=()=>{
   if(t==='enh')return seg+enhHtml();
   if(t==='trade')return seg+tradeHtml();
   if(t==='list'&&typeof rcHtml==='function'&&G.rc&&G.rc.on)return seg+rcHtml();
-  if(t==='list')return seg+`${typeof rcHtml==='function'?rcHtml():''}<div class="kick">マイ選手<span class="r">${M.roster.length}人</span></div>${M.roster.length?M.roster.map(c=>cardTile(c)).join(''):'<p class="note">まだいない。</p>'}<div class="kick">マイ監督<span class="r">${M.mgrs.length}人</span></div>${M.mgrs.length?M.mgrs.map(c=>cardTile(c)).join(''):'<p class="note">まだいない。</p>'}`;
+  if(t==='list'){const lt=G.sq.lt||'gacha',ga=M.roster.filter(isGachaCard),ik=M.roster.filter(c=>!isGachaCard(c)),L=lt==='gacha'?ga:lt==='ikusei'?ik:M.mgrs;
+    return seg+`${typeof rcHtml==='function'?rcHtml():''}<div class="seg c3 subnav">${[['gacha',`ガチャキャラ ${ga.length}`],['ikusei',`育成キャラ ${ik.length}`],['mgr',`監督 ${M.mgrs.length}`]].map(([k,n])=>`<button class="opt" aria-pressed="${lt===k}" data-act="sqLt" data-v="${k}">${n}</button>`).join('')}</div>
+    <div class="kick">${lt==='gacha'?'ガチャキャラ':lt==='ikusei'?'育成キャラ':'マイ監督'}<span class="r">${L.length}人</span></div>${L.length?L.map(c=>cardTile(c)).join(''):`<p class="note">${lt==='gacha'?'まだいない。ガチャで引くとここに並ぶ。':lt==='ikusei'?'まだいない。育成モードで選手を引退まで育てるとここに並ぶ。':'まだいない。'}</p>`}`}
   const mg=T.mg;
   return `${seg}
   <div class="label">チーム名</div><div class="field one"><input id="tname" aria-label="チーム名" value="${esc(M.squad.name)}" maxlength="14"></div>
@@ -8782,8 +8785,14 @@ function rcHtml(){
   const L=M.roster.filter(rcOk).sort((a,b)=>cardOvr(a)-cardOvr(b)),n=G.rc.sel.length,k=Math.floor(n/RC_N);
   return `<div class="kick">素材に変える選手を選ぶ<span class="r">${n}人選択中</span></div>
   <p class="note">${RC_N}人ごとに、育成素材${MATK.length}種類を${RC_Q}個ずつもらえる。スタメンとベンチの選手は選べない。変えた選手は元に戻せない。</p>
-  ${L.length?`<div class="plist">${L.map(c=>`<button class="prow" aria-pressed="${G.rc.sel.includes(c.id)}" data-act="rcPick" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${esc(c.from||'')}${c.special||c.legend?'・特別な選手':''}</span><span class="num">${cardOvr(c)}</span></button>`).join('')}</div>`:'<p class="note">変えられる選手がいない（スタメン・ベンチ以外の選手が対象）。</p>'}
+  ${L.length?`<div class="plist">${grpRows(L,c=>`<button class="prow" aria-pressed="${G.rc.sel.includes(c.id)}" data-act="rcPick" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${esc(c.from||'')}${c.special||c.legend?'・特別な選手':''}</span><span class="num">${cardOvr(c)}</span></button>`)}</div>`:'<p class="note">変えられる選手がいない（スタメン・ベンチ以外の選手が対象）。</p>'}
   <div class="stack" style="margin-top:10px"><button class="btn red" data-act="rcGo" ${k?'':'disabled'}>${k?`${k*RC_N}人を素材に変える（全素材+${k*RC_Q}個ずつ）`:`あと${RC_N-n%RC_N}人選んでね`}</button><button class="btn ghost" data-act="rcOpen">やめる</button></div>`}
+
+/* ----- ガチャキャラと育成キャラを分けて並べる ----- */
+const isGachaCard=c=>!!c&&(c.from==='ガチャ'||!!c.special||GLEGS.some(l=>l.id===c.id));
+function grpRows(list,fn){const cOf=x=>x&&x.c?x.c:x,g=list.filter(x=>isGachaCard(cOf(x))),k=list.filter(x=>!isGachaCard(cOf(x)));
+  return `${g.length?`<div class="plh">ガチャキャラ<span>${g.length}人</span></div>${g.map(fn).join('')}`:''}${k.length?`<div class="plh">育成キャラ<span>${k.length}人</span></div>${k.map(fn).join('')}`:''}`}
+ACT.sqLt=v=>{G.sq.lt=v};
 
 /* ========== スカッドの表示：スキルで上がった状態の能力（試合の途中で上がるものは含めない） ========== */
 let DISPC=null;
