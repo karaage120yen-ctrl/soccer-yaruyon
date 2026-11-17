@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-094339';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-094832';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5423,7 +5423,7 @@ function pickerHtml(){
   }
   if(typeof i==='string'&&i[0]==='b'){
     const bi=+i.slice(1),cur=M.squad.bench[bi];
-    const list=M.roster.filter(c=>!isMgr(c)&&!isLegSup(c)).map(c=>({c,v:cardOvr(c)})).sort((a,b)=>b.v-a.v);
+    const list=M.roster.filter(c=>!isMgr(c)&&!isLegSup(c)&&!M.squad.slots.includes(c.id)&&!M.squad.bench.some((id,j)=>id===c.id&&j!==bi)).map(c=>({c,v:typeof dispOvr==='function'?dispOvr(c):cardOvr(c)})).sort((a,b)=>b.v-a.v);
     return `<div class="kick">ベンチ${bi+1}に入れる<span class="r">交代要員</span></div>${list.length?`<div class="plist">${cur?'<button class="prow" data-act="sqSet" data-v="">外す</button>':''}${list.map(({c,v})=>{const inXI=M.squad.slots.includes(c.id),ib=M.squad.bench.indexOf(c.id);return `<button class="prow" aria-pressed="${cur===c.id}" data-act="sqSet" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${inXI?'スタメンからベンチへ移す':ib>=0&&ib!==bi?'別のベンチ枠にいる（入れ替え）':'ベンチ入り'}</span><span class="num">${v}</span></button>`}).join('')}</div>`:'<p class="note">まだマイ選手がいない。</p>'}`;
   }
   const role=slotLabel(i),cur=M.squad.slots[i];
