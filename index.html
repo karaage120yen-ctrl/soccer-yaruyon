@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-095029';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-095546';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -772,6 +772,11 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .slot b{font-size:17px;line-height:1.1}
 .slot .simg{width:28px;height:28px}
 .plh{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:700;color:var(--gold);letter-spacing:.08em;padding:10px 4px 4px;border-bottom:1px solid var(--line)}.plh span{color:var(--muted);font-weight:400}
+.insbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px 12px;margin-top:12px}
+.inslist{display:flex;flex-wrap:wrap;gap:6px}.inslist .opt{flex:none;padding:7px 10px;font-size:13px}.inslist .opt .po{font-size:10px;color:var(--accent);margin-right:5px}
+.inslist .opt.on.d{background:#2f6fd6;color:#fff;border-color:#2f6fd6}.inslist .opt.on.a{background:#e2462b;color:#fff;border-color:#e2462b}
+.slot .insb{position:absolute;left:-7px;top:-7px;font-style:normal;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff}
+.slot .insb.d{background:#2f6fd6}.slot .insb.a{background:#e2462b}
 
 </style>
 </head>
@@ -3946,6 +3951,8 @@ const FORMS={
 };
 function filler(role){const st={};for(const k of KEYS)st[k]=Math.round(POS_CAP[role][k]*.62);return {id:null,kind:'pl',name:'控え選手',pos:role,st,plus:{},filler:true}}
 function fitMul(pos,role){if(pos===role)return 1;if(pos==='GK'||role==='GK')return .55;const d={FW:0,MF:1,DF:2};return Math.abs(d[pos]-d[role])===1?.92:.84}
+const TEAM_CAP=150;
+const ovrRaw=(st,role)=>{const w=POS[role].w;let s=0,t=0;for(const k of KEYS){s+=w[k]*Math.min(TEAM_CAP,st[k]||0);t+=w[k]}return Math.round(s/t)};// チーム力（攻撃・中盤・守備・総合）とスキル込みの能力の上限
 function teamCalc(sq){
   sq=sq||M.squad;const F=FORMS[sq.form]||FORMS['433'];
   const cnt={};const cards=F.s.map(([role],i)=>{const c=cardById(sq.slots[i]);if(c&&!isMgr(c)&&!isLegSup(c)&&!(c.gikkuri>0))return {role,c};cnt[role]=(cnt[role]||0)+1;const f=filler(role);f.name=`控え${role}${'①②③④⑤'[cnt[role]-1]||''}`;return {role,c:f}});
@@ -3954,18 +3961,20 @@ function teamCalc(sq){
   const pl=cards.map(({role,c})=>{
     const chb=CH&&CH.get(c)?CH.get(c).b:0;
     const bonus=(hasCap&&c.special!=='captain'?4:0)+chb,st={},gp=hasDoc&&typeof isGramps==='function'&&isGramps(c);
-    for(const k of KEYS)st[k]=Math.min(99,effSt(c,k)+bonus+(gp?50:0)+(typeof sxSt==='function'?sxSt(cards,c,k):0));
+    for(const k of KEYS)st[k]=Math.min(TEAM_CAP,effSt(c,k)+bonus+(gp?50:0)+(typeof sxSt==='function'?sxSt(cards,c,k):0));
     const tmp={st,pos:c.pos},sta=typeof cardSta==='function'?cardSta(c):100;
-    const r=Math.round(cardOvr({st,plus:{},pos:role},role)*(typeof fitOf==='function'?fitOf(c,role):fitMul(c.pos,role))*(typeof staFac==='function'?staFac(sta):1)*10)/10;
-    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',kpass:c.special==='kpass',kama:c.special==='renkei',oib:c.special==='oibore'&&role==='GK',uhho:c.special==='uhho',tabako:c.special==='tabako',inu:c.special==='inu'&&!c.filler,doc:c.special==='doctor',santa:c.special==='santa',sx:c.sx&&c.sx.length?c.sx:null,gp,sta,filler:!!c.filler,legend:!!c.legend,id:c.id};
+    const r=Math.round(ovrRaw(st,role)*(typeof fitOf==='function'?fitOf(c,role):fitMul(c.pos,role))*(typeof staFac==='function'?staFac(sta):1)*10)/10;
+    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',kpass:c.special==='kpass',kama:c.special==='renkei',oib:c.special==='oibore'&&role==='GK',uhho:c.special==='uhho',tabako:c.special==='tabako',inu:c.special==='inu'&&!c.filler,doc:c.special==='doctor',santa:c.special==='santa',insD:!c.filler&&(sq.insD||[]).includes(c.id)&&(role==='MF'||role==='FW'),insA:!c.filler&&(sq.insA||[]).includes(c.id)&&(role==='MF'||role==='DF'),sx:c.sx&&c.sx.length?c.sx:null,gp,sta,filler:!!c.filler,legend:!!c.legend,id:c.id};
   });
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
   const mgc=cardById(sq.mgr);const mg=mgc&&isMgr(mgc)?{n:mgc.name,st:Object.fromEntries(MKEYS.map(k=>[k,effSt(mgc,k)])),famous:!!mgc.famous}:null;
   const ms=k=>mg?mg.st[k]:50;
   const boost=(ms('tac')-50)*.08+(ms('coa')-50)*.02+(ms('lea')-50)*.03;
   let atk=av('FW')*.62+av('MF')*.38+boost,mid=av('MF')*.75+av('FW')*.1+av('DF')*.15+boost,def=av('DF')*.68+av('GK')*.32+boost,dogB=null;
+  pl.forEach(x=>{if(x.insD){def+=1.2+(x.r-65)*.04;atk-=.7}if(x.insA){atk+=1.2+(x.r-65)*.04;def-=.7}});
   if(pl.some(x=>x.inu)&&typeof dogEntry==='function'){const d=dogEntry(hasCap);pl.push(d);dogB=dogBonus(d);atk+=dogB.atk;mid+=dogB.mid;def+=dogB.def}
-  const tot=Math.round((atk+mid+def)/3);
+  atk=Math.min(TEAM_CAP,atk);mid=Math.min(TEAM_CAP,mid);def=Math.min(TEAM_CAP,def);
+  const tot=Math.min(TEAM_CAP,Math.round((atk+mid+def)/3));
   // ベンチ（交代要員）。キャプテンしーの＋4はベンチにも効く
   const bench=(sq.bench||[]).map(id=>cardById(id)).filter(c=>c&&!isMgr(c)&&!isLegSup(c)&&!(c.gikkuri>0)&&!(sq.slots||[]).includes(c.id));
   const maoP=pl.find(x=>x.mao),bonusB=c=>hasCap&&c.special!=='captain'?4:0;
@@ -3978,7 +3987,7 @@ function teamSnap(sq){
   const T=teamCalc(sq);
   return {v:1,dogB:T.dogB||undefined,tac:(sq||M.squad).tac||'bal',name:T.name,form:T.form,tot:T.tot,atk:T.atk,mid:T.mid,def:T.def,hasCap:T.hasCap,hasEmp:!!T.hasEmp,hasMao:!!T.hasMao,maoSub:!!T.maoSub,sub:T.sub,
    mg:T.mg?{n:T.mg.n,st:T.mg.st,famous:T.mg.famous}:null,
-   pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};if(x.kama)o.kama=1;if(x.oib)o.oib=1;if(x.uhho)o.uhho=1;if(x.tabako)o.tabako=1;if(x.kpass)o.kpass=1;if(x.inu)o.inu=1;if(x.doc)o.doc=1;if(x.santa)o.santa=1;if(x.sx)o.sx=x.sx.slice();if(x.gp)o.gp=1;if(x.sta!=null&&x.sta<100)o.sta=x.sta;if(x.dog)o.dog=1;o.phy=x.st.phy;
+   pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};if(x.kama)o.kama=1;if(x.oib)o.oib=1;if(x.uhho)o.uhho=1;if(x.tabako)o.tabako=1;if(x.kpass)o.kpass=1;if(x.inu)o.inu=1;if(x.doc)o.doc=1;if(x.santa)o.santa=1;if(x.sx)o.sx=x.sx.slice();if(x.insD)o.insD=1;if(x.insA)o.insA=1;if(x.gp)o.gp=1;if(x.sta!=null&&x.sta<100)o.sta=x.sta;if(x.dog)o.dog=1;o.phy=x.st.phy;
      if(x.starter){const st={...x.st};for(const [k,v] of Object.entries(STARTER_D))st[k]=Math.min(99,Math.max(1,st[k]+v));o.st1={r:Math.round(cardOvr({st,plus:{},pos:x.role},x.role)*fitMul(x.pos,x.role)*10)/10,pas:st.pas}}
      return o})};
 }
@@ -4150,7 +4159,7 @@ function mTeam(X,i){
   X.sh[i]++;
   const m=seg*5+1+Math.floor(r()*5);
   let att=Y.pl.filter(p=>p.role!=='GK'&&!p.gone&&!injOut(X,p)&&!tbAway(X,p));if(!att.length)att=Y.pl.filter(p=>p.role!=='GK'&&!p.gone);
-  const sc1=wPick(r,att,p=>({FW:5,MF:2.4,DF:.55}[p.role]||1)*Math.pow(Math.max(30,p.sho)/60,3));
+  const sc1=wPick(r,att,p=>({FW:5,MF:2.4,DF:.55}[p.role]||1)*(p.insA?1.8:p.insD?.7:1)*Math.pow(Math.max(30,p.sho)/60,3));
   const pg=clamp(.27+(mAtk(X,i)-odef)*.0075+(sc1.sho-75)*.003,.08,.58);
   const gk=(O.pl.find(p=>p.role==='GK')||{n:'GK'}).n;
   // 決定機：攻める側はどこを狙うか、守る側はどこを読むかを選ぶ
@@ -5414,7 +5423,7 @@ function slotLabel(i){const F=FORMS[M.squad.form];return F.s[i][0]}
 function pitchHtml(T){
   const F=FORMS[M.squad.form];
   return `<div class="pitch" role="group" aria-label="${F.n}の布陣">${F.s.map(([role,x,y],i)=>{const p=T.pl[i],sel=G.sq.slot===i;
-    return `<button class="slot ${p.filler?'empty':''} ${p.cap?'cap':''} ${p.emp||p.mao||p.starter||p.kpass?'emp':''} ${p.legend?'leg':''}" style="left:${x}%;top:${y}%" aria-pressed="${sel}" data-act="sqSlot" data-v="${i}"><span class="sr">${role}</span><b class="num">${Math.round(p.r)}</b>${(()=>{const c=!p.filler&&cardById(M.squad.slots[i]);return c?`<span class="simg">${sprOf(c)}</span>`:''})()}<span class="sn">${esc(p.filler?'空き':p.n.split(' ').pop().replace(/^・/,''))}</span>${!p.filler&&p.sta!=null?`<span class="stabar sl"><i style="width:${p.sta}%;background:${staCol(p.sta)}"></i></span>`:''}${p.inu?'<i class="dogb">🐕</i>':''}</button>`}).join('')}</div>`;
+    return `<button class="slot ${p.filler?'empty':''} ${p.cap?'cap':''} ${p.emp||p.mao||p.starter||p.kpass?'emp':''} ${p.legend?'leg':''}" style="left:${x}%;top:${y}%" aria-pressed="${sel}" data-act="sqSlot" data-v="${i}"><span class="sr">${role}</span><b class="num">${Math.round(p.r)}</b>${(()=>{const c=!p.filler&&cardById(M.squad.slots[i]);return c?`<span class="simg">${sprOf(c)}</span>`:''})()}<span class="sn">${esc(p.filler?'空き':p.n.split(' ').pop().replace(/^・/,''))}</span>${!p.filler&&p.sta!=null?`<span class="stabar sl"><i style="width:${p.sta}%;background:${staCol(p.sta)}"></i></span>`:''}${p.inu?'<i class="dogb">🐕</i>':''}${p.insD?'<i class="insb d">守</i>':p.insA?'<i class="insb a">攻</i>':''}</button>`}).join('')}</div>`;
 }
 function pickerHtml(){
   const i=G.sq.slot;
@@ -5449,6 +5458,7 @@ H.squad=()=>{
   <div class="label">戦術<span class="r">試合の最初の戦術（CPU戦は試合中に変えられる）</span></div><div class="seg c3">${Object.entries(TACS).map(([k,t])=>`<button class="opt" aria-pressed="${(M.squad.tac||'bal')===k}" data-act="sqTac" data-v="${k}">${t.n}<span class="d">${t.d}</span></button>`).join('')}</div>
   ${pitchHtml(T)}
   ${typeof slotEditHtml==='function'?slotEditHtml():''}
+  ${typeof insHtml==='function'?insHtml(T):''}
   <div class="label">ベンチ（交代要員・12人まで）</div>
   <div class="bench">${M.squad.bench.map((id,i)=>{const c=cardById(id);return `<button class="bslot ${c?'':'empty'} ${c&&c.special?'emp':''}" aria-pressed="${G.sq.slot==='b'+i}" data-act="sqSlot" data-v="b${i}"><span class="sr">${c?c.pos:'空き'}</span><b class="num">${c?(typeof dispOvr==='function'?dispOvr(c):cardOvr(c)):'—'}</b>${c?`<span class="simg">${sprOf(c)}</span>`:''}<span class="sn">${c?esc(c.name.split(' ').pop().replace(/^・/,'')):'ベンチ'}</span></button>`}).join('')}</div>
   <button class="mgslot" aria-pressed="${G.sq.slot==='mgr'}" data-act="sqSlot" data-v="mgr"><span class="sr">監督</span><b>${mg?esc(mg.n):'未設定（代行監督）'}</b>${mg?`<span class="sub">${MKEYS.map(k=>MLBL[k]+mg.st[k]).join(' ')}</span>`:''}</button>
@@ -6296,7 +6306,9 @@ function rulesHtml(){
     '超レジェンド：育成でまれに15人の超レジェンドが現れる（ふつうのレジェンドの1/10の確率）。「教わる」に成功すると特殊能力がつき、引退してマイ選手になったあとも試合で発動する（ガチャキャラより少し弱め）。リオネル・メツシに勝つと「神の子」に加えて「アルゼンチンの神の子」の能力と称号',
     '結婚相手：日本だけでなく世界各国の人と出会う。出会いのときに国・職業・月収がわかる（暮らしタブの家族にも表示）。まれに（5%）トランス女性・トランス男性のパートナーとも出会えて、結婚もできる。その相手と最後まで添い遂げると、引退時に全能力+5と特殊能力「LGBTQに配慮した人」（試合中1回、自分の全能力+5・自分以外が3秒止まってフリーで決定機）',
     '編成：ベンチは12人まで。選手の枠をタップしてから別の枠（ベンチも）をタップすると入れ替わる。フォーメーションの「カスタム」では、枠ごとにポジション（GK・DF・MF・FW）と位置を自分で決められる（GKは1人）',
+    '指示：スカッドで、守備時のディフェンス指示（MF・FWから2人まで：守備力アップ・攻撃力少しダウン）と、攻撃時のアタック指示（MF・DFから2人まで：攻撃力アップ・本人が得点しやすい・守備力少しダウン）を出せる。指示を出した選手は体力の減りが少し早い',
     'いらない選手：スカッドの「一覧」の「いらない選手を素材に変える」で、10人ごとに育成素材を全種類100個ずつに変えられる（スタメン・ベンチの選手は対象外）',
+    'チーム力の上限：攻撃・中盤・守備・総合はそれぞれ150まで。選手の能力は素の値が99までだが、キャプテンや超レジェンドなどスキルで上がった分は150まで伸びる',
     'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる。左の「×1」ボタンで速さを1・2・4・8倍に切り替えられる（育成と試合の両方）',
     '体力ゲージ：選手は対戦や試合のたびに体力が減る（フィジカルが高いほど減りにくい）。1時間で12ずつ回復。体力60未満だと能力が下がり、試合中に体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
@@ -8171,7 +8183,7 @@ function staPen(Y,p,d){p.r+=d;p.sho+=d;p.pas+=d;shiftTeam(Y,p.role,d)}
 function staSeg(X){
   const hot=X.wx&&['heat','humid','alt','sirocco'].includes(X.wx.id)?1.35:1;
   X.T.forEach((Y,t)=>Y.pl.forEach(p=>{
-    if(p.gone||p.ms==null)return;const dr=Math.max(.8,2.4-((p.phy==null?60:p.phy)-60)/40)*(p.role==='GK'?.5:1)*hot;p.ms=Math.max(0,p.ms-dr);
+    if(p.gone||p.ms==null)return;const dr=Math.max(.8,2.4-((p.phy==null?60:p.phy)-60)/40)*(p.role==='GK'?.5:1)*hot*(p.insD||p.insA?1.2:1);p.ms=Math.max(0,p.ms-dr);
     const m=X.seg*5;
     if(p.ms<45&&!p.ms1){p.ms1=1;staPen(Y,p,-3);X.ev.push({m,s:t,ty:'down',tx:`${p.n}の足が止まってきた（体力${Math.round(p.ms)}・能力−3）`})}
     if(p.ms<20&&!p.ms2){p.ms2=1;staPen(Y,p,-4);X.ev.push({m,s:t,ty:'down',tx:`${p.n}はもう限界だ…（体力${Math.round(p.ms)}・能力さらに−4）`})}
@@ -8794,13 +8806,25 @@ function grpRows(list,fn){const cOf=x=>x&&x.c?x.c:x,g=list.filter(x=>isGachaCard
   return `${g.length?`<div class="plh">ガチャキャラ<span>${g.length}人</span></div>${g.map(fn).join('')}`:''}${k.length?`<div class="plh">育成キャラ<span>${k.length}人</span></div>${k.map(fn).join('')}`:''}`}
 ACT.sqLt=v=>{G.sq.lt=v};
 
+/* ----- 守備の指示（MF・FW 2人まで）と攻撃の指示（MF・DF 2人まで） ----- */
+const INS_MAX=2;
+function insElig(kind){const sq=M.squad,F=FORMS[sq.form]||FORMS['433'],ok=kind==='d'?['MF','FW']:['MF','DF'];return F.s.map(([role],i)=>({role,id:sq.slots[i]})).filter(x=>x.id&&ok.includes(x.role)&&cardById(x.id))}
+ACT.insT=v=>{const [k,id]=String(v).split(':'),key=k==='d'?'insD':'insA',sq=M.squad;sq[key]=(sq[key]||[]).filter(x=>insElig(k).some(e=>e.id===x));const L=sq[key],i=L.indexOf(id);
+  if(i>=0){L.splice(i,1);return}if(!insElig(k).some(e=>e.id===id))return;if(L.length>=INS_MAX){G.toastMsg=`${k==='d'?'守備':'攻撃'}の指示は${INS_MAX}人まで`;setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},1600);return}
+  const o=k==='d'?'insA':'insD';sq[o]=(sq[o]||[]).filter(x=>x!==id);L.push(id)};
+function insHtml(T){const sq=M.squad,row=(k,lbl,d)=>{const E=insElig(k),key=k==='d'?'insD':'insA',on=(sq[key]||[]).filter(x=>E.some(e=>e.id===x));
+  return `<div class="label">${lbl}<span class="r">${on.length}/${INS_MAX}人</span></div><p class="sub" style="margin:0 0 6px">${d}</p>
+  ${E.length?`<div class="inslist">${E.map(e=>{const c=cardById(e.id),a=on.includes(e.id);return `<button class="opt ${a?'on '+k:''}" aria-pressed="${a}" data-act="insT" data-v="${k}:${e.id}"><span class="po">${e.role}</span>${esc(c.name.split(' ').pop().replace(/^・/,''))}</button>`}).join('')}</div>`:'<p class="note">対象の選手がいない。</p>'}`};
+  return `<div class="insbox">${row('d','守備時のディフェンス指示（MF・FW）','守備に戻ってチームの守備力が上がる。そのぶん攻撃力が少し下がり、得点しにくくなる。体力の減りが少し早い。')}
+  ${row('a','攻撃時のアタック指示（MF・DF）','前に出て攻撃に加わり、チームの攻撃力が上がって本人も得点しやすくなる。そのぶん守備力が少し下がる。体力の減りが少し早い。')}</div>`}
+
 /* ========== スカッドの表示：スキルで上がった状態の能力（試合の途中で上がるものは含めない） ========== */
 let DISPC=null;
 function dispMap(){if(DISPC)return DISPC;DISPC=new Map();try{const sq=M.squad,F=FORMS[sq.form]||FORMS['433'],T=teamCalc(sq);
   F.s.forEach((s,i)=>{const c=cardById(sq.slots[i]),p=T.pl[i];if(c&&p&&!p.filler&&p.st)DISPC.set(c.id,p.st)})}catch(e){}return DISPC}
-function dispSt(c,k){if(!c||isMgr(c))return effSt(c,k);const st=dispMap().get(c.id);if(st&&st[k]!=null)return Math.min(99,Math.round(st[k]));
-  return Math.min(99,effSt(c,k)+(typeof sxSt==='function'?sxSt([{c,role:c.pos}],c,k):0))}
-function dispOvr(c,role){if(!c||isMgr(c))return isMgr(c)?mgrOvr(c):0;const st={};KEYS.forEach(k=>st[k]=dispSt(c,k));return cardOvr({st,plus:{},pos:role||c.pos},role||c.pos)}
+function dispSt(c,k){if(!c||isMgr(c))return effSt(c,k);const st=dispMap().get(c.id);if(st&&st[k]!=null)return Math.min(TEAM_CAP,Math.round(st[k]));
+  return Math.min(TEAM_CAP,effSt(c,k)+(typeof sxSt==='function'?sxSt([{c,role:c.pos}],c,k):0))}
+function dispOvr(c,role){if(!c||isMgr(c))return isMgr(c)?mgrOvr(c):0;const st={};KEYS.forEach(k=>st[k]=dispSt(c,k));return ovrRaw(st,role||c.pos)}
 {const _r=render;render=function(){DISPC=null;return _r()}}
 
 </script>
