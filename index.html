@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-100608';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-100922';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -782,6 +782,53 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .mpg{background:linear-gradient(135deg,rgba(47,111,214,.18),rgba(215,180,74,.1));border:1px solid var(--gold);border-radius:14px;padding:12px 14px;margin:0 0 12px}
 .mpgh{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}.mpgh b{font-size:16px;color:var(--gold)}
 .mpi{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line);font-size:13px}
+/* ===== ホーム画面 ===== */
+.hero2{position:relative;height:430px;margin:4px -18px 0;overflow:hidden;border-radius:0 0 26px 26px;background:linear-gradient(180deg,#05070f 0%,#0b1430 38%,#13244a 56%,#0c2a1a 57%,#0a2214 100%);isolation:isolate}
+.h2sky{position:absolute;inset:0 0 43% 0}
+.h2sky .beam{position:absolute;top:-30%;width:70%;height:150%;background:conic-gradient(from 180deg at 50% 0%,transparent 0deg,rgba(255,240,190,.0) 160deg,rgba(255,244,200,.22) 175deg,rgba(255,250,220,.32) 180deg,rgba(255,244,200,.22) 185deg,transparent 200deg);filter:blur(6px);transform-origin:50% 0;mix-blend-mode:screen;animation:h2sweep 7s ease-in-out infinite alternate}
+.h2sky .b1{left:-22%;transform:rotate(-18deg)}.h2sky .b2{right:-22%;transform:rotate(18deg);animation-delay:-3.5s}
+@keyframes h2sweep{0%{transform:rotate(-24deg)}100%{transform:rotate(-6deg)}}
+.h2sky .b2{animation-name:h2sweep2}@keyframes h2sweep2{0%{transform:rotate(24deg)}100%{transform:rotate(6deg)}}
+.h2sky .crowd{position:absolute;left:0;right:0;bottom:0;height:46%;background:radial-gradient(circle,rgba(255,255,255,.55) 0 1px,transparent 1.6px) 0 0/9px 7px,radial-gradient(circle,rgba(255,90,60,.45) 0 1px,transparent 1.6px) 4px 3px/13px 9px,radial-gradient(circle,rgba(90,160,255,.45) 0 1px,transparent 1.6px) 2px 5px/11px 8px,linear-gradient(180deg,transparent,rgba(0,0,0,.55));opacity:.75;animation:h2crowd 1.6s steps(3) infinite;-webkit-mask:linear-gradient(180deg,transparent,#000 35%)}
+@keyframes h2crowd{50%{background-position:1px 1px,5px 2px,1px 6px,0 0}}
+.h2sky .stars{position:absolute;inset:0 0 50% 0;background:radial-gradient(circle,#fff 0 .8px,transparent 1.2px) 0 0/37px 29px,radial-gradient(circle,#cfe0ff 0 .7px,transparent 1.1px) 13px 9px/53px 41px;opacity:.5;animation:h2tw 3s ease-in-out infinite alternate}
+@keyframes h2tw{to{opacity:.2}}
+.h2pitch{position:absolute;left:-30%;right:-30%;bottom:-6%;height:52%;perspective:380px;overflow:hidden}
+.h2pitch i{position:absolute;inset:0;transform:rotateX(58deg);transform-origin:50% 100%;background:repeating-linear-gradient(90deg,#1f7a3a 0 9%,#1a6c33 9% 18%);box-shadow:inset 0 0 80px rgba(0,0,0,.6)}
+.h2pitch i::before{content:'';position:absolute;left:50%;top:6%;width:30%;aspect-ratio:1;transform:translateX(-50%);border:3px solid rgba(255,255,255,.7);border-radius:50%}
+.h2pitch i::after{content:'';position:absolute;left:0;right:0;top:calc(6% + 15%);height:3px;background:rgba(255,255,255,.7)}
+.h2logo{position:absolute;left:0;right:0;top:26px;text-align:center;z-index:3;line-height:.95}
+.h2logo .l1,.h2logo .l2{display:block;font-family:var(--display);font-weight:900;font-size:46px;letter-spacing:.02em;background:linear-gradient(180deg,#fff7d6 0%,#f2c94c 45%,#b8860b 55%,#ffe9a0 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #3a2400) drop-shadow(0 0 18px rgba(242,201,76,.45));transform:skewX(-8deg)}
+.h2logo .l2{font-size:58px;background:linear-gradient(180deg,#ffffff 0%,#ffd0c0 40%,#e2462b 55%,#ff8a5a 100%);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 3px 0 #4a0e00) drop-shadow(0 0 20px rgba(226,70,43,.55))}
+.h2logo .l3{display:block;margin-top:8px;font-family:var(--num);font-size:11px;letter-spacing:.5em;color:#cfe0ff;opacity:.85}
+.h2cards{position:absolute;left:0;right:0;bottom:22px;height:200px;z-index:2}
+.hc{position:absolute;bottom:0;left:50%;width:132px;aspect-ratio:1;border-radius:14px;overflow:hidden;border:2px solid #f2c94c;box-shadow:0 10px 30px rgba(0,0,0,.6),0 0 22px rgba(242,201,76,.35);background:#111}
+.hc img{width:100%;height:100%;image-rendering:pixelated;display:block}
+.hc0{transform:translateX(-50%) translateY(-24px);z-index:3;width:152px;animation:h2float 3.2s ease-in-out infinite}
+.hc1{transform:translateX(-128%) rotate(-10deg);opacity:.9;filter:saturate(.85)}
+.hc2{transform:translateX(28%) rotate(10deg);opacity:.9;filter:saturate(.85)}
+@keyframes h2float{50%{transform:translateX(-50%) translateY(-34px)}}
+.hc .shine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.45) 45%,transparent 60%);transform:translateX(-120%);animation:h2shine 3.8s ease-in-out infinite}
+.hc1 .shine{animation-delay:1.2s}.hc2 .shine{animation-delay:2.4s}
+@keyframes h2shine{0%,55%{transform:translateX(-120%)}85%,100%{transform:translateX(120%)}}
+.h2ball{position:absolute;right:18px;top:150px;font-size:30px;z-index:3;animation:h2ball 2.6s cubic-bezier(.4,0,.6,1) infinite;filter:drop-shadow(0 4px 4px rgba(0,0,0,.5))}
+@keyframes h2ball{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-26px) rotate(180deg)}}
+.h2cta{display:flex;flex-direction:column;gap:8px;margin:18px 0 6px}
+.btn.glow{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 12px;box-shadow:0 0 0 2px rgba(255,255,255,.08),0 8px 26px rgba(226,70,43,.45);animation:h2glow 2.4s ease-in-out infinite}
+.btn.glow b{font-size:19px}.btn.glow span{font-size:12px;opacity:.85;font-weight:400}
+@keyframes h2glow{50%{box-shadow:0 0 0 2px rgba(255,255,255,.12),0 8px 36px rgba(226,70,43,.75)}}
+.h2stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0 4px}
+.h2stats>div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center;display:flex;flex-direction:column;gap:2px}
+.h2stats span{font-size:10px;color:var(--muted);letter-spacing:.08em}.h2stats b{font-size:18px;color:var(--gold)}
+.h2ev{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x mandatory}
+.h2e{flex:0 0 72%;scroll-snap-align:start;text-align:left;border:1px solid var(--ec);border-radius:14px;padding:12px 14px;background:linear-gradient(135deg,color-mix(in srgb,var(--ec) 30%,transparent),rgba(0,0,0,.2));color:var(--text);font:inherit;display:flex;flex-direction:column;gap:3px;cursor:pointer;position:relative;overflow:hidden}
+.h2e small{font-size:11px;font-weight:700;color:var(--ec);letter-spacing:.1em}.h2e b{font-size:17px}.h2e span{font-size:12px;color:var(--muted)}
+.h2e::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.18) 50%,transparent 65%);transform:translateX(-100%);animation:h2shine 4.5s ease-in-out infinite}
+.h2menu{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.h2m{display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 4px 12px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--surface),rgba(0,0,0,.25));color:var(--text);font:inherit;cursor:pointer;transition:transform .12s}
+.h2m:active{transform:scale(.96)}.h2m i{font-style:normal;font-size:26px}.h2m b{font-size:14px}.h2m span{font-size:10px;color:var(--muted);text-align:center;line-height:1.3}
+.h2how{margin-top:18px;border:1px solid var(--line);border-radius:12px;padding:10px 14px}.h2how summary{cursor:pointer;font-weight:700}
+@media (prefers-reduced-motion:reduce){.hero2 *{animation:none!important}}
 
 </style>
 </head>
@@ -8876,6 +8923,62 @@ function mgPerkHtml(){const m=sqMgr();if(!m)return '<p class="note">監督を選
   <p class="sub">強化アイテムは監督強化ガチャ（ガチャ画面）で手に入る。</p>`}
 const mgTag=c=>{if(!isMgr(c))return '';const pf=mgPref(c);return `<span class="sk">得意：${STYLES[pf].n}</span>${c.perk&&MPERKS[c.perk]?`<span class="sk sxk">${esc(MPERKS[c.perk].n)}</span>`:''}`};
 {const _ph=pickerHtml;pickerHtml=function(){const h=_ph();return G.sq.slot==='mgr'?h+mgPerkHtml():h}}
+
+/* ========== ホーム画面（育成タブのトップ） ========== */
+function homeFeatured(){
+  const ids=[];
+  try{if(BANNERS.doc&&BANNERS.doc.on())ids.push('doctor')}catch(e){}
+  try{if(BANNERS.inu&&BANNERS.inu.on())ids.push('masao')}catch(e){}
+  try{if(BANNERS.xmas&&BANNERS.xmas.on())ids.push('santa')}catch(e){}
+  ['ichikawa','mao','sasachi','doctor','masao','gorimori','shanchi','inkansu','batsumaru'].forEach(i=>{if(!ids.includes(i))ids.push(i)});
+  return ids.filter(i=>FA[i]).slice(0,3);
+}
+function homeEvents(){const ev=[];
+  try{if(BANNERS.doc&&BANNERS.doc.on())ev.push(['doc','レジェンド降臨','ドクター うさぎ','今日だけ・月3日の降臨日','#c060e0'])}catch(e){}
+  try{if(BANNERS.inu&&BANNERS.inu.on())ev.push(['inu','本日限定','犬を飼ってる政夫（67歳）','毎週火曜日だけ','#7ab04a'])}catch(e){}
+  try{if(BANNERS.xmas&&BANNERS.xmas.on())ev.push(['xmas','クリスマス限定','サンタ・クロース','12月25日まで','#d02a2a'])}catch(e){}
+  try{const L=lgdState();if(L.tries<LGD_TRY)ev.push(['lgd','伝説降臨',`今日あと${LGD_TRY-L.tries}回`,L.wins?'2勝目からは500コイン':'1勝目で5,000コイン','#e0b030'])}catch(e){}
+  return ev}
+ACT.homeGa=v=>{G.mode='gacha';if(BANNERS[v])G.ga.bk=v;toTop()};
+ACT.homeLgd=()=>{G.mode='battle';G.bt.view='lgd';toTop()};
+H.title=()=>{
+  const sv=S._resume,hof=hofList(),met=legendsMet().length,feat=homeFeatured();
+  let T=null;try{T=teamCalc()}catch(e){}
+  let rk=null,me=0;try{rk=rkState();const L=rkRivals(rk.key,wkFrac()).concat([{pts:rk.pts,me:1}]).sort((a,b)=>b.pts-a.pts||(b.me?1:0)-(a.me?1:0));me=L.findIndex(x=>x.me)+1}catch(e){}
+  let dm=null;try{dm=dmState()}catch(e){}
+  const dmDone=dm?dm.ids.filter(i=>dm.got[i]).length:0,ev=homeEvents();
+  const card=(id,k)=>{const u=fullArtURL(id);return u?`<div class="hc hc${k}"><img src="${u}" alt="" draggable="false"><i class="shine"></i></div>`:''};
+  return `<section class="hero2">
+   <div class="h2sky"><i class="beam b1"></i><i class="beam b2"></i><i class="crowd"></i><i class="stars"></i></div>
+   <div class="h2pitch"><i></i></div>
+   <div class="h2logo"><span class="l1">サッカー</span><span class="l2">やるよん</span><span class="l3">SOCCER YARUYON</span></div>
+   <div class="h2cards">${feat.map((id,k)=>card(id,k)).join('')}</div>
+   <div class="h2ball">⚽</div>
+  </section>
+  <div class="h2cta">${sv?`<button class="btn red glow" data-act="resume"><b>続きから</b><span>${esc(sv.p.sei)}${esc(sv.p.mei)}・${sv.p.age}歳・${esc(clubOf(sv.p).n)}</span></button><button class="btn ghost" data-act="newGame">新しい人生を始める</button>`:`<button class="btn red glow" data-act="newGame"><b>新しい人生を始める</b><span>高3から引退まで、ひとりのサッカー人生</span></button>`}</div>
+  <div class="h2stats">
+   <div><span>コイン</span><b class="num">${M.coins.toLocaleString('ja-JP')}</b></div>
+   <div><span>チーム力</span><b class="num">${T?T.tot:'—'}</b></div>
+   <div><span>週間</span><b class="num">${me?me+'位':'—'}</b></div>
+   <div><span>ミッション</span><b class="num">${dmDone}/3</b></div>
+  </div>
+  ${ev.length?`<div class="kick">開催中のイベント</div><div class="h2ev">${ev.map(([k,a,b,c,col])=>`<button class="h2e" style="--ec:${col}" data-act="${k==='lgd'?'homeLgd':'homeGa'}" data-v="${k}"><small>${a}</small><b>${esc(b)}</b><span>${esc(c)}</span></button>`).join('')}</div>`:''}
+  <div class="kick">メニュー</div>
+  <div class="h2menu">
+   ${[['battle','⚔️','対戦',`${M.rec.w}勝${M.rec.d}分${M.rec.l}敗`],['gacha','🎰','ガチャ',freeReady()?'無料10連が引ける！':'選手を集める'],['squad','📋','スカッド',`マイ選手${M.roster.length}人`],
+      ['mgr','👔','監督','8シーズン指揮をとる'],['rec','🏆','記録',`図鑑${met}/${LEGENDS.length}`],['career','📖','遊び方','下にくわしく']].map(([v,i,n,d])=>`<button class="h2m" ${v==='career'?'onclick="document.getElementById(\'h2how\').open=true;document.getElementById(\'h2how\').scrollIntoView({behavior:\'smooth\'})"':`data-act="go" data-v="${v}"`}><i>${i}</i><b>${n}</b><span>${esc(d)}</span></button>`).join('')}
+  </div>
+  <div class="kick">殿堂<span class="r">${hof.length?'あなたの記録':'表示例'}</span></div>
+  ${(hof.length?hof:HOF_EX).slice(0,3).map((h,i)=>hofRow(h,i)).join('')}
+  <details class="h2how" id="h2how"><summary>遊び方</summary>
+  <ol class="howto">
+   <li>スカウトが選手を連れてくる。気に入るまで何度でも探せる。2%で「天才」、0.001%で「伝説」が見つかる</li>
+   <li>シーズンは8月に開幕し、3か月ごとにひとつ行動を選ぶ。17歳から33歳までの17シーズンで引退する</li>
+   <li>試合は1試合ずつ進み、リーグ戦・カップ戦・欧州CL・代表・W杯がカレンダー通りに来る。出来事の選択肢には成功率が出る</li>
+   <li>年俸で家や車を買い、トレーナーを雇い、恋人と出会い家族を持つ。レジェンドや超レジェンドに出会えることもある</li>
+   <li>引退した選手は「マイ選手」になり、スカッドで布陣に入れて対戦できる。ガチャの特別な選手も一緒に使える</li>
+  </ol></details>`;
+};
 
 /* ========== スカッドの表示：スキルで上がった状態の能力（試合の途中で上がるものは含めない） ========== */
 let DISPC=null;
