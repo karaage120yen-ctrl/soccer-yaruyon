@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261116-181545';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-075448';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -722,6 +722,9 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .stb .st3s>*{width:100%;height:auto;max-height:100%}
 .wxi{font-size:11px;color:var(--soft);white-space:nowrap}
 .wxline{margin:0 0 6px;text-align:center}
+.stabar{display:block;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-top:4px;width:100%}
+.stabar i{display:block;height:100%;border-radius:2px}
+.slot .stabar.sl{position:absolute;left:8%;right:8%;bottom:-6px;height:3px;margin:0;width:auto}
 
 </style>
 </head>
@@ -3833,13 +3836,13 @@ function fitMul(pos,role){if(pos===role)return 1;if(pos==='GK'||role==='GK')retu
 function teamCalc(sq){
   sq=sq||M.squad;const F=FORMS[sq.form]||FORMS['433'];
   const cnt={};const cards=F.s.map(([role],i)=>{const c=cardById(sq.slots[i]);if(c&&!isMgr(c)&&!isLegSup(c)&&!(c.gikkuri>0))return {role,c};cnt[role]=(cnt[role]||0)+1;const f=filler(role);f.name=`控え${role}${'①②③④⑤'[cnt[role]-1]||''}`;return {role,c:f}});
-  const hasCap=cards.some(x=>x.c.special==='captain'),hasEmp=cards.some(x=>x.c.special==='empire');
+  const hasCap=cards.some(x=>x.c.special==='captain'),hasEmp=cards.some(x=>x.c.special==='empire'),hasDoc=cards.some(x=>x.c.special==='doctor');
   const pl=cards.map(({role,c})=>{
-    const bonus=hasCap&&c.special!=='captain'?4:0,st={};
-    for(const k of KEYS)st[k]=Math.min(99,effSt(c,k)+bonus);
-    const tmp={st,pos:c.pos};
-    const r=Math.round(cardOvr({st,plus:{},pos:role},role)*fitMul(c.pos,role)*10)/10;
-    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',kpass:c.special==='kpass',kama:c.special==='renkei',oib:c.special==='oibore'&&role==='GK',uhho:c.special==='uhho',tabako:c.special==='tabako',inu:c.special==='inu'&&!c.filler,filler:!!c.filler,legend:!!c.legend,id:c.id};
+    const bonus=hasCap&&c.special!=='captain'?4:0,st={},gp=hasDoc&&typeof isGramps==='function'&&isGramps(c);
+    for(const k of KEYS)st[k]=Math.min(99,effSt(c,k)+bonus+(gp?50:0));
+    const tmp={st,pos:c.pos},sta=typeof cardSta==='function'?cardSta(c):100;
+    const r=Math.round(cardOvr({st,plus:{},pos:role},role)*(typeof fitOf==='function'?fitOf(c,role):fitMul(c.pos,role))*(typeof staFac==='function'?staFac(sta):1)*10)/10;
+    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',kpass:c.special==='kpass',kama:c.special==='renkei',oib:c.special==='oibore'&&role==='GK',uhho:c.special==='uhho',tabako:c.special==='tabako',inu:c.special==='inu'&&!c.filler,doc:c.special==='doctor',gp,sta,filler:!!c.filler,legend:!!c.legend,id:c.id};
   });
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
   const mgc=cardById(sq.mgr);const mg=mgc&&isMgr(mgc)?{n:mgc.name,st:Object.fromEntries(MKEYS.map(k=>[k,effSt(mgc,k)])),famous:!!mgc.famous}:null;
@@ -3860,7 +3863,7 @@ function teamSnap(sq){
   const T=teamCalc(sq);
   return {v:1,dogB:T.dogB||undefined,tac:(sq||M.squad).tac||'bal',name:T.name,form:T.form,tot:T.tot,atk:T.atk,mid:T.mid,def:T.def,hasCap:T.hasCap,hasEmp:!!T.hasEmp,hasMao:!!T.hasMao,maoSub:!!T.maoSub,sub:T.sub,
    mg:T.mg?{n:T.mg.n,st:T.mg.st,famous:T.mg.famous}:null,
-   pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};if(x.kama)o.kama=1;if(x.oib)o.oib=1;if(x.uhho)o.uhho=1;if(x.tabako)o.tabako=1;if(x.kpass)o.kpass=1;if(x.inu)o.inu=1;if(x.dog)o.dog=1;o.phy=x.st.phy;
+   pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};if(x.kama)o.kama=1;if(x.oib)o.oib=1;if(x.uhho)o.uhho=1;if(x.tabako)o.tabako=1;if(x.kpass)o.kpass=1;if(x.inu)o.inu=1;if(x.doc)o.doc=1;if(x.gp)o.gp=1;if(x.sta!=null&&x.sta<100)o.sta=x.sta;if(x.dog)o.dog=1;o.phy=x.st.phy;
      if(x.starter){const st={...x.st};for(const [k,v] of Object.entries(STARTER_D))st[k]=Math.min(99,Math.max(1,st[k]+v));o.st1={r:Math.round(cardOvr({st,plus:{},pos:x.role},x.role)*fitMul(x.pos,x.role)*10)/10,pas:st.pas}}
      return o})};
 }
@@ -3930,6 +3933,7 @@ function mStart(A0,B0,seed,human){
   // 巧妙テクニックパス：試合中に5回（時間はシードで決まる）
   X.kp=T.map((Y,i)=>{if(!Y.pl.some(p=>p.kpass))return null;const rk=rng((seed^(0x9e3779b1+i*7919))>>>0),s=new Set();while(s.size<KPASS_N)s.add(1+Math.floor(rk()*17));return [...s].sort((a,b)=>a-b)});X.kpI=[0,0];
   X.tb=T.map(Y=>Y.pl.some(p=>p.tabako)?[10,26,42,58,74].map(t=>t+Math.floor(r()*7)):null);X.tbI=[0,0];X.tmods=[];
+  if(typeof docStart==='function')docStart(X,seed);if(typeof staStart==='function')staStart(X);
   return X;
 }
 const kamaB=(X,i)=>X.kama&&X.kama[i]&&X.sc[i]<X.sc[1-i]?1:0;// 負けているあいだ味方の全能力+1
@@ -3938,7 +3942,7 @@ const mDef=(X,i)=>{const Y=X.T[i];return Y.def+tacOf(X,i).f+(Y.hasEmp&&X.seg>=9?
 /* 1Killウッホね：1回だけシュートをブロック。打った選手は10分ケガ、相手のフィジカルが上なら自分も10分ケガ */
 const phyOf=p=>p.phy!=null?p.phy:Math.round(60+(p.r-60)*.9);
 const injOut=(X,p)=>p.injUntil>X.seg;
-function mInjure(X,t,p,m){if(!p||injOut(X,p))return;if(p.inu&&typeof inuOut==='function'){inuOut(X,t,m,'がケガ');return}const d=-Math.round(p.r*.5*10)/10;p.injUntil=Math.ceil((m+10)/5);p.injD=d;shiftTeam(X.T[t],p.role,d);
+function mInjure(X,t,p,m){if(!p||injOut(X,p))return;if(typeof docHeal==='function'&&docHeal(X,t,p,m))return;if(p.inu&&typeof inuOut==='function'){inuOut(X,t,m,'がケガ');return}const d=-Math.round(p.r*.5*10)/10;p.injUntil=Math.ceil((m+10)/5);p.injD=d;shiftTeam(X.T[t],p.role,d);
   X.ev.push({m,s:t,ty:'down',tx:`${p.n}はケガで10分間動けない`});if(X.human===t&&!X.pend)X.pend={ty:'inj',m,n:p.n,t}}
 function uhhoBlock(X,d,sh,m){
   if(!X.uh||!X.uh[d]||X.uhUsed[d])return false;const Y=X.T[d],gp=Y.pl.find(p=>p.uhho&&!injOut(X,p));if(!gp)return false;
@@ -3976,7 +3980,7 @@ function mRun(X){
     if(X.seg>=18){mEnd(X);break}
     if(X.lazy&&X.si===0&&X.seg*5>=X.until)break;// 画面の時間に合わせて少しずつ進める（途中で戦術を変えられる）
     if(X.si===0&&tbCheck(X))break;
-    if(X.si===0){if(X.wx)wxSeg(X);if(X.inu)inuTick(X);tbApply(X);X.T.forEach((Y,t)=>Y.pl.forEach(p=>{if(p.injUntil!=null&&X.seg>=p.injUntil){shiftTeam(Y,p.role,-p.injD);delete p.injUntil;X.ev.push({m:X.seg*5,s:t,ty:'sub',tx:`${p.n}がケガから戻ってきた`})}}));
+    if(X.si===0){if(X.wx)wxSeg(X);if(typeof staSeg==='function')staSeg(X);if(X.inu)inuTick(X);tbApply(X);X.T.forEach((Y,t)=>Y.pl.forEach(p=>{if(p.injUntil!=null&&X.seg>=p.injUntil){shiftTeam(Y,p.role,-p.injD);delete p.injUntil;X.ev.push({m:X.seg*5,s:t,ty:'sub',tx:`${p.n}がケガから戻ってきた`})}}));
       X.pa=1/(1+Math.exp(-((X.T[0].mid+tacOf(X,0).m+kamaB(X,0))-(X.T[1].mid+tacOf(X,1).m+kamaB(X,1)))/9));X.posA+=X.pa;
       if(X.kama)[0,1].forEach(i=>{if(kamaB(X,i)&&!X.kamaOn[i]){X.kamaOn[i]=true;const k=X.T[i].pl.find(p=>p.kama);X.ev.push({m:X.seg*5,s:i,ty:'skill',tx:`${k?k.n:'鎌ポコ'}「まだいけるやん、連携や！」 負けているあいだ味方の全能力＋1`})}})}
     if(X.si<2){const i=X.si;X.si++;mTeam(X,i);continue}
@@ -4014,6 +4018,7 @@ function mTeam(X,i){
       const pg=clamp(.42+(mAtk(X,i)-odef)*.0075+(mao.sho+25-75)*.004,.3,.88);
       if(r()<pg&&!uhhoBlock(X,1-i,mao,m)){X.sc[i]++;X.gl[i][mao.n]=(X.gl[i][mao.n]||0)+1;X.ev.push({m,s:i,ty:'goal',tx:`${mao.n}の黄金の右足が炸裂！ ネットを突き破るような一撃！`,sc:X.sc.slice()})}
       else X.ev.push({m,s:i,ty:'save',tx:`${mao.n}の渾身のシュートを${gk}が奇跡的に止めた！`});
+      if(typeof maoAgain==='function'&&maoAgain(X,i,m,r))return;
       mao.r-=10;mao.sho-=10;mao.pas-=10;shiftTeam(Y,mao.role,-10);
       X.ev.push({m,s:i,ty:'down',tx:`${mao.n}は力を使い果たした。全能力−10`});
       if(Y.maoSub&&Y.sub){
@@ -4070,7 +4075,7 @@ function mResub(X,sq,swaps){
   const adj=(X.cond[h]&&X.cond[h].adj)||0;S.atk+=adj;S.mid+=adj;S.def+=adj;
   S.out=(old.out||[]).concat(old.pl.filter(p=>!S.pl.some(q=>q.n===p.n)));
   if(S.hasMao&&!X.maoUsed[h]&&X.maoMin[h]<46)X.maoMin[h]=46+Math.floor(X.r()*35);
-  X.T[h]=S;if(X.wxD){const D=X.wxD[h];S.atk+=D.atk;S.mid+=D.mid;S.def+=D.def}if(X.inu){X.inu[h]=!!(S.dogB&&S.pl.some(p=>p.dog)&&S.pl.some(p=>p.inu));if(X.inuOut[h]){X.inuOut[h]=false;inuOut(X,h,46,null)}}(swaps||[]).forEach(s=>X.ev.push({m:46,s:h,ty:'sub',tx:`選手交代：${s[0]} → ${s[1]}`}));
+  X.T[h]=S;if(typeof staCarry==='function')staCarry(X,h,old,S);if(X.wxD){const D=X.wxD[h];S.atk+=D.atk;S.mid+=D.mid;S.def+=D.def}if(X.inu){X.inu[h]=!!(S.dogB&&S.pl.some(p=>p.dog)&&S.pl.some(p=>p.inu));if(X.inuOut[h]){X.inuOut[h]=false;inuOut(X,h,46,null)}}(swaps||[]).forEach(s=>X.ev.push({m:46,s:h,ty:'sub',tx:`選手交代：${s[0]} → ${s[1]}`}));
 }
 function mEnd(X){
   const sc=X.sc;
@@ -4139,6 +4144,7 @@ function battleReward(kind,res,side,lvIdx){
 }
 // 試合のあと：ぎっくり腰の判定（出場停止は次の1試合）
 function postMatch(res,side){
+  if(typeof staDrain==='function')staDrain(res,side);
   M.roster.forEach(c=>{if(c.gikkuri>0)c.gikkuri--});
   if(res&&res.gikk&&res.gikk[side])res.gikkuri=res.gikk[side];
 }
@@ -5228,8 +5234,8 @@ function cardMini(c){
 }
 function cardTile(c,opts={}){
   const mg=isMgr(c),o=mg?mgrOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
-  const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:c.special==='kpass'?`<span class="sk">${KPASS_SKILL.n}</span>`:c.special==='renkei'?`<span class="sk">${RENKEI_SKILL.n}</span>`:c.special==='oibore'?`<span class="sk">${OIBORE_SKILL.n}</span>`:c.special==='uhho'?`<span class="sk">${UHHO_SKILL.n}</span>`:c.special==='tabako'?`<span class="sk">${TABAKO_SKILL.n}</span>`:c.special==='inu'?`<span class="sk">タッグ・${INU_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
-  return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${standArt3(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${c.title?`<b style="color:var(--gold)">${esc(c.title)}</b>・`:''}${c.height?c.height+'cm・':''}${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span></div></div>${tag||c.gikkuri>0?`<div class="tags">${tag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
+  const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:c.special==='kpass'?`<span class="sk">${KPASS_SKILL.n}</span>`:c.special==='doctor'?`<span class="sk">ヤハ・ウラ・プルャ‼︎</span>`:c.special==='renkei'?`<span class="sk">${RENKEI_SKILL.n}</span>`:c.special==='oibore'?`<span class="sk">${OIBORE_SKILL.n}</span>`:c.special==='uhho'?`<span class="sk">${UHHO_SKILL.n}</span>`:c.special==='tabako'?`<span class="sk">${TABAKO_SKILL.n}</span>`:c.special==='inu'?`<span class="sk">タッグ・${INU_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
+  return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${standArt3(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos+(c.pos2?'/'+c.pos2.join('/'):'')}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${c.title?`<b style="color:var(--gold)">${esc(c.title)}</b>・`:''}${c.height?c.height+'cm・':''}${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span>${!mg&&!isLegSup(c)&&typeof staBar==='function'?staBar(c):''}</div></div>${tag||c.gikkuri>0?`<div class="tags">${tag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
 }
 
 /* ---------- ガチャ ---------- */
@@ -5241,8 +5247,8 @@ function copyText(val){
   if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(val).then(()=>true).catch(()=>false);
   return Promise.resolve(false);
 }
-const puCard=id=>GLEGS.find(l=>l.id===id)||(id==='shanchi'?SHANCHI:id==='mao'?MAO:id==='inkansu'?INKANSU:id==='kamapoko'?KAMAPOKO:id==='batsumaru'?BATSUMARU:id==='gorimori'?GORIMORI:id==='sasachi'?SASACHI:id==='masao'?MASAO:ICHIKAWA);
-const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと：${legText(l)}`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:id==='inkansu'?KPASS_SKILL:id==='kamapoko'?RENKEI_SKILL:id==='batsumaru'?OIBORE_SKILL:id==='gorimori'?UHHO_SKILL:id==='sasachi'?TABAKO_SKILL:id==='masao'?INU_SKILL:CAP_SKILL};
+const puCard=id=>GLEGS.find(l=>l.id===id)||(id==='shanchi'?SHANCHI:id==='mao'?MAO:id==='inkansu'?INKANSU:id==='kamapoko'?KAMAPOKO:id==='batsumaru'?BATSUMARU:id==='gorimori'?GORIMORI:id==='sasachi'?SASACHI:id==='masao'?MASAO:id==='doctor'?DOCTOR:ICHIKAWA);
+const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと：${legText(l)}`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:id==='inkansu'?KPASS_SKILL:id==='kamapoko'?RENKEI_SKILL:id==='batsumaru'?OIBORE_SKILL:id==='gorimori'?UHHO_SKILL:id==='sasachi'?TABAKO_SKILL:id==='masao'?INU_SKILL:id==='doctor'?DOC_SKILL:CAP_SKILL};
 function pairArt(BN){
   return `<article class="front gban"><div><div class="dateline"><span>新ガチャ・2人ピックアップ</span><span>各1%</span></div><p class="deck">笹山 鎌ポコ ＆ バツ丸尾君</p>
    <p class="lede">守備的MFと85歳の守護神。どちらも出る確率は1%ずつ。</p></div>${vhead(BN.head[0],BN.head[1],'gold')}</article>
@@ -5265,7 +5271,7 @@ H.gacha=()=>{
   <div class="lgal">${GLEGS.map(l=>`<figure>${fullArt(l.id)}<figcaption>${l.pu?'<b class="gold">PU</b> ':''}${esc(l.name)}</figcaption></figure>`).join('')}</div>
   <div class="plist" style="margin-top:10px">${GLEGS.map(l=>{const o=M.roster.find(c=>c.id===l.id);return `<div class="prow wf" style="cursor:default"><span class="pf">${sprOf(l)}</span><span class="po">${l.pu?'PU':l.pos}</span><b>${esc(l.name)}</b><span class="sub">${esc(legText(l))}${o?'・所持':''}</span><span class="num">${cardOvr(l)}</span></div>`}).join('')}</div>`;
   const BL=Object.entries(BANNERS).filter(([k,B])=>!B.on||B.on()).sort((a,b)=>(b[1].on?1:0)-(a[1].on?1:0));
-  return `${BANNERS.inu&&BANNERS.inu.on()?`<div class="toast"><b>本日限定！</b>「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ。残り${inuLeft()}</div>`:`<p class="note" style="margin:0 0 8px">「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ登場。</p>`}<div class="seg c3 subnav">${BL.map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${B.multi?`${legOwned().length}/${GLEGS.length}人`:B.pair?`${B.pair.filter(c=>M.roster.some(x=>x.id===c.id)).length}/2人・NEW`:M.roster.some(c=>c.id===B.card().id)?'所持':'1%'}</span></button>`).join('')}</div>
+  return `${BANNERS.inu&&BANNERS.inu.on()?`<div class="toast"><b>本日限定！</b>「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ。残り${inuLeft()}</div>`:`<p class="note" style="margin:0 0 8px">「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ登場。</p>`}${typeof docBannerNote==='function'?docBannerNote():''}<div class="seg c3 subnav">${BL.map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${B.multi?`${legOwned().length}/${GLEGS.length}人`:B.pair?`${B.pair.filter(c=>M.roster.some(x=>x.id===c.id)).length}/2人・NEW`:M.roster.some(c=>c.id===B.card().id)?'所持':'1%'}</span></button>`).join('')}</div>
   ${BN.multi?legArt:BN.pair?pairArt(BN):`<article class="front gban"><div><div class="dateline"><span>${pu.tag?'タッグキャラ・毎週火曜日だけ':'ピックアップ・'+(pu.style?esc(pu.style):pu.pos)}</span><span>排出率 1%</span></div>
    <p class="deck">${esc(pu.name)}</p>${fullArt(pu.id)?'':`<div class="gface">${sprOf(pu)}</div>`}
    ${pu.tag?'<p class="sub" style="margin:4px 0 2px">政夫（DF）</p>':''}<div class="ichst">${KEYS.map(k=>`<span>${LBL[k]}<b>${pu.st[k]}</b></span>`).join('')}</div>${pu.tag?`<p class="sub" style="margin:8px 0 2px">飼っているワンちゃん（FW）</p><div class="ichst">${KEYS.map(k=>`<span>${LBL[k]}<b>${MASAO_DOG.st[k]}</b></span>`).join('')}</div>`:''}
@@ -5291,7 +5297,7 @@ function slotLabel(i){const F=FORMS[M.squad.form];return F.s[i][0]}
 function pitchHtml(T){
   const F=FORMS[M.squad.form];
   return `<div class="pitch" role="group" aria-label="${F.n}の布陣">${F.s.map(([role,x,y],i)=>{const p=T.pl[i],sel=G.sq.slot===i;
-    return `<button class="slot ${p.filler?'empty':''} ${p.cap?'cap':''} ${p.emp||p.mao||p.starter||p.kpass?'emp':''} ${p.legend?'leg':''}" style="left:${x}%;top:${y}%" aria-pressed="${sel}" data-act="sqSlot" data-v="${i}"><span class="sr">${role}</span><b class="num">${Math.round(p.r)}</b><span class="sn">${esc(p.filler?'空き':p.n.split(' ').pop().replace(/^・/,''))}</span>${p.inu?'<i class="dogb">🐕</i>':''}</button>`}).join('')}</div>`;
+    return `<button class="slot ${p.filler?'empty':''} ${p.cap?'cap':''} ${p.emp||p.mao||p.starter||p.kpass?'emp':''} ${p.legend?'leg':''}" style="left:${x}%;top:${y}%" aria-pressed="${sel}" data-act="sqSlot" data-v="${i}"><span class="sr">${role}</span><b class="num">${Math.round(p.r)}</b><span class="sn">${esc(p.filler?'空き':p.n.split(' ').pop().replace(/^・/,''))}</span>${!p.filler&&p.sta!=null?`<span class="stabar sl"><i style="width:${p.sta}%;background:${staCol(p.sta)}"></i></span>`:''}${p.inu?'<i class="dogb">🐕</i>':''}</button>`}).join('')}</div>`;
 }
 function pickerHtml(){
   const i=G.sq.slot;
@@ -5612,7 +5618,7 @@ function makeSnap(name,players,mgLv,tac,form){
   const hasCap=players.some(x=>x.special==='captain'),rOf=(st,x)=>Math.round(cardOvr({st,plus:{},pos:x.role},x.role)*fitMul(x.pos||x.role,x.role)*10)/10;
   const pl=players.map(x=>{const st={};KEYS.forEach(k=>st[k]=Math.min(99,x.st[k]+(hasCap&&x.special!=='captain'?4:0)));
     const o={n:x.n,role:x.role,r:rOf(st,x),sho:st.sho,pas:st.pas,cap:x.special==='captain'?1:0,emp:x.special==='empire'?1:0,mao:x.special==='mao'?1:0,st,pos:x.pos||x.role,sp:x.special||null};
-    o.phy=st.phy;if(x.special==='renkei')o.kama=1;if(x.special==='uhho')o.uhho=1;if(x.special==='tabako')o.tabako=1;if(x.special==='kpass')o.kpass=1;if(x.special==='inu')o.inu=1;if(x.special==='oibore'&&x.role==='GK')o.oib=1;
+    o.phy=st.phy;if(x.special==='renkei')o.kama=1;if(x.special==='uhho')o.uhho=1;if(x.special==='tabako')o.tabako=1;if(x.special==='kpass')o.kpass=1;if(x.special==='doctor')o.doc=1;if(x.special==='inu')o.inu=1;if(x.special==='oibore'&&x.role==='GK')o.oib=1;
     if(x.special==='starter'){const s1={...st};for(const [k,v] of Object.entries(STARTER_D))s1[k]=Math.min(99,Math.max(1,s1[k]+v));o.st1={r:rOf(s1,x),pas:s1.pas}}
     return o});
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
@@ -5762,7 +5768,7 @@ function wcHtml(){
 const SP_SKILL={captain:CAP_SKILL,empire:EMP_SKILL,mao:MAO_SKILL,starter:STARTER_SKILL,kpass:KPASS_SKILL,renkei:RENKEI_SKILL,oibore:OIBORE_SKILL,uhho:UHHO_SKILL,tabako:TABAKO_SKILL};
 const BET_N=600,BET_EDGE=.9,BET_MIN=10;
 const BET_CLUBS=['ゴッドイレブン','レジェンドユナイテッド','オールスターズFC','ドリームXI','ミソロジーFC','ヘブンズゲート','ゴールデンエイジ','エターナルFC'];
-function betAllStars(){const sp=[ICHIKAWA,SHANCHI,MAO,INKANSU,KAMAPOKO,BATSUMARU,GORIMORI,SASACHI,MASAO].concat(GLEGS);return sp.map(c=>({n:c.name,pos:c.pos,st:{...c.st},special:c.special||null}))}
+function betAllStars(){const sp=[ICHIKAWA,SHANCHI,MAO,INKANSU,KAMAPOKO,BATSUMARU,GORIMORI,SASACHI,MASAO,DOCTOR].concat(GLEGS);return sp.map(c=>({n:c.name,pos:c.pos,st:{...c.st},special:c.special||null}))}
 function betTeams(seed){
   const r=rng(seed),pool=shuf(betAllStars(),r),clubs=shuf(BET_CLUBS,r),names=shuf(LGD_NAMES,r),epi=shuf(LGD_EPI,r);let ni=0;
   const mk=k=>{const lv=80+Math.floor(r()*12),pl=ROLES433.map(role=>{let i=pool.findIndex(c=>c.pos===role);let c;if(i>=0&&r()<.8){c=pool.splice(i,1)[0]}
@@ -6130,7 +6136,7 @@ function rulesHtml(){
   const yen0=n=>n.toLocaleString('ja-JP');
   const sec=(t,body)=>`<details class="rule"><summary>${t}</summary><div class="rb">${body}</div></details>`;
   const ul=a=>`<ul class="plan">${a.map(x=>`<li>${x}</li>`).join('')}</ul>`;
-  const sp=[[ICHIKAWA,CAP_SKILL],[SHANCHI,EMP_SKILL],[MAO,MAO_SKILL],[INKANSU,KPASS_SKILL],[KAMAPOKO,RENKEI_SKILL],[BATSUMARU,OIBORE_SKILL],[GORIMORI,UHHO_SKILL],[SASACHI,TABAKO_SKILL],[MASAO,INU_SKILL]];
+  const sp=[[ICHIKAWA,CAP_SKILL],[SHANCHI,EMP_SKILL],[MAO,MAO_SKILL],[INKANSU,KPASS_SKILL],[KAMAPOKO,RENKEI_SKILL],[BATSUMARU,OIBORE_SKILL],[GORIMORI,UHHO_SKILL],[SASACHI,TABAKO_SKILL],[MASAO,INU_SKILL],[DOCTOR,DOC_SKILL]];
   return `<div class="kick">ルール説明<span class="r">タップで開く</span></div>
   ${typeof rules2==='function'?rules2(sec,ul):''}
   ${sec('育成（サッカー選手）',ul([
@@ -6156,6 +6162,8 @@ function rulesHtml(){
     '通常のガチャ：ピックアップ選手1%・育成素材×5が10%・×2が25%・×1が64%',
     '鎌ポコ＆丸尾ガチャ：2人それぞれ1%（合計2%）',
     '政夫＆犬ガチャ：毎週火曜日（日本時間）の1日だけ登場。ピックアップ1%。タッグキャラなので、政夫を配置すると犬も一緒に出場する',
+    'レジェンド降臨ガチャ「ドクター うさぎ」：1か月に3日だけ登場（2026年11月は17日から。ほかの日はランダム）。ピックアップ1%。MF・FW・GKのどこに置いても能力が下がらない',
+    '体力ゲージ：選手は対戦や試合のたびに体力が減る（フィジカルが高いほど減りにくい）。1時間で12ずつ回復。体力60未満だと能力が下がり、試合中に体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
     `素材ガチャ：育成素材を全種類${MATG_COST}個ずつ使うと、好きなガチャを1回引ける。キャラが出る確率は${Math.round(MATG_PU*100)}%`,
     '同じキャラの2枚目は、全種類の育成素材×2に変わる'
@@ -7959,7 +7967,7 @@ function wxOverlay(g,id,t,Wd,Hd){
 function autoPlan(form){
   const F=FORMS[form]||FORMS['433'],roles=F.s.map(s=>s[0]);
   const pool=M.roster.filter(c=>!isMgr(c)&&!isLegSup(c)&&!(c.gikkuri>0));
-  const val=(c,role)=>cardOvr(c,role)*fitMul(c.pos,role);
+  const val=(c,role)=>cardOvr(c,role)*(typeof fitOf==='function'?fitOf(c,role):fitMul(c.pos,role))*(typeof staFac==='function'?staFac(cardSta(c)):1);
   // 1) 値の高い組み合わせから順に埋める
   const pairs=[];roles.forEach((r,i)=>pool.forEach(c=>pairs.push({i,c,v:val(c,r)})));pairs.sort((a,b)=>b.v-a.v);
   const slots=Array(11).fill(null),used=new Set();
@@ -8006,6 +8014,105 @@ function spResume(){
     render();
   }catch(e){delete M.spPend;metaSave()}
 }
+
+/* ========== 体力ゲージ ＆ レジェンド降臨ガチャ「ドクター うさぎ」 ========== */
+/* ----- 体力（カードごと・時間で回復） ----- */
+const STA_REC=12;// 1時間に回復する量
+function cardSta(c){if(!c||c.filler||isMgr(c))return 100;const s=c.sta==null?100:c.sta,t=c.staT||0;return Math.round(clamp(s+(Date.now()-t)/3.6e6*STA_REC,0,100))}
+function setSta(c,v){c.sta=Math.round(clamp(v,0,100));c.staT=Date.now()}
+const staFac=s=>s>=60?1:1-(60-s)/200;// 体力0で能力−30%
+const staCol=s=>s>=60?'var(--up)':s>=30?'var(--gold)':'var(--down)';
+const staBar=(c,w)=>{const s=cardSta(c);return `<span class="stabar" title="体力${s}" style="${w?`width:${w}`:''}"><i style="width:${s}%;background:${staCol(s)}"></i></span>`};
+function staDrain(res,side){
+  const sq=M.squad,F=FORMS[sq.form]||FORMS['433'];
+  sq.slots.forEach((id,i)=>{const c=cardById(id);if(!c||isMgr(c)||isLegSup(c))return;const role=F.s[i][0],ph=(c.st&&c.st.phy)||60;
+    setSta(c,cardSta(c)-(role==='GK'?8:Math.max(10,22-(ph-60)/5)))});
+  (sq.bench||[]).forEach(id=>{const c=cardById(id);if(c&&!isMgr(c))setSta(c,cardSta(c)-4)});
+}
+/* ----- 試合中の体力 ----- */
+function staStart(X){X.T.forEach(Y=>Y.pl.forEach(p=>{p.ms=p.sta==null?100:p.sta;p.ms1=0;p.ms2=0}))}
+function staPen(Y,p,d){p.r+=d;p.sho+=d;p.pas+=d;shiftTeam(Y,p.role,d)}
+function staSeg(X){
+  const hot=X.wx&&['heat','humid','alt','sirocco'].includes(X.wx.id)?1.35:1;
+  X.T.forEach((Y,t)=>Y.pl.forEach(p=>{
+    if(p.gone||p.ms==null)return;const dr=Math.max(.8,2.4-((p.phy==null?60:p.phy)-60)/40)*(p.role==='GK'?.5:1)*hot;p.ms=Math.max(0,p.ms-dr);
+    const m=X.seg*5;
+    if(p.ms<45&&!p.ms1){p.ms1=1;staPen(Y,p,-3);X.ev.push({m,s:t,ty:'down',tx:`${p.n}の足が止まってきた（体力${Math.round(p.ms)}・能力−3）`})}
+    if(p.ms<20&&!p.ms2){p.ms2=1;staPen(Y,p,-4);X.ev.push({m,s:t,ty:'down',tx:`${p.n}はもう限界だ…（体力${Math.round(p.ms)}・能力さらに−4）`})}
+    if(p.ms<50&&!injOut(X,p)&&X.r()<(50-p.ms)/800)mInjure(X,t,p,m+2);
+  }));
+}
+function staCarry(X,h,old,S){const mp={};old.pl.forEach(p=>mp[p.n]=p);S.pl.forEach(p=>{const o=mp[p.n];if(o&&o.ms!=null){p.ms=o.ms;if(o.ms1){p.ms1=1;staPen(S,p,-3)}if(o.ms2){p.ms2=1;staPen(S,p,-4)}}else if(p.ms==null)p.ms=p.sta==null?100:p.sta})}
+
+/* ----- ドクター うさぎ ----- */
+const DOCTOR={id:'doctor',kind:'pl',name:'ドクター うさぎ',pos:'MF',pos2:['FW','GK'],style:'グラウンドの名医',special:'doctor',from:'ガチャ',legendG:1,
+ st:{spd:94,tec:90,sho:96,pas:20,phy:70,def:70}};
+const DOC_SK=[
+ {n:'ヤハ',d:'ケガをした味方を試合中3回まで治して復活させる。治った選手は体力が全回復し、調子が一段階上がる'},
+ {n:'ウラ',d:'試合開始時、調子が不調・絶不調ではない味方の調子を一段階上げる'},
+ {n:'プルャ‼︎',d:'おじいちゃん系キャラ（バツ丸尾君・政夫）の全能力+50。ささちーのタバコ休憩が3回減る。MAOの「俺の邪魔はさせない！！」が能力を下げずにもう一度打てる（2回目は下がる）'}];
+const DOC_SKILL={n:'ヤハ／ウラ／プルャ‼︎',q:'ヤハ！',d:DOC_SK.map(s=>`「${s.n}」${s.d}`).join('　')};
+const isGramps=c=>!!c&&(['batsumaru','masao'].includes(c.id)||['oibore','inu'].includes(c.special));
+const fitOf=(c,role)=>c&&c.pos2&&c.pos2.includes(role)?1:fitMul(c.pos,role);
+function docStart(X,seed){
+  X.yaha=[0,0];X.maoTw=[0,0];
+  X.T.forEach((Y,i)=>{const doc=Y.pl.find(p=>p.doc);if(!doc)return;
+    // ウラ
+    const up=[];Y.pl.forEach(p=>{if(p===doc||p.dog||!p.cond||p.cond==='不調'||p.cond==='絶不調')return;const k=COND.findIndex(c=>c.n===p.cond);if(k>0){staPen(Y,p,COND[k-1].d-COND[k].d);p.cond=COND[k-1].n;up.push(p.n)}});
+    X.ev.push({m:0,s:i,ty:'skill',tx:`${doc.n}「ウラ」 ${up.length?`${up.length}人の調子が一段階上がった`:'（調子を上げられる仲間がいなかった）'}`});
+    // プルャ‼︎（おじいちゃんの+50は編成時に計算済み）
+    const gp=Y.pl.filter(p=>p.gp).map(p=>p.n),tb=X.tb&&X.tb[i];
+    if(tb)X.tb[i]=tb.slice(0,Math.max(0,tb.length-3));
+    const pr=[];if(gp.length)pr.push(`${gp.join('・')}の全能力+50`);if(tb)pr.push('ささちーのタバコ休憩が3回減った');if(Y.pl.some(p=>p.mao))pr.push('MAOの必殺シュートがもう1回打てる');
+    if(pr.length)X.ev.push({m:0,s:i,ty:'skill',tx:`${doc.n}「プルャ‼︎」 ${pr.join('・')}`});
+  });
+}
+function docHeal(X,t,p,m){
+  const Y=X.T[t],doc=Y.pl.find(q=>q.doc&&!q.gone&&!injOut(X,q));if(!doc||doc===p||(X.yaha[t]||0)>=3)return false;
+  X.yaha[t]++;if(p.ms1)staPen(Y,p,3);if(p.ms2)staPen(Y,p,4);p.ms=100;p.ms1=0;p.ms2=0;
+  const k=COND.findIndex(c=>c.n===p.cond);let cu='';if(k>0){staPen(Y,p,COND[k-1].d-COND[k].d);p.cond=COND[k-1].n;cu=`・調子が「${p.cond}」に`}
+  X.ev.push({m,s:t,ty:'skill',tx:`${p.n}がケガ…！ ${doc.n}「ヤハ！」 すぐに治して復活！ 体力全回復${cu}（残り${3-X.yaha[t]}回）`});return true;
+}
+function maoAgain(X,i,m,r){const Y=X.T[i];if(!X.maoTw||X.maoTw[i]||!Y.pl.some(q=>q.doc&&!q.gone&&!injOut(X,q)))return false;
+  X.maoTw[i]=1;X.maoUsed[i]=false;X.maoMin[i]=Math.min(88,m+8+Math.floor(r()*20));X.ev.push({m,s:i,ty:'skill',tx:'ドクター うさぎ「プルャ‼︎」 MAOの能力は下がらない。もう一度打てる！'});return true}
+
+/* ----- 降臨日：1か月に3日だけ（2026年11月は今日17日から） ----- */
+function docDays(y,mo){const dim=new Date(Date.UTC(y,mo,0)).getUTCDate(),s=new Set(),h0=HASH('doc'+y+'-'+mo);
+  if(y===2026&&mo===11)s.add(17);let h=h0,k=0;while(s.size<3&&k<80){h=(Math.imul(h,1103515245)+12345)>>>0;const d=1+(h>>>9)%dim;if(!(y===2026&&mo===11&&d<17)&&![...s].some(x=>Math.abs(x-d)<3))s.add(d);k++}return [...s].sort((a,b)=>a-b)}
+const jstNow=()=>new Date(Date.now()+9*3600e3);
+function docOn(){const n=jstNow();return docDays(n.getUTCFullYear(),n.getUTCMonth()+1).includes(n.getUTCDate())}
+function docNext(){const n=jstNow();let y=n.getUTCFullYear(),mo=n.getUTCMonth()+1;for(let i=0;i<2;i++){const d=docDays(y,mo).find(d=>i||d>n.getUTCDate());if(d)return `${mo}月${d}日`;mo++;if(mo>12){mo=1;y++}}return ''}
+BANNERS.doc={card:()=>DOCTOR,skill:()=>DOC_SKILL,short:'ドクター',head:['名医','降臨'],on:docOn};
+SP_SKILL.doctor=DOC_SKILL;
+
+/* ----- 見た目（オリジナルの、垂れ耳うさぎのお医者さん） ----- */
+SPR_SPECIAL.doctor=()=>drawPerson({skin:'#b8aca0',hair:'#8a7a6a',hs:'buzz',jersey:'#f4f4f0',trim:'#4a8ad0',num:null,glasses:1,smile:1});
+SPR_BG.doctor=['#3a6a8a','#0c1620'];
+FA.doctor={custom:'doctor',bg:{strokes:[['#7ec0e0',0,26,80,18,80,30,6],['#ffffff',0,50,40,44,80,54,2],['#4a8ad0',0,70,30,66,80,74,2]],groundY:89}};
+POSE.doctor=J([40,20],[40,28],[45,31],[35,31],[49,41],[52,50],[31,41],[28,50],[40,54],[44,55],[36,55],[46,70],[47,84],[51,86],[34,70],[33,84],[29,86]);
+function doctorDraw(P){
+  const fur='#a89a8c',furD='#7a6c5e',furL='#d8ccc0',inner='#c8a090';
+  faPerson(P,POSE.doctor,{skin:fur,hair:fur,hs:'bald',jersey:'#f6f6f2',trim:'#d8e4ee',shorts:'#3a4a6a',socks:'#3a4a6a',boots:'#222830',num:null,
+    head:(P,k,hx,hy,hr)=>{
+      // 垂れ耳（横に垂れる）
+      faCap(P,[hx-5,hy-3],[hx-10,hy+8],2.4,2,furD);faCap(P,[hx+5,hy-3],[hx+10,hy+8],2.4,2,furD);faCap(P,[hx-5.5,hy-1],[hx-9,hy+6],1.2,1,inner);faCap(P,[hx+5.5,hy-1],[hx+9,hy+6],1.2,1,inner);
+      faEll(P,hx,hy+.5,6.2,6.4,(x,y)=>{const l=(x-hx)/6*LIGHT[0]+(y-hy)/6*LIGHT[1];return l>.45?furL:l<-.4?furD:fur});
+      faEll(P,hx,hy+3.4,3.2,2.2,()=>'#efe6dc');
+      // 丸めがね
+      for(let a=0;a<Math.PI*2;a+=.2){P.set(hx-2.6+Math.cos(a)*1.9,hy+.2+Math.sin(a)*1.9,'#2a2a30');P.set(hx+2.6+Math.cos(a)*1.9,hy+.2+Math.sin(a)*1.9,'#2a2a30')}
+      P.set(hx,hy+.2,'#2a2a30');P.set(hx-2.6,hy+.3,'#1a1010');P.set(hx+2.6,hy+.3,'#1a1010');
+      faCircle(P,hx,hy+2.4,.8,'#6a3a3a');P.set(hx-.6,hy+4,'#5a4a40');P.set(hx+.6,hy+4,'#5a4a40');
+    }});
+  // 白衣のすそ・聴診器・カルテ
+  faPoly(P,[[33,50],[47,50],[50,64],[30,64]],'#f6f6f2');faCap(P,[40,52],[40,63],.3,.3,'#d0d6dc');
+  for(let t=0;t<=1;t+=.04){const x=36+8*t,y=31+9*Math.sin(t*Math.PI);faCircle(P,x,y,.45,'#2a3a4a')}faCircle(P,40,41,1.2,'#9aa8b4');
+  faPoly(P,[[25,46],[31,45],[32,54],[26,55]],'#e8d8a8');faCap(P,[26,48],[30,47.5],.25,.25,'#8a7a5a');faCap(P,[26,50],[30,49.5],.25,.25,'#8a7a5a');
+  faBall(P,58,85,3.4);
+}
+{const _fc=faCustom;faCustom=function(P,kind){if(kind==='doctor'){doctorDraw(P);return}return _fc(P,kind)}}
+
+/* ----- 画面 ----- */
+function docBannerNote(){return docOn()?`<div class="toast"><b>レジェンド降臨中！</b>「ドクター うさぎ」は1か月に3日だけ。今日の残り${inuLeft()}</div>`:`<p class="note" style="margin:0 0 8px">レジェンド「ドクター うさぎ」は1か月に3日だけ降臨。次は${docNext()}</p>`}
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
