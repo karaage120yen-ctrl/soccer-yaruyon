@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-081514';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-082354';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -729,6 +729,27 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .autobtn b{font-size:13px;line-height:1.1}.autobtn span{font-size:9px;opacity:.8;margin-top:2px}
 .autobtn.on{background:var(--gold);color:#1a1408;animation:apPulse 1.4s ease-in-out infinite}
 @keyframes apPulse{50%{box-shadow:0 0 0 6px rgba(215,180,74,.25)}}
+.btn.sm{padding:8px 12px;font-size:13px;min-height:0;width:auto;flex:none}
+.dmbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px 10px}
+.dmrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.dmrow.got{opacity:.55}.dmt{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.dmbar{display:block;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-top:3px}.dmbar i{display:block;height:100%;background:var(--gold)}
+.dmok{font-size:12px;color:var(--up)}
+.dmst{display:flex;align-items:center;gap:5px;margin-top:9px;flex-wrap:wrap}.dmst i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--gold)}.dmst i.on{background:var(--gold)}.dmst .sub{flex-basis:100%;font-size:11px}
+.rkme{display:flex;align-items:baseline;gap:10px;background:var(--surface);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;margin:8px 0}.rkme b{font-size:28px;color:var(--gold)}
+.rkl{list-style:none;padding:0;margin:6px 0}.rkl li{display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid var(--line)}.rkl li b{flex:1;font-weight:600}.rkl li.me{background:rgba(215,180,74,.14);border-radius:8px}.rkl li.gap{justify-content:center;color:var(--muted)}
+.rkl li>.num:first-child{width:24px;text-align:center;color:var(--muted)}
+.cupl{list-style:none;padding:0;margin:8px 0}.cupl li{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px}
+.cupl li small{grid-column:1/3;color:var(--muted);font-size:11px}.cupl li .sub{grid-column:1}.cupl li .num{grid-row:2/4;grid-column:2;align-self:center}
+.cupl li.now{border-color:var(--gold)}.cupl li.w{border-color:var(--up)}.cupl li.l{border-color:var(--down);opacity:.7}
+.tro{display:inline-block;width:12px;height:14px;border-radius:2px 2px 6px 6px;margin-right:6px;vertical-align:-1px}.tro.big{width:30px;height:36px;border-radius:4px 4px 14px 14px;display:block;margin:0 auto 4px}
+.trophs{display:flex;gap:10px;flex-wrap:wrap}.trp{display:flex;flex-direction:column;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px}
+.achl{display:flex;flex-direction:column;gap:6px}.ach{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px}.ach>div{flex:1;display:flex;flex-direction:column;gap:2px}
+.ach.got{border-color:var(--gold)}.ach.ok{border-color:var(--red,#e2462b);background:rgba(226,70,43,.08)}.ach:not(.got):not(.ok){opacity:.6}
+.zkc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.zc{border:1px solid var(--line);border-radius:8px;padding:7px 8px;font-size:12px;display:flex;flex-direction:column;gap:2px;opacity:.5}.zc.on{opacity:1;border-color:var(--gold)}.zc.lg.on{background:rgba(215,180,74,.1)}.zc .po{font-size:10px;color:var(--muted)}
+.flags{display:flex;flex-wrap:wrap;gap:8px}.flags span{display:flex;flex-direction:column;align-items:center;font-size:22px}.flags small{font-size:10px;color:var(--muted)}
+.ttlline{margin:4px 0 0;font-size:13px;color:var(--muted)}.ttlline b{color:var(--gold)}
+.jk{display:flex;align-items:baseline;gap:8px;background:rgba(0,0,0,.35);border-left:3px solid var(--gold);border-radius:6px;padding:8px 12px;margin:8px 0;font-size:14px;min-height:20px}.jk b{color:var(--gold);font-size:11px;flex:none}.jk .num{font-size:12px;color:var(--muted);flex:none}
 
 </style>
 </head>
@@ -3692,7 +3713,7 @@ function addPlayerCard(p,sum){
   if(p.fam&&p.fam.partner&&p.fam.partner.married){KEYS.forEach(k=>st[k]=Math.min(99,st[k]+1));end.push(`${p.fam.partner.n}と最後まで添い遂げた：全能力+1`)}
   if(sum)sum.legEnd=end;
   const c={id:uidGen('p'),kind:'pl',name:`${p.sei} ${p.mei}`,pos:p.pos,style:POS[p.pos].styles[p.style].n,st,plus:{},enh:0,
-   legend:has(p,'legend'),genius:has(p,'monster'),skills:p.skills.map(k=>SKILLS[k].n),grade:sum.grade,peak:p.peak,from:'育成',t:Date.now(),height:p.height||null,title:p.title||null,nation:p.nation||null};
+   legend:has(p,'legend'),genius:has(p,'monster'),skills:p.skills.map(k=>SKILLS[k].n),grade:sum.grade,peak:p.peak,from:'育成',t:Date.now(),height:p.height||null,title:p.title||null,nation:p.nation||null,clubs:(p.hist||[]).map(h=>h.n).filter((n,i,a)=>n&&a.indexOf(n)===i&&n!==p.school)};
   M.roster.unshift(c);
   const coins=CAREER_COINS;
   M.coins+=coins;
@@ -3841,12 +3862,14 @@ function teamCalc(sq){
   sq=sq||M.squad;const F=FORMS[sq.form]||FORMS['433'];
   const cnt={};const cards=F.s.map(([role],i)=>{const c=cardById(sq.slots[i]);if(c&&!isMgr(c)&&!isLegSup(c)&&!(c.gikkuri>0))return {role,c};cnt[role]=(cnt[role]||0)+1;const f=filler(role);f.name=`控え${role}${'①②③④⑤'[cnt[role]-1]||''}`;return {role,c:f}});
   const hasCap=cards.some(x=>x.c.special==='captain'),hasEmp=cards.some(x=>x.c.special==='empire'),hasDoc=cards.some(x=>x.c.special==='doctor');
+  const CH=typeof chemCalc==='function'?chemCalc(cards):null;
   const pl=cards.map(({role,c})=>{
-    const bonus=hasCap&&c.special!=='captain'?4:0,st={},gp=hasDoc&&typeof isGramps==='function'&&isGramps(c);
+    const chb=CH&&CH.get(c)?CH.get(c).b:0;
+    const bonus=(hasCap&&c.special!=='captain'?4:0)+chb,st={},gp=hasDoc&&typeof isGramps==='function'&&isGramps(c);
     for(const k of KEYS)st[k]=Math.min(99,effSt(c,k)+bonus+(gp?50:0));
     const tmp={st,pos:c.pos},sta=typeof cardSta==='function'?cardSta(c):100;
     const r=Math.round(cardOvr({st,plus:{},pos:role},role)*(typeof fitOf==='function'?fitOf(c,role):fitMul(c.pos,role))*(typeof staFac==='function'?staFac(sta):1)*10)/10;
-    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',kpass:c.special==='kpass',kama:c.special==='renkei',oib:c.special==='oibore'&&role==='GK',uhho:c.special==='uhho',tabako:c.special==='tabako',inu:c.special==='inu'&&!c.filler,doc:c.special==='doctor',gp,sta,filler:!!c.filler,legend:!!c.legend,id:c.id};
+    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',kpass:c.special==='kpass',kama:c.special==='renkei',oib:c.special==='oibore'&&role==='GK',uhho:c.special==='uhho',tabako:c.special==='tabako',inu:c.special==='inu'&&!c.filler,doc:c.special==='doctor',santa:c.special==='santa',gp,sta,filler:!!c.filler,legend:!!c.legend,id:c.id};
   });
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
   const mgc=cardById(sq.mgr);const mg=mgc&&isMgr(mgc)?{n:mgc.name,st:Object.fromEntries(MKEYS.map(k=>[k,effSt(mgc,k)])),famous:!!mgc.famous}:null;
@@ -3867,7 +3890,7 @@ function teamSnap(sq){
   const T=teamCalc(sq);
   return {v:1,dogB:T.dogB||undefined,tac:(sq||M.squad).tac||'bal',name:T.name,form:T.form,tot:T.tot,atk:T.atk,mid:T.mid,def:T.def,hasCap:T.hasCap,hasEmp:!!T.hasEmp,hasMao:!!T.hasMao,maoSub:!!T.maoSub,sub:T.sub,
    mg:T.mg?{n:T.mg.n,st:T.mg.st,famous:T.mg.famous}:null,
-   pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};if(x.kama)o.kama=1;if(x.oib)o.oib=1;if(x.uhho)o.uhho=1;if(x.tabako)o.tabako=1;if(x.kpass)o.kpass=1;if(x.inu)o.inu=1;if(x.doc)o.doc=1;if(x.gp)o.gp=1;if(x.sta!=null&&x.sta<100)o.sta=x.sta;if(x.dog)o.dog=1;o.phy=x.st.phy;
+   pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};if(x.kama)o.kama=1;if(x.oib)o.oib=1;if(x.uhho)o.uhho=1;if(x.tabako)o.tabako=1;if(x.kpass)o.kpass=1;if(x.inu)o.inu=1;if(x.doc)o.doc=1;if(x.santa)o.santa=1;if(x.gp)o.gp=1;if(x.sta!=null&&x.sta<100)o.sta=x.sta;if(x.dog)o.dog=1;o.phy=x.st.phy;
      if(x.starter){const st={...x.st};for(const [k,v] of Object.entries(STARTER_D))st[k]=Math.min(99,Math.max(1,st[k]+v));o.st1={r:Math.round(cardOvr({st,plus:{},pos:x.role},x.role)*fitMul(x.pos,x.role)*10)/10,pas:st.pas}}
      return o})};
 }
@@ -3990,7 +4013,7 @@ function mRun(X){
     if(X.si<2){const i=X.si;X.si++;mTeam(X,i);continue}
     const seg=X.seg;X.seg++;X.si=0;
     if(seg===8){
-      if(X.wx)wxHalf(X);
+      if(X.wx)wxHalf(X);if(typeof santaHalf==='function')santaHalf(X);
       X.ev.push({m:45,s:-1,ty:'ht',tx:`前半終了 ${X.sc[0]}-${X.sc[1]}`});
       X.starters.forEach(x=>{x.p.r-=x.dr;x.p.pas-=x.dp;shiftTeam(X.T[x.i],x.p.role,-x.dr);X.T[x.i].atk-=.6;X.T[x.i].mid+=.2;X.T[x.i].def+=.4;X.ev.push({m:46,s:x.i,ty:'skill',tx:`${x.p.n}の「${STARTER_SKILL.n}」が切れた。能力が元に戻る`})});X.starters=[];
       X.T.forEach((Y,i)=>{if(Y.hasEmp){const c=Y.pl.find(p=>p.emp);X.ev.push({m:46,s:i,ty:'skill',tx:`${c?c.n:'シャン・チー'}の「${EMP_SKILL.n}」発動！ 後半は味方全員の守備＋6`})}});
@@ -5238,7 +5261,7 @@ function cardMini(c){
 }
 function cardTile(c,opts={}){
   const mg=isMgr(c),o=mg?mgrOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
-  const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:c.special==='kpass'?`<span class="sk">${KPASS_SKILL.n}</span>`:c.special==='doctor'?`<span class="sk">ヤハ・ウラ・プルャ‼︎</span>`:c.special==='renkei'?`<span class="sk">${RENKEI_SKILL.n}</span>`:c.special==='oibore'?`<span class="sk">${OIBORE_SKILL.n}</span>`:c.special==='uhho'?`<span class="sk">${UHHO_SKILL.n}</span>`:c.special==='tabako'?`<span class="sk">${TABAKO_SKILL.n}</span>`:c.special==='inu'?`<span class="sk">タッグ・${INU_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
+  const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:c.special==='kpass'?`<span class="sk">${KPASS_SKILL.n}</span>`:c.special==='doctor'?`<span class="sk">ヤハ・ウラ・プルャ‼︎</span>`:c.special==='santa'?`<span class="sk">${SANTA_SKILL.n}</span>`:c.special==='renkei'?`<span class="sk">${RENKEI_SKILL.n}</span>`:c.special==='oibore'?`<span class="sk">${OIBORE_SKILL.n}</span>`:c.special==='uhho'?`<span class="sk">${UHHO_SKILL.n}</span>`:c.special==='tabako'?`<span class="sk">${TABAKO_SKILL.n}</span>`:c.special==='inu'?`<span class="sk">タッグ・${INU_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
   return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${standArt3(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos+(c.pos2?'/'+c.pos2.join('/'):'')}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${c.title?`<b style="color:var(--gold)">${esc(c.title)}</b>・`:''}${c.height?c.height+'cm・':''}${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span>${!mg&&!isLegSup(c)&&typeof staBar==='function'?staBar(c):''}</div></div>${tag||c.gikkuri>0?`<div class="tags">${tag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
 }
 
@@ -5251,8 +5274,8 @@ function copyText(val){
   if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(val).then(()=>true).catch(()=>false);
   return Promise.resolve(false);
 }
-const puCard=id=>GLEGS.find(l=>l.id===id)||(id==='shanchi'?SHANCHI:id==='mao'?MAO:id==='inkansu'?INKANSU:id==='kamapoko'?KAMAPOKO:id==='batsumaru'?BATSUMARU:id==='gorimori'?GORIMORI:id==='sasachi'?SASACHI:id==='masao'?MASAO:id==='doctor'?DOCTOR:ICHIKAWA);
-const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと：${legText(l)}`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:id==='inkansu'?KPASS_SKILL:id==='kamapoko'?RENKEI_SKILL:id==='batsumaru'?OIBORE_SKILL:id==='gorimori'?UHHO_SKILL:id==='sasachi'?TABAKO_SKILL:id==='masao'?INU_SKILL:id==='doctor'?DOC_SKILL:CAP_SKILL};
+const puCard=id=>GLEGS.find(l=>l.id===id)||(id==='shanchi'?SHANCHI:id==='mao'?MAO:id==='inkansu'?INKANSU:id==='kamapoko'?KAMAPOKO:id==='batsumaru'?BATSUMARU:id==='gorimori'?GORIMORI:id==='sasachi'?SASACHI:id==='masao'?MASAO:id==='doctor'?DOCTOR:id==='santa'?SANTA:ICHIKAWA);
+const puSkill=id=>{const l=GLEGS.find(x=>x.id===id);return l?{n:'レジェンドの教え',d:`育成のときに連れて行くと：${legText(l)}`}:id==='shanchi'?EMP_SKILL:id==='mao'?MAO_SKILL:id==='inkansu'?KPASS_SKILL:id==='kamapoko'?RENKEI_SKILL:id==='batsumaru'?OIBORE_SKILL:id==='gorimori'?UHHO_SKILL:id==='sasachi'?TABAKO_SKILL:id==='masao'?INU_SKILL:id==='doctor'?DOC_SKILL:id==='santa'?SANTA_SKILL:CAP_SKILL};
 function pairArt(BN){
   return `<article class="front gban"><div><div class="dateline"><span>新ガチャ・2人ピックアップ</span><span>各1%</span></div><p class="deck">笹山 鎌ポコ ＆ バツ丸尾君</p>
    <p class="lede">守備的MFと85歳の守護神。どちらも出る確率は1%ずつ。</p></div>${vhead(BN.head[0],BN.head[1],'gold')}</article>
@@ -5275,7 +5298,7 @@ H.gacha=()=>{
   <div class="lgal">${GLEGS.map(l=>`<figure>${fullArt(l.id)}<figcaption>${l.pu?'<b class="gold">PU</b> ':''}${esc(l.name)}</figcaption></figure>`).join('')}</div>
   <div class="plist" style="margin-top:10px">${GLEGS.map(l=>{const o=M.roster.find(c=>c.id===l.id);return `<div class="prow wf" style="cursor:default"><span class="pf">${sprOf(l)}</span><span class="po">${l.pu?'PU':l.pos}</span><b>${esc(l.name)}</b><span class="sub">${esc(legText(l))}${o?'・所持':''}</span><span class="num">${cardOvr(l)}</span></div>`}).join('')}</div>`;
   const BL=Object.entries(BANNERS).filter(([k,B])=>!B.on||B.on()).sort((a,b)=>(b[1].on?1:0)-(a[1].on?1:0));
-  return `${BANNERS.inu&&BANNERS.inu.on()?`<div class="toast"><b>本日限定！</b>「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ。残り${inuLeft()}</div>`:`<p class="note" style="margin:0 0 8px">「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ登場。</p>`}${typeof docBannerNote==='function'?docBannerNote():''}<div class="seg c3 subnav">${BL.map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${B.multi?`${legOwned().length}/${GLEGS.length}人`:B.pair?`${B.pair.filter(c=>M.roster.some(x=>x.id===c.id)).length}/2人・NEW`:M.roster.some(c=>c.id===B.card().id)?'所持':'1%'}</span></button>`).join('')}</div>
+  return `${BANNERS.inu&&BANNERS.inu.on()?`<div class="toast"><b>本日限定！</b>「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ。残り${inuLeft()}</div>`:`<p class="note" style="margin:0 0 8px">「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ登場。</p>`}${typeof docBannerNote==='function'?docBannerNote():''}${typeof seasonNote==='function'?seasonNote():''}<div class="seg c3 subnav">${BL.map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${B.multi?`${legOwned().length}/${GLEGS.length}人`:B.pair?`${B.pair.filter(c=>M.roster.some(x=>x.id===c.id)).length}/2人・NEW`:M.roster.some(c=>c.id===B.card().id)?'所持':'1%'}</span></button>`).join('')}</div>
   ${BN.multi?legArt:BN.pair?pairArt(BN):`<article class="front gban"><div><div class="dateline"><span>${pu.tag?'タッグキャラ・毎週火曜日だけ':'ピックアップ・'+(pu.style?esc(pu.style):pu.pos)}</span><span>排出率 1%</span></div>
    <p class="deck">${esc(pu.name)}</p>${fullArt(pu.id)?'':`<div class="gface">${sprOf(pu)}</div>`}
    ${pu.tag?'<p class="sub" style="margin:4px 0 2px">政夫（DF）</p>':''}<div class="ichst">${KEYS.map(k=>`<span>${LBL[k]}<b>${pu.st[k]}</b></span>`).join('')}</div>${pu.tag?`<p class="sub" style="margin:8px 0 2px">飼っているワンちゃん（FW）</p><div class="ichst">${KEYS.map(k=>`<span>${LBL[k]}<b>${MASAO_DOG.st[k]}</b></span>`).join('')}</div>`:''}
@@ -5329,6 +5352,7 @@ H.squad=()=>{
   <div class="label">チーム名</div><div class="field one"><input id="tname" aria-label="チーム名" value="${esc(M.squad.name)}" maxlength="14"></div>
   <div class="label">フォーメーション</div><div class="seg c4">${Object.entries(FORMS).map(([k,F])=>`<button class="opt" aria-pressed="${M.squad.form===k}" data-act="sqForm" data-v="${k}">${F.n}</button>`).join('')}</div>
   ${typeof autoBtns==='function'?autoBtns():''}
+  ${typeof chemHtml==='function'?chemHtml():''}
   <div class="label">戦術<span class="r">試合の最初の戦術（CPU戦は試合中に変えられる）</span></div><div class="seg c3">${Object.entries(TACS).map(([k,t])=>`<button class="opt" aria-pressed="${(M.squad.tac||'bal')===k}" data-act="sqTac" data-v="${k}">${t.n}<span class="d">${t.d}</span></button>`).join('')}</div>
   ${pitchHtml(T)}
   <div class="label">ベンチ（交代要員・5人まで）</div>
@@ -5447,6 +5471,7 @@ function matchHtml(){
   ${(()=>{const w=(L&&L.wx)||(res&&res.wx?{id:res.wx,k:res.wxk}:null);if(!w||typeof WX==='undefined'||!WX[w.id])return '';const N=NATIONS[w.k];return `<p class="sub wxline">${N?N.fl+' '+esc(N.n)+'・':''}${WX[w.id].i} ${esc(WX[w.id].n)}</p>`})()}
   <div class="board"><div class="bt ${side===0?'me':''}"><b>${esc(nm[0])}</b><span class="sub">総合${X.A.tot}${res.cond?`・${res.cond[0].lbl}`:''}</span></div><div class="bs"><span class="num" id="bscore">${scoreAt(res,min).join(' - ')}</span><span class="num clock" id="bclock">${min}'</span></div><div class="bt ${side===1?'me':''}"><b>${esc(nm[1])}</b><span class="sub">総合${X.B.tot}${res.cond?`・${res.cond[1].lbl}`:''}</span></div></div>
   ${scnHtml()}
+  ${typeof jkHtml==='function'?jkHtml():''}
   ${L&&!L.done?`<div class="tacbar"><div class="label">戦術（いつでも変えられる）・相手は「${TACS[L.tac[1-side]].n}」</div><div class="seg c3">${Object.entries(TACS).map(([k,t])=>`<button class="opt" aria-pressed="${L.tac[side]===k}" data-act="ixTac" data-v="${k}" ${ask?'disabled':''}>${t.n}<span class="d">${t.d}</span></button>`).join('')}</div></div>`:''}
   ${res.pk?`<p class="note center" style="text-align:center;margin:6px 0 0">PK戦 ${res.pk[0]} - ${res.pk[1]}</p>`:''}
   ${ask?ixPanel(L,side):''}
@@ -5454,12 +5479,12 @@ function matchHtml(){
   <ul class="bevs" id="bevs">${evs}</ul>
   <div id="bend" class="${done?'':'hide'}">
    ${X.kind==='bet'?`<div class="verdict big safe"><span class="vbig">${res.sc[0]}-${res.sc[1]}</span><span class="sub">MVP ${res.mvp?esc(res.mvp.n):'—'}</span></div>${done?betResultHtml(X):''}`:`<div class="verdict big ${mine>op||pkW===true?'ok':mine<op?'ng':'safe'}"><span class="vbig">${o}</span><span class="sub">${mine}-${op}${pkTx}・MVP ${res.mvp?esc(res.mvp.n):'—'}</span></div>`}
-   ${X.sp==='lgd'&&X.rw?`<div class="toast"><b>${X.rw.o===0?`伝説を倒した！ ${X.rw.coins.toLocaleString('ja-JP')}コイン獲得`:'伝説の壁は厚かった…'}</b></div>`:''}${res.gikkuri?`<div class="toast"><b>😱 ${esc(res.gikkuri)}がぎっくり腰！</b>この試合の途中から控えGKに交代した。</div>`:''}
+   ${X.sp==='lgd'&&X.rw?`<div class="toast"><b>${X.rw.o===0?`伝説を倒した！ ${X.rw.coins.toLocaleString('ja-JP')}コイン獲得`:'伝説の壁は厚かった…'}</b></div>`:''}${X.sp==='cup'&&X.cupTx?`<div class="toast"><b>${esc(X.cupTx)}</b></div>`:''}${res.gikkuri?`<div class="toast"><b>😱 ${esc(res.gikkuri)}がぎっくり腰！</b>この試合の途中から控えGKに交代した。</div>`:''}
    ${done?interviewHtml(X,res):''}
    <table class="st"><tbody><tr><th>ボール支配率</th><td class="n">${res.poss[0]}% - ${res.poss[1]}%</td></tr><tr><th>シュート</th><td class="n">${res.sh[0]} - ${res.sh[1]}</td></tr>${X.kind==='bet'?'':`<tr><th>獲得コイン</th><td class="n"><b class="gold">+${X.rw?X.rw.coins:0}</b></td></tr>`}</tbody></table>
    ${X.kind==='code'&&X.reply?`<div class="toast"><b>結果コードを相手に送り返そう。</b>相手が貼り付けると、同じ試合が見られて報酬ももらえる。</div><textarea class="code" id="rpout" readonly>${esc(X.reply)}</textarea><div class="stack" style="margin-top:8px"><button class="btn red" data-act="copyFrom" data-v="rpout">結果コードをコピー</button></div>`:''}
    ${X.own?'<p class="note">自分の対戦コードなので報酬はない。</p>':''}${X.watch?'<p class="note">ほかの人どうしの試合なので観戦のみ。</p>':''}
-   <div class="stack" style="margin-top:16px">${X.kind==='cpu'&&!X.sp?`<button class="btn red" data-act="btCpu" data-v="${X.lv}">もう一度戦う</button>`:''}${X.sp==='wc'?'<button class="btn red" data-act="wcBack">トーナメント表へ</button>':''}${X.sp==='lgd'?'<button class="btn red" data-act="spView" data-v="lgd">伝説降臨へ</button>':''}<button class="btn ghost" data-act="btMenu">対戦メニューへ</button></div>
+   <div class="stack" style="margin-top:16px">${X.kind==='cpu'&&!X.sp?`<button class="btn red" data-act="btCpu" data-v="${X.lv}">もう一度戦う</button>`:''}${X.sp==='wc'?'<button class="btn red" data-act="wcBack">トーナメント表へ</button>':''}${X.sp==='lgd'?'<button class="btn red" data-act="spView" data-v="lgd">伝説降臨へ</button>':''}${X.sp==='cup'?'<button class="btn red" data-act="spView" data-v="cup">カップ戦へ</button>':''}<button class="btn ghost" data-act="btMenu">対戦メニューへ</button></div>
   </div>`;
 }
 function scoreAt(res,min){let s=[0,0];for(const e of res.ev)if(e.ty==='goal'&&e.m<=min)s=e.sc.slice();return s}
@@ -5622,7 +5647,7 @@ function makeSnap(name,players,mgLv,tac,form){
   const hasCap=players.some(x=>x.special==='captain'),rOf=(st,x)=>Math.round(cardOvr({st,plus:{},pos:x.role},x.role)*fitMul(x.pos||x.role,x.role)*10)/10;
   const pl=players.map(x=>{const st={};KEYS.forEach(k=>st[k]=Math.min(99,x.st[k]+(hasCap&&x.special!=='captain'?4:0)));
     const o={n:x.n,role:x.role,r:rOf(st,x),sho:st.sho,pas:st.pas,cap:x.special==='captain'?1:0,emp:x.special==='empire'?1:0,mao:x.special==='mao'?1:0,st,pos:x.pos||x.role,sp:x.special||null};
-    o.phy=st.phy;if(x.special==='renkei')o.kama=1;if(x.special==='uhho')o.uhho=1;if(x.special==='tabako')o.tabako=1;if(x.special==='kpass')o.kpass=1;if(x.special==='doctor')o.doc=1;if(x.special==='inu')o.inu=1;if(x.special==='oibore'&&x.role==='GK')o.oib=1;
+    o.phy=st.phy;if(x.special==='renkei')o.kama=1;if(x.special==='uhho')o.uhho=1;if(x.special==='tabako')o.tabako=1;if(x.special==='kpass')o.kpass=1;if(x.special==='doctor')o.doc=1;if(x.special==='santa')o.santa=1;if(x.special==='inu')o.inu=1;if(x.special==='oibore'&&x.role==='GK')o.oib=1;
     if(x.special==='starter'){const s1={...st};for(const [k,v] of Object.entries(STARTER_D))s1[k]=Math.min(99,Math.max(1,s1[k]+v));o.st1={r:rOf(s1,x),pas:s1.pas}}
     return o});
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
@@ -5772,7 +5797,7 @@ function wcHtml(){
 const SP_SKILL={captain:CAP_SKILL,empire:EMP_SKILL,mao:MAO_SKILL,starter:STARTER_SKILL,kpass:KPASS_SKILL,renkei:RENKEI_SKILL,oibore:OIBORE_SKILL,uhho:UHHO_SKILL,tabako:TABAKO_SKILL};
 const BET_N=600,BET_EDGE=.9,BET_MIN=10;
 const BET_CLUBS=['ゴッドイレブン','レジェンドユナイテッド','オールスターズFC','ドリームXI','ミソロジーFC','ヘブンズゲート','ゴールデンエイジ','エターナルFC'];
-function betAllStars(){const sp=[ICHIKAWA,SHANCHI,MAO,INKANSU,KAMAPOKO,BATSUMARU,GORIMORI,SASACHI,MASAO,DOCTOR].concat(GLEGS);return sp.map(c=>({n:c.name,pos:c.pos,st:{...c.st},special:c.special||null}))}
+function betAllStars(){const sp=[ICHIKAWA,SHANCHI,MAO,INKANSU,KAMAPOKO,BATSUMARU,GORIMORI,SASACHI,MASAO,DOCTOR,SANTA].concat(GLEGS);return sp.map(c=>({n:c.name,pos:c.pos,st:{...c.st},special:c.special||null}))}
 function betTeams(seed){
   const r=rng(seed),pool=shuf(betAllStars(),r),clubs=shuf(BET_CLUBS,r),names=shuf(LGD_NAMES,r),epi=shuf(LGD_EPI,r);let ni=0;
   const mk=k=>{const lv=80+Math.floor(r()*12),pl=ROLES433.map(role=>{let i=pool.findIndex(c=>c.pos===role);let c;if(i>=0&&r()<.8){c=pool.splice(i,1)[0]}
@@ -6140,7 +6165,7 @@ function rulesHtml(){
   const yen0=n=>n.toLocaleString('ja-JP');
   const sec=(t,body)=>`<details class="rule"><summary>${t}</summary><div class="rb">${body}</div></details>`;
   const ul=a=>`<ul class="plan">${a.map(x=>`<li>${x}</li>`).join('')}</ul>`;
-  const sp=[[ICHIKAWA,CAP_SKILL],[SHANCHI,EMP_SKILL],[MAO,MAO_SKILL],[INKANSU,KPASS_SKILL],[KAMAPOKO,RENKEI_SKILL],[BATSUMARU,OIBORE_SKILL],[GORIMORI,UHHO_SKILL],[SASACHI,TABAKO_SKILL],[MASAO,INU_SKILL],[DOCTOR,DOC_SKILL]];
+  const sp=[[ICHIKAWA,CAP_SKILL],[SHANCHI,EMP_SKILL],[MAO,MAO_SKILL],[INKANSU,KPASS_SKILL],[KAMAPOKO,RENKEI_SKILL],[BATSUMARU,OIBORE_SKILL],[GORIMORI,UHHO_SKILL],[SASACHI,TABAKO_SKILL],[MASAO,INU_SKILL],[DOCTOR,DOC_SKILL],[SANTA,SANTA_SKILL]];
   return `<div class="kick">ルール説明<span class="r">タップで開く</span></div>
   ${typeof rules2==='function'?rules2(sec,ul):''}
   ${sec('育成（サッカー選手）',ul([
@@ -6167,6 +6192,13 @@ function rulesHtml(){
     '鎌ポコ＆丸尾ガチャ：2人それぞれ1%（合計2%）',
     '政夫＆犬ガチャ：毎週火曜日（日本時間）の1日だけ登場。ピックアップ1%。タッグキャラなので、政夫を配置すると犬も一緒に出場する',
     'レジェンド降臨ガチャ「ドクター うさぎ」：1か月に3日だけ登場（2026年11月は17日から。ほかの日はランダム）。ピックアップ1%。MF・FW・GKのどこに置いても能力が下がらない。降臨日はゲームを開くと毎回5,000コインもらえる',
+    'デイリーミッション：毎日3つ出る（対戦メニューの上）。達成して「受け取る」でコインや素材。3つ全部を7日続けると3,000コイン＋素材10個ずつ',
+    'カップ戦：ブロンズ・シルバー・ゴールド・レジェンドの4つの杯。16チームの勝ち抜き戦で、4回勝てば優勝してトロフィー。1日3回まで',
+    '週間ランキング：月曜0時〜日曜24時の試合の勝ち点（勝ち3・引き分け1）で順位を競う。週が変わったときに順位に応じて報酬（1位10,000コイン）',
+    '実績と称号：記録タブの「実績と称号」で、条件を満たすと報酬と称号がもらえる。選手図鑑・国の図鑑・トロフィー棚もある',
+    'ケミストリー：同じ国の選手（2人+1・3人+2・4人以上+3）、育成で同じクラブにいた選手（+2）、ガチャの特別選手3人以上（+1）を並べると能力アップ（1人最大+5）',
+    '季節イベント：12月1日〜25日はクリスマス限定「サンタ・クロース」ガチャ。12月24・25日はプレゼント、1月1〜7日はお年玉（10,000コイン）を配布',
+    '実況：試合中、ゴールや特殊能力の発動に合わせて実況が入る',
     'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる',
     '体力ゲージ：選手は対戦や試合のたびに体力が減る（フィジカルが高いほど減りにくい）。1時間で12ずつ回復。体力60未満だと能力が下がり、試合中に体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
@@ -8219,6 +8251,245 @@ function apMount(){
   b.innerHTML=cr?(AP.cr?'<b>オート中</b><span>止める</span>':'<b>オート</b><span>育成</span>'):(['<b>オート</b><span>試合</span>','<b>オート中</b><span>次は高速</span>','<b>高速オート</b><span>止める</span>'][AP.bt]);
 }
 {const _render=render;render=function(){_render();try{apMount()}catch(e){}}}
+
+/* ========== デイリーミッション・図鑑と実績・週間ランキング・カップ戦・ケミストリー・季節イベント・実況 ========== */
+const jstD=()=>new Date(Date.now()+9*3600e3);
+const ymd=d=>`${d.getUTCFullYear()}-${d.getUTCMonth()+1}-${d.getUTCDate()}`;
+const yen2=n=>n.toLocaleString('ja-JP');
+function evToast(t,ms){G.toastMsg=t;try{render()}catch(e){}clearTimeout(evToast._t);evToast._t=setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},ms||4000)}
+function giveRw(rw){if(rw.coins)M.coins+=rw.coins;if(rw.mats)MATK.forEach(k=>M.mats[k]=(M.mats[k]||0)+rw.mats)}
+const rwTx=rw=>[rw.coins?`${yen2(rw.coins)}コイン`:'',rw.mats?`育成素材×${rw.mats}ずつ`:''].filter(Boolean).join('・');
+
+/* ---------- デイリーミッション ---------- */
+const DM_POOL=[
+ {id:'play',n:'試合を3回する',g:3,rw:{coins:300}},
+ {id:'win',n:'試合に2回勝つ',g:2,rw:{coins:400}},
+ {id:'goals',n:'合計5ゴール決める',g:5,rw:{coins:300}},
+ {id:'big',n:'1試合で3点以上取る',g:1,rw:{coins:400}},
+ {id:'clean',n:'無失点で勝つ',g:1,rw:{coins:400}},
+ {id:'gacha',n:'ガチャを1回引く（無料でもOK）',g:1,rw:{coins:200}},
+ {id:'enh',n:'選手を1回強化する',g:1,rw:{mats:2}},
+ {id:'career',n:'育成で行動を3回選ぶ',g:3,rw:{coins:300}},
+ {id:'cupw',n:'カップ戦で1勝する',g:1,rw:{coins:300}},
+ {id:'lgd',n:'伝説降臨に挑戦する',g:1,rw:{coins:300}},
+ {id:'wc',n:'ワールドカップの試合をする',g:1,rw:{coins:300}},
+ {id:'rkpt',n:'週間ランキングで勝ち点6を稼ぐ',g:6,rw:{coins:400}},
+];
+const DM_STREAK={coins:3000,mats:10};
+function dmState(){const d=todayKey();if(!M.dm||M.dm.day!==d){const h=HASH('dm'+d);const pool=DM_POOL.map((x,i)=>[x.id,(Math.imul(h^(i*2654435761),2246822507)>>>0)]).sort((a,b)=>a[1]-b[1]).slice(0,3).map(x=>x[0]);
+  M.dm={day:d,ids:pool,p:{},got:{}}}M.dmS=M.dmS||{streak:0,last:'',full:0,days:0};return M.dm}
+function dmAdd(id,n){const D=dmState();if(!D.ids.includes(id)||D.got[id])return;D.p[id]=Math.min(DM_POOL.find(x=>x.id===id).g,(D.p[id]||0)+(n||1))}
+function dmClaim(id){const D=dmState(),m=DM_POOL.find(x=>x.id===id);if(!m||D.got[id]||(D.p[id]||0)<m.g)return;D.got[id]=1;giveRw(m.rw);let tx=`ミッション達成！ ${rwTx(m.rw)}`;
+  if(D.ids.every(i=>D.got[i])){const S2=M.dmS,y=new Date();y.setDate(y.getDate()-1);const yk=`${y.getFullYear()}-${y.getMonth()+1}-${y.getDate()}`;
+    S2.streak=S2.last===yk?S2.streak+1:1;S2.last=D.day;S2.days++;
+    if(S2.streak>=7){giveRw(DM_STREAK);S2.full++;S2.streak=0;tx=`🎉 7日連続コンプリート！ ${rwTx(DM_STREAK)}`}else tx+=`・今日のミッション全部クリア（${S2.streak}日連続）`}
+  metaSave();evToast(tx)}
+function dmHtml(){const D=dmState(),S2=M.dmS,y=new Date();y.setDate(y.getDate()-1);const yk=`${y.getFullYear()}-${y.getMonth()+1}-${y.getDate()}`,st=S2.last===yk||S2.last===D.day?S2.streak:0;
+  return `<div class="kick">今日のミッション<span class="r">連続${st}/7日</span></div>
+  <div class="dmbox">${D.ids.map(id=>{const m=DM_POOL.find(x=>x.id===id),p=D.p[id]||0,ok=p>=m.g,got=D.got[id];
+    return `<div class="dmrow ${got?'got':''}"><div class="dmt"><b>${esc(m.n)}</b><span class="sub">${rwTx(m.rw)}</span><span class="dmbar"><i style="width:${Math.round(p/m.g*100)}%"></i></span></div>${got?'<span class="dmok">受取済</span>':`<button class="btn sm ${ok?'red':'ghost'}" data-act="dmClaim" data-v="${id}" ${ok?'':'disabled'}>${ok?'受け取る':`${p}/${m.g}`}</button>`}</div>`}).join('')}
+  <div class="dmst">${[0,1,2,3,4,5,6].map(i=>`<i class="${i<st?'on':''}"></i>`).join('')}<span class="sub">3つ全部クリアを7日続けると ${rwTx(DM_STREAK)}</span></div></div>`}
+ACT.dmClaim=v=>dmClaim(v);
+
+/* ---------- 週間ランキング ---------- */
+function wkKey(t){const d=new Date((t||Date.now())+9*3600e3),wd=(d.getUTCDay()+6)%7;const m=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()-wd));return ymd(m)}
+function wkFrac(){const d=jstD(),wd=(d.getUTCDay()+6)%7;return clamp((wd*24+d.getUTCHours()+d.getUTCMinutes()/60)/168,0,1)}
+const RK_RW=[[1,{coins:10000,mats:5}],[3,{coins:5000,mats:3}],[10,{coins:2000}],[20,{coins:500}]];
+const rkRw=r=>{for(const [k,rw] of RK_RW)if(r<=k)return rw;return null};
+const RK_TEAM=['FC','ユナイテッド','シティ','SC','アスレティック','ローヴァーズ','ワンダラーズ','レンジャーズ','ドルフィンズ','タイガース'];
+function rkRivals(key,frac){const h0=HASH('rk'+key),out=[];for(let i=0;i<19;i++){const h=(Math.imul(h0+i*7919,2654435761)>>>0),S0=SEI[h%SEI.length];
+  const fin=Math.round(8+((h>>>8)%1000)/1000*(i<3?62:i<8?44:32));out.push({n:`${S0}${RK_TEAM[(h>>>4)%RK_TEAM.length]}`,pts:Math.floor(fin*Math.pow(frac,.92)),cpu:1})}return out}
+function rkState(){const k=wkKey();M.wk=M.wk||{key:k,pts:0,w:0,d:0,l:0};if(M.wk.key!==k){const old=M.wk;
+    if(old.pts>0){const L=rkRivals(old.key,1).concat([{n:'あなた',pts:old.pts,me:1}]).sort((a,b)=>b.pts-a.pts||(b.me?1:0)-(a.me?1:0)),r=L.findIndex(x=>x.me)+1,rw=rkRw(r);
+      if(rw)giveRw(rw);M.wkLast={key:old.key,rank:r,pts:old.pts,rw};M.rkBest=Math.min(M.rkBest||99,r);if(r===1)M.rkWin=(M.rkWin||0)+1;
+      setTimeout(()=>evToast(`🏅 先週の週間ランキング ${r}位！${rw?' '+rwTx(rw)+'獲得':''}`,6000),1200)}
+    M.wk={key:k,pts:0,w:0,d:0,l:0}}return M.wk}
+function rkAdd(o){const W=rkState();W.pts+=[3,1,0][o];W[['w','d','l'][o]]++;dmAdd('rkpt',[3,1,0][o]);rkPush()}
+function rkPush(){if(typeof NET==='undefined'||!NET.db||!NET.uid)return;clearTimeout(rkPush._t);rkPush._t=setTimeout(()=>{try{NET.db.doc(`rank_${M.wk.key}/${NET.uid}`).set({n:teamCalc().name,pts:M.wk.pts,t:Date.now()}).catch(()=>{})}catch(e){}},3000)}
+function rkFetch(){if(typeof NET==='undefined'||!NET.db||G.rkBusy)return;G.rkBusy=1;try{NET.db.collection(`rank_${M.wk.key}`).orderBy('pts','desc').limit(30).get().then(s=>{G.rkOn=s.docs.map(d=>({...d.data(),me:d.id===NET.uid}));G.rkBusy=0;render()}).catch(()=>{G.rkBusy=0})}catch(e){G.rkBusy=0}}
+function rkHtml(){const W=rkState(),L=rkRivals(W.key,wkFrac()).concat([{n:teamCalc().name+'（あなた）',pts:W.pts,me:1}]).sort((a,b)=>b.pts-a.pts||(b.me?1:0)-(a.me?1:0)),me=L.findIndex(x=>x.me)+1;
+  const d=jstD(),left=Math.ceil((1-wkFrac())*168),row=(x,i)=>`<li class="${x.me?'me':''}"><span class="num">${i+1}</span><b>${esc(x.n)}</b><span class="num">${x.pts}</span></li>`;
+  if(!G.rkOn&&!G.rkBusy)rkFetch();
+  return `<div class="kick">週間ランキング<span class="r">残り${left>=24?Math.floor(left/24)+'日':left+'時間'}</span></div>
+  <p class="note">月曜0時から日曜24時まで、試合の勝ち点（勝ち3・引き分け1）で競う。CPU戦・カップ戦・伝説降臨・W杯・ルーム対戦、全部の試合が対象。</p>
+  <div class="rkme"><span>今週のあなた</span><b class="num">${me}位</b><span class="sub">勝ち点${W.pts}・${W.w}勝${W.d}分${W.l}敗</span></div>
+  <ol class="rkl">${L.slice(0,10).map(row).join('')}${me>10?`<li class="gap">…</li>${row(L[me-1],me-1)}`:''}</ol>
+  <div class="kick">週の終わりの報酬</div><table class="st"><tbody>${[['1位',RK_RW[0][1]],['2〜3位',RK_RW[1][1]],['4〜10位',RK_RW[2][1]],['11〜20位',RK_RW[3][1]]].map(([a,b])=>`<tr><th>${a}</th><td class="n">${rwTx(b)}</td></tr>`).join('')}</tbody></table>
+  ${M.wkLast?`<p class="note">先週：${M.wkLast.rank}位（勝ち点${M.wkLast.pts}）${M.wkLast.rw?'・'+rwTx(M.wkLast.rw):''}</p>`:''}
+  ${G.rkOn&&G.rkOn.length?`<div class="kick">みんなのランキング</div><ol class="rkl">${G.rkOn.map((x,i)=>row({n:x.n+(x.me?'（あなた）':''),pts:x.pts,me:x.me},i)).join('')}</ol>`:'<p class="sub">友達どうしのランキングは、オンライン（アカウント）につながっているときに表示される。</p>'}
+  <div class="stack"><button class="btn ghost" data-act="btMenu">対戦メニューへ</button></div>`}
+
+/* ---------- カップ戦 ---------- */
+const CUPS=[
+ {k:'br',n:'ブロンズ杯',lv:54,rw:[0,100,300,600,1200],c:'#c07a3a'},
+ {k:'sv',n:'シルバー杯',lv:64,rw:[0,200,500,1000,2500],c:'#b8c0c8'},
+ {k:'gd',n:'ゴールド杯',lv:74,rw:[0,300,800,1500,4000],c:'#e0b030'},
+ {k:'lg',n:'レジェンド杯',lv:85,rw:[0,500,1200,2500,8000],c:'#c060e0'}];
+const CUP_MAX=3,CUP_RD=['1回戦（ベスト16）','準々決勝','準決勝','決勝'];
+function cupDay(){const d=todayKey();M.cupDay=M.cupDay||{day:'',n:0};if(M.cupDay.day!==d){M.cupDay.day=d;M.cupDay.n=0}return M.cupDay}
+function cupStart(k){const C=CUPS.find(c=>c.k===k);if(!C||(M.cup&&!M.cup.done)||cupDay().n>=CUP_MAX)return;cupDay().n++;
+  const used=new Set(),opps=[];for(let i=0;i<4;i++){let c;let g=0;do{c=pick(CLUBS)}while((used.has(c.n)||c.lg==='UNI')&&g++<30);used.add(c.n);opps.push({n:c.n,lv:Math.round(C.lv+i*2.5)})}
+  M.cup={k,r:0,opps,hist:[],done:false,t:Date.now()};metaSave()}
+function cupPlay(){const W=M.cup;if(!W||W.done)return;const o=W.opps[W.r],C=CUPS.find(c=>c.k===W.k),seed=Math.floor(Math.random()*4294967295);
+  const T=cpuTeam({n:o.n,lv:o.lv},seed^0x2545f491);spMatch(T,'cup',`${C.n} ${CUP_RD[W.r]}`,{cupR:W.r})}
+function cupResult(X,o){const W=M.cup;if(!W||W.done||X.cupR!==W.r)return 0;const C=CUPS.find(c=>c.k===W.k),res=X.res;
+  W.hist.push({n:W.opps[W.r].n,sc:res.sc.slice(),pk:res.pk?res.pk.slice():null,w:o===0});
+  if(o===0){dmAdd('cupw');W.r++;if(W.r<4)return 0}
+  W.done=true;const won=W.r,rw=C.rw[won];M.cupRec=M.cupRec||{};const R=M.cupRec[W.k]=M.cupRec[W.k]||{n:0,best:0,win:0};R.n++;R.best=Math.max(R.best,won);
+  if(won===4){R.win++;M.troph=M.troph||{};M.troph[W.k]=(M.troph[W.k]||0)+1}
+  W.rw=rw;return rw}
+function cupHtml(){const W=M.cup,left=CUP_MAX-cupDay().n;
+  if(W&&!W.done){const C=CUPS.find(c=>c.k===W.k);
+    return `<div class="kick">${C.n}<span class="r">${CUP_RD[W.r]}</span></div>
+    <ol class="cupl">${W.opps.map((o,i)=>{const h=W.hist[i];return `<li class="${i===W.r?'now':h?h.w?'w':'l':''}"><small>${CUP_RD[i]}</small><b>${esc(o.n)}</b><span class="sub">総合${o.lv}前後</span><span class="num">${h?`${h.sc[0]}-${h.sc[1]}${h.pk?` PK${h.pk[0]}-${h.pk[1]}`:''}`:i===W.r?'次':''}</span></li>`}).join('')}</ol>
+    <p class="note">勝ち進むほど報酬アップ。優勝で<b class="gold">${yen2(C.rw[4])}コイン</b>とトロフィー。負けたらそこで終わり。</p>
+    <div class="stack"><button class="btn red" data-act="cupPlay">${CUP_RD[W.r]}を戦う</button><button class="btn ghost" data-act="btMenu">対戦メニューへ</button></div>`}
+  const last=W&&W.done?(()=>{const C=CUPS.find(c=>c.k===W.k);return `<div class="toast"><b>${W.r===4?`🏆 ${C.n} 優勝！`:`${C.n}は${CUP_RD[W.r]}で敗退`}</b>${W.rw?`${yen2(W.rw)}コイン獲得`:'報酬なし'}</div>`})():'';
+  return `${last}<div class="kick">カップ戦<span class="r">今日あと${left}回</span></div>
+  <p class="note">16チームの勝ち抜きトーナメント。4回勝てば優勝。1日${CUP_MAX}回まで出場できる。</p>
+  <div class="acts">${CUPS.map(C=>{const R=(M.cupRec||{})[C.k]||{n:0,win:0};return `<button class="act cup" data-act="cupGo" data-v="${C.k}" ${left>0?'':'disabled'}><b><i class="tro" style="background:${C.c}"></i>${C.n}</b><span>相手 総合${C.lv}〜${C.lv+8}</span><em>優勝${yen2(C.rw[4])}・準優勝${yen2(C.rw[3])}・4強${yen2(C.rw[2])}／優勝${R.win}回</em></button>`}).join('')}</div>
+  ${trophyHtml()}
+  <div class="stack"><button class="btn ghost" data-act="btMenu">対戦メニューへ</button></div>`}
+function trophyHtml(){const T=M.troph||{};const any=CUPS.some(C=>T[C.k]);return `<div class="kick">トロフィー棚</div>${any?`<div class="trophs">${CUPS.filter(C=>T[C.k]).map(C=>`<div class="trp"><i class="tro big" style="background:${C.c}"></i><b>${C.n}</b><span class="num">×${T[C.k]}</span></div>`).join('')}</div>`:'<p class="note">まだトロフィーはない。カップ戦で優勝するとここに飾られる。</p>'}`}
+ACT.cupGo=v=>{cupStart(v);G.bt.view='cup';toTop()};
+ACT.cupPlay=()=>{cupPlay();toTop()};
+
+/* ---------- 試合のフック（ミッション・ランキング・カップ戦） ---------- */
+function outOf(res,side){const me=res.sc[side],op=res.sc[1-side];if(me>op)return 0;if(me<op)return 2;if(res.pk)return res.pk[side]>res.pk[1-side]?0:2;return 1}
+{const _pm=postMatch;postMatch=function(res,side){_pm(res,side);try{if(!res||!res.sc)return;const o=outOf(res,side),g=res.sc[side];
+  dmAdd('play');if(o===0)dmAdd('win');if(g)dmAdd('goals',g);if(g>=3)dmAdd('big');if(o===0&&res.sc[1-side]===0)dmAdd('clean');rkAdd(o)}catch(e){}}}
+{const _sf=spFinish;spFinish=function(X){_sf(X);try{const o=X.rw?X.rw.o:outOf(X.res,0);
+  if(X.sp==='lgd')dmAdd('lgd');if(X.sp==='wc')dmAdd('wc');
+  if(X.sp==='cup'){const c=cupResult(X,o);if(c){M.coins+=c;if(X.rw)X.rw.coins+=c}X.cupTx=M.cup?(M.cup.done?(M.cup.r===4?`🏆 優勝！ ${yen2(c)}コイン獲得`:`敗退… ${c?yen2(c)+'コイン獲得':'報酬なし'}`):`勝利！ 次は${CUP_RD[M.cup.r]}`):''}
+  metaSave()}catch(e){}}}
+{const _dg=doGacha;doGacha=function(...a){const r=_dg(...a);if(r)dmAdd('gacha');return r}}
+{const _en=enhance;enhance=function(id,k){const c=cardById(id),e0=c?JSON.stringify([c.enh,c.plus]):'';const r=_en(id,k);const c2=cardById(id);if(c2&&JSON.stringify([c2.enh,c2.plus])!==e0)dmAdd('enh');return r}}
+{const _ca=confirmAction;confirmAction=function(){if(S.act)dmAdd('career');try{zkCareer()}catch(e){}return _ca()}}
+
+/* ---------- 図鑑と実績 ---------- */
+function zkCareer(){const p=S.p;if(!p)return;M.zk=M.zk||{nat:[],cty:[]};if(p.nation&&!M.zk.nat.includes(p.nation))M.zk.nat.push(p.nation);
+  try{const c=clubOf(p),cty=LG[c.lg]&&LG[c.lg].cty;if(cty&&!M.zk.cty.includes(cty))M.zk.cty.push(cty)}catch(e){}}
+const ZK_CARDS=()=>[ICHIKAWA,SHANCHI,MAO,INKANSU,KAMAPOKO,BATSUMARU,GORIMORI,SASACHI,MASAO,DOCTOR,SANTA].filter(Boolean);
+const ownId=id=>M.roster.some(c=>c.id===id);
+const ACH=[
+ {id:'w1',n:'はじめての勝利',d:'試合に1勝する',f:()=>M.rec.w>=1,rw:{coins:300}},
+ {id:'w10',n:'勝ち癖',d:'通算10勝',f:()=>M.rec.w>=10,rw:{coins:500}},
+ {id:'w50',n:'常勝軍団',d:'通算50勝',f:()=>M.rec.w>=50,rw:{coins:1500}},
+ {id:'w100',n:'百戦錬磨',d:'通算100勝',f:()=>M.rec.w>=100,rw:{coins:3000}},
+ {id:'w300',n:'生ける伝説',d:'通算300勝',f:()=>M.rec.w>=300,rw:{coins:8000}},
+ {id:'g100',n:'ガチャ好き',d:'ガチャを100回引く',f:()=>M.pulls>=100,rw:{coins:500}},
+ {id:'g1000',n:'ガチャの鬼',d:'ガチャを1000回引く',f:()=>M.pulls>=1000,rw:{coins:3000}},
+ {id:'c5',n:'コレクター',d:'ピックアップ選手を5人集める',f:()=>ZK_CARDS().filter(c=>ownId(c.id)).length>=5,rw:{coins:1000}},
+ {id:'call',n:'コンプリート',d:'ピックアップ選手を全員集める',f:()=>ZK_CARDS().every(c=>ownId(c.id)),rw:{coins:5000,mats:5}},
+ {id:'l5',n:'伝説の目利き',d:'レジェンド選手を5人集める',f:()=>legOwned().length>=5,rw:{coins:1500}},
+ {id:'lall',n:'伝説の支配者',d:'レジェンド選手を全員集める',f:()=>legOwned().length>=GLEGS.length,rw:{coins:8000,mats:10}},
+ {id:'wc',n:'世界王者',d:'ワールドカップで優勝する',f:()=>(M.wcRec&&M.wcRec.win)>0,rw:{coins:2000}},
+ {id:'lgd',n:'伝説を超えた者',d:'伝説降臨で勝つ',f:()=>!!(M.lgd&&M.lgd.ever),rw:{coins:2000}},
+ {id:'cbr',n:'ブロンズの栄光',d:'ブロンズ杯で優勝',f:()=>((M.troph||{}).br||0)>0,rw:{coins:500}},
+ {id:'cgd',n:'黄金の杯',d:'ゴールド杯で優勝',f:()=>((M.troph||{}).gd||0)>0,rw:{coins:2000}},
+ {id:'clg',n:'杯の覇者',d:'レジェンド杯で優勝',f:()=>((M.troph||{}).lg||0)>0,rw:{coins:5000,mats:5}},
+ {id:'rk1',n:'週間王者',d:'週間ランキングで1位になる',f:()=>(M.rkWin||0)>0,rw:{coins:3000}},
+ {id:'dm7',n:'皆勤賞',d:'デイリーミッションを7日連続コンプリート',f:()=>((M.dmS||{}).full||0)>0,rw:{coins:2000}},
+ {id:'hof',n:'名伯楽',d:'育成した選手が殿堂入りする',f:()=>{try{return hofList().length>0}catch(e){return false}},rw:{coins:1000}},
+ {id:'n10',n:'世界を渡る者',d:'育成で10か国の選手を育てる',f:()=>((M.zk||{}).nat||[]).length>=10,rw:{coins:2000}},
+ {id:'t10',n:'渡り鳥',d:'育成で10か国のリーグでプレーする',f:()=>((M.zk||{}).cty||[]).length>=10,rw:{coins:2000}},
+ {id:'rich',n:'大富豪',d:'コインを10万枚持つ',f:()=>M.coins>=100000,rw:{mats:5}},
+];
+function achClaim(id){const a=ACH.find(x=>x.id===id);M.ach=M.ach||{};if(!a||M.ach[id]||!a.f())return;M.ach[id]=Date.now();giveRw(a.rw);if(!M.ttl)M.ttl=id;metaSave();evToast(`🏅 実績「${a.n}」達成！ ${rwTx(a.rw)}・称号を手に入れた`)}
+ACT.achClaim=v=>achClaim(v);
+ACT.ttlSet=v=>{M.ach=M.ach||{};if(M.ach[v])M.ttl=M.ttl===v?null:v};
+const ttlName=()=>{const a=M.ttl&&ACH.find(x=>x.id===M.ttl);return a?a.n:''};
+function achHtml(){M.ach=M.ach||{};const got=ACH.filter(a=>M.ach[a.id]).length,ready=ACH.filter(a=>!M.ach[a.id]&&a.f());
+  return `<div class="kick">実績と称号<span class="r">${got}/${ACH.length}</span></div>
+  <p class="note">実績を達成すると報酬と称号がもらえる。手に入れた称号は対戦メニューに表示される（「称号にする」で切り替え）。${M.ttl?`今の称号：<b class="gold">${esc(ttlName())}</b>`:''}</p>
+  <div class="achl">${ACH.map(a=>{const g=M.ach[a.id],ok=!g&&a.f();return `<div class="ach ${g?'got':''} ${ok?'ok':''}"><div><b>${g?esc(a.n):ok?esc(a.n):'？？？'}</b><span class="sub">${esc(a.d)}・${rwTx(a.rw)}</span></div>${ok?`<button class="btn sm red" data-act="achClaim" data-v="${a.id}">受け取る</button>`:g?`<button class="btn sm ${M.ttl===a.id?'red':'ghost'}" data-act="ttlSet" data-v="${a.id}">${M.ttl===a.id?'称号に設定中':'称号にする'}</button>`:''}</div>`}).join('')}</div>`}
+function cardZkHtml(){const L=ZK_CARDS(),own=L.filter(c=>ownId(c.id)).length,lg=legOwned().length;
+  return `<div class="kick">選手図鑑<span class="r">ピックアップ${own}/${L.length}・レジェンド${lg}/${GLEGS.length}</span></div>
+  <div class="zkc">${L.concat(GLEGS).map(c=>{const o=ownId(c.id);return `<div class="zc ${o?'on':''} ${c.legend?'lg':''}"><span class="po">${c.pos}</span><b>${o?esc(c.name):'？？？'}</b></div>`}).join('')}</div>`}
+function natZkHtml(){const Z=M.zk||{nat:[],cty:[]};return `<div class="kick">国の図鑑<span class="r">育てた国${Z.nat.length}・プレーした国${Z.cty.length}</span></div>
+  <p class="note">育成モードで選んだ国籍と、プレーしたリーグの国が記録される。</p>
+  ${Z.nat.length?`<div class="flags">${Z.nat.map(k=>NATIONS[k]?`<span title="${esc(NATIONS[k].n)}">${NATIONS[k].fl}<small>${esc(NATIONS[k].n)}</small></span>`:'').join('')}</div>`:''}
+  ${Z.cty.length?`<p class="sub">プレーした国：${Z.cty.map(esc).join('・')}</p>`:''}`}
+{const _zk=zukan;zukan=function(){return achHtml()+cardZkHtml()+natZkHtml()+trophyHtml()+_zk()}}
+
+/* ---------- ケミストリー（相性） ---------- */
+function chemCalc(cards){
+  const out=new Map(),add=(c,v,why)=>{const o=out.get(c)||{b:0,why:[]};o.b+=v;o.why.push(why);out.set(c,o)};
+  const real=cards.map(x=>x.c).filter(c=>c&&!c.filler);
+  const by={};real.forEach(c=>{if(c.nation)(by[c.nation]=by[c.nation]||[]).push(c)});
+  const links=[];
+  Object.entries(by).forEach(([k,l])=>{if(l.length<2)return;const v=l.length>=4?3:l.length===3?2:1,N=NATIONS[k];l.forEach(c=>add(c,v,`${N?N.n:k}の仲間+${v}`));links.push({t:`${N?N.fl+' '+N.n:k}の選手${l.length}人`,v,n:l.length})});
+  const cl={};real.forEach(c=>(c.clubs||[]).forEach(n=>{(cl[n]=cl[n]||new Set()).add(c)}));
+  Object.entries(cl).forEach(([n,s])=>{if(s.size<2)return;[...s].forEach(c=>add(c,2,`${n}の元チームメイト+2`));links.push({t:`${n}の元チームメイト${s.size}人`,v:2,n:s.size})});
+  const ga=real.filter(c=>c.from==='ガチャ'&&!c.legend&&c.special);if(ga.length>=3){ga.forEach(c=>add(c,1,'ガチャ仲間+1'));links.push({t:`ガチャ仲間${ga.length}人`,v:1,n:ga.length})}
+  out.forEach(o=>{o.b=Math.min(5,o.b)});out.links=links;return out}
+function chemHtml(){const sq=M.squad,F=FORMS[sq.form]||FORMS['433'],cards=F.s.map(([role],i)=>({role,c:cardById(sq.slots[i])})).filter(x=>x.c&&!isMgr(x.c));
+  const C=chemCalc(cards),tot=[...C.values()].reduce((s,o)=>s+o.b,0);
+  return `<div class="kick">ケミストリー（相性）<span class="r">合計+${tot}</span></div>
+  ${C.links.length?`<div class="chips">${C.links.map(l=>`<span class="chip gold">${esc(l.t)}・能力+${l.v}</span>`).join('')}</div>`:''}
+  <p class="sub">同じ国の選手（2人+1・3人+2・4人以上+3）、育成で同じクラブにいた選手（+2）、ガチャの特別選手3人以上（+1）を並べると能力が上がる（1人最大+5）。</p>`}
+
+/* ---------- 季節イベント：クリスマス限定ガチャ・お年玉 ---------- */
+const SANTA={id:'santa',kind:'pl',name:'サンタ・クロース',pos:'GK',pos2:['DF'],style:'聖夜の守護神',special:'santa',from:'ガチャ',st:{spd:58,tec:72,sho:40,pas:86,phy:90,def:92}};
+const SANTA_SKILL={n:'メリークリスマス！',q:'ホッホッホー！',d:'ハーフタイムに、ランダムな味方3人へプレゼントを配る。もらった選手は後半ずっと能力+6'};
+const xmasOn=()=>{const d=jstD();return d.getUTCMonth()===11&&d.getUTCDate()<=25};
+BANNERS.xmas={card:()=>SANTA,skill:()=>SANTA_SKILL,short:'サンタ',head:['聖夜','降臨'],on:xmasOn};
+SP_SKILL.santa=SANTA_SKILL;
+function santaHalf(X){X.T.forEach((Y,i)=>{const s=Y.pl.find(p=>p.santa&&!p.gone&&!(typeof injOut==='function'&&injOut(X,p)));if(!s)return;
+  const c=Y.pl.filter(p=>p!==s&&!p.gone&&!p.dog);const pick3=[];for(let k=0;k<3&&c.length;k++)pick3.push(c.splice(Math.floor(X.r()*c.length),1)[0]);
+  pick3.forEach(p=>{p.r+=6;p.sho+=6;p.pas+=6;shiftTeam(Y,p.role,6)});X.ev.push({m:45,s:i,ty:'skill',tx:`${s.n}「${SANTA_SKILL.q}」 ${pick3.map(p=>p.n).join('・')}にプレゼント！ 後半ずっと能力+6`})})}
+const SEASON_GIFTS=[
+ {id:'xmas',on:d=>d.getUTCMonth()===11&&(d.getUTCDate()===24||d.getUTCDate()===25),n:'🎄 メリークリスマス！ プレゼント',rw:{coins:3000,mats:3}},
+ {id:'ny',on:d=>d.getUTCMonth()===0&&d.getUTCDate()<=7,n:'🎍 あけましておめでとう！ お年玉',rw:{coins:10000,mats:5}}];
+{const _ag=applyGifts;applyGifts=function(){_ag();if(typeof M==='undefined'||!M)return;const d=jstD(),y=d.getUTCFullYear();M.gifts=M.gifts||{};
+  for(const g of SEASON_GIFTS){const k=`${g.id}${y}`;if(!g.on(d)||M.gifts[k])continue;M.gifts[k]=Date.now();giveRw(g.rw);metaSave();evToast(`${g.n}：${rwTx(g.rw)}を受け取った`,6000)}}}
+function seasonNote(){const d=jstD();if(xmasOn())return `<div class="toast"><b>🎄 クリスマス限定！</b>「サンタ・クロース」ガチャは12月25日まで。24日・25日はプレゼントも配布。</div>`;
+  if(d.getUTCMonth()===0&&d.getUTCDate()<=7)return `<div class="toast"><b>🎍 新春！</b>1月7日までにゲームを開くとお年玉がもらえる。</div>`;
+  if(d.getUTCMonth()===10&&d.getUTCDate()>=20)return `<p class="note" style="margin:0 0 8px">12月1日から「サンタ・クロース」のクリスマス限定ガチャが始まる。</p>`;return ''}
+// サンタの見た目（オリジナル）
+SPR_SPECIAL.santa=()=>drawPerson({skin:'#f0c8a8',hair:'#f4f4f4',hs:'buzz',jersey:'#d02a2a',trim:'#ffffff',num:24,smile:1});
+SPR_BG.santa=['#2a5a3a','#0a1a10'];
+FA.santa={custom:'santa',bg:{strokes:[['#d02a2a',0,26,80,18,80,30,6],['#ffffff',0,50,40,44,80,54,2],['#2a8a4a',0,70,30,66,80,74,3]],groundY:89}};
+POSE.santa=J([40,20],[40,28],[45,31],[35,31],[50,40],[54,47],[30,40],[24,34],[40,54],[44,55],[36,55],[46,70],[47,84],[51,86],[34,70],[33,84],[29,86]);
+function santaDraw(P){
+  faPerson(P,POSE.santa,{skin:'#f0c8a8',hair:'#f4f4f4',hs:'bald',jersey:'#d02a2a',trim:'#ffffff',shorts:'#d02a2a',socks:'#1a1a1a',boots:'#1a1a1a',num:null,smile:1,
+    head:(P,k,hx,hy,hr)=>{
+      faEll(P,hx,hy+4,5.6,4.6,(x,y)=>y>hy+6?'#e8e8e8':'#fafafa');faCircle(P,hx,hy+2.6,1.3,'#e8a090');
+      faCircle(P,hx-2,hy,.8,'#2a2a2a');faCircle(P,hx+2,hy,.8,'#2a2a2a');faCap(P,[hx-3,hy-1.6],[hx-1,hy-1.8],.5,.5,'#f4f4f4');faCap(P,[hx+1,hy-1.8],[hx+3,hy-1.6],.5,.5,'#f4f4f4');
+      faPoly(P,[[hx-6,hy-3],[hx+6,hy-3],[hx+9,hy-10],[hx+2,hy-11]],'#d02a2a');faCap(P,[hx-6.5,hy-3],[hx+6.5,hy-3],1.4,1.4,'#fafafa');faCircle(P,hx+9.5,hy-10,1.8,'#fafafa');
+    }});
+  faCap(P,[33,46],[47,46],1.6,1.6,'#1a1a1a');faPoly(P,[[38.5,44.5],[41.5,44.5],[41.5,47.5],[38.5,47.5]],'#e0b030');
+  // プレゼント袋
+  faEll(P,21,32,6,7,(x,y)=>x<20?'#a8743a':'#c08a48');faCap(P,[21,25],[21,23],1.2,.8,'#8a5a2a');
+  faPoly(P,[[54,46],[60,46],[60,52],[54,52]],'#2a8a4a');faCap(P,[57,46],[57,52],.5,.5,'#e0b030');faCap(P,[54,49],[60,49],.5,.5,'#e0b030');
+  faBall(P,60,85,3.4);
+}
+{const _fc=faCustom;faCustom=function(P,kind){if(kind==='santa'){santaDraw(P);return}return _fc(P,kind)}}
+
+/* ---------- 実況 ---------- */
+const JK={
+ goal:['ゴーーール！！決めたーー！','入ったーー！スタジアムが揺れている！','ネットを揺らしたーー！見事な一撃！','決まったーー！これは美しいゴールだ！','ゴール！ゴール！ゴーーール！'],
+ skill:['出たーー！必殺技だーー！','ここで特殊能力発動！流れが変わるか！','これは見逃せない！特別な力が炸裂！'],
+ down:['おっと、これは苦しい展開…','ここは耐えどころだ！','嫌な流れになってきた…'],
+ ht:['ここでホイッスル！ハーフタイムです','前半終了！後半に向けて何を仕掛けるか'],
+ tac:['ベンチが動いた！戦術変更だ','監督の指示が飛ぶ！形を変えてきた'],
+ def:['ナイスセーブ！！よく止めた！','守った守った！ゴールを許さない！'],
+};
+const JK_KEY=[[/タバコ/,'ささちー、まさかのタバコ休憩だーー！'],[/戻ってきた/,'帰ってきたーー！ニコチンゾーン突入だ！'],[/ワンちゃん/,'犬だ！ピッチをワンちゃんが駆け回っている！'],[/ヤハ/,'ドクターうさぎ「ヤハ！」見事な処置で復活だ！'],[/ウラ/,'ドクターうさぎ「ウラ」！チームの調子が上がっていく！'],[/プルャ/,'「プルャ‼︎」の叫びがこだまする！'],[/邪魔はさせない/,'MAOだーー！必殺シュートの体勢だ！'],[/巧妙/,'陰関数の絶妙なパス！決定機だ！'],[/ホッホッホー/,'サンタからのプレゼントだーー！'],[/ぎっくり/,'あーっと！ぎっくり腰だ！これは痛い！'],[/ケガ/,'倒れた！ケガでなければいいが…'],[/足が止ま|限界/,'足が止まってきた！体力の限界か！'],[/おいぼれ/,'バツ丸尾君の経験がものを言う！']];
+function jkLine(e,nm){if(!e)return '';for(const [re,t] of JK_KEY)if(re.test(e.tx))return t;const L=JK[e.ty]||null;if(!L)return '';const h=HASH(e.m+e.tx);let t=L[h%L.length];if(e.ty==='goal'&&nm&&e.s>=0)t=`${nm[e.s]}、${t}`;return t}
+function jkAt(min){const B=G.bt,X=B.match;if(!X)return '';const res=X.live?X.live.res||X.live:X.res;const ev=(X.live?X.live.ev:res&&res.ev)||[];const nm=[X.A.name,X.B.name];
+  let last=null;for(const e of ev){if(e.m<=min&&jkLine(e,nm))last=e}return last?{m:last.m,t:jkLine(last,nm)}:null}
+function jkHtml(){const j=jkAt(typeof matchMin==='function'?matchMin():90);return `<div class="jk" id="jk">${j?`<span class="num">${j.m}'</span><b>実況</b>${esc(j.t)}`:'<b>実況</b>さあ、キックオフです！'}</div>`}
+{const _ap=applyPlayback;applyPlayback=function(min){_ap(min);try{const el=document.getElementById('jk');if(!el)return;const j=jkAt(min);const h=j?`<span class="num">${j.m}'</span><b>実況</b>${esc(j.t)}`:'<b>実況</b>さあ、キックオフです！';if(el.innerHTML!==h)el.innerHTML=h}catch(e){}}}
+
+/* ---------- 対戦メニュー・画面 ---------- */
+{const _sm=spMenuHtml;spMenuHtml=function(){const W=M.cup,left=CUP_MAX-cupDay().n,R=rkState();
+  return `${M.ttl?`<p class="ttlline">称号 <b>${esc(ttlName())}</b></p>`:''}${dmHtml()}
+  <div class="kick">大会</div><div class="acts sp">
+   <button class="act" data-act="spView" data-v="cup"><b>カップ戦</b><span>${W&&!W.done?`${CUPS.find(c=>c.k===W.k).n}の途中`:`今日あと${left}回`}</span><em>4つの杯・優勝で最大8,000コイン</em></button>
+   <button class="act" data-act="spView" data-v="rank"><b>週間ランキング</b><span>今週 勝ち点${R.pts}</span><em>1位10,000コイン・月曜にリセット</em></button>
+  </div>`+_sm()}}
+{const _sv=spView;spView=function(){const v=G.bt.view;if(v==='cup')return cupHtml();if(v==='rank')return rkHtml();return _sv()}}
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}

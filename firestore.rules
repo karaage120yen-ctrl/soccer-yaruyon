@@ -22,5 +22,12 @@ service cloud.firestore {
       // 作った本人だけが閉じられる
       allow delete: if request.auth != null && resource.data.host.uid == request.auth.uid;
     }
+
+    // 週間ランキング（rank_週の月曜日/ユーザーID）：ログインしている人は読める、自分の行だけ書ける
+    match /{coll}/{uid} {
+      allow read: if request.auth != null && coll.matches('rank_.*');
+      allow write: if request.auth != null && request.auth.uid == uid && coll.matches('rank_.*')
+                   && request.resource.data.pts is int && request.resource.data.pts <= 2000;
+    }
   }
 }
