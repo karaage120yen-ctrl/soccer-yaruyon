@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-181329';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-183332';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -961,6 +961,11 @@ body.rmon{overflow:hidden}
   .pzg{display:grid;grid-template-columns:1fr 1.15fr;gap:14px;align-items:start}
   .pzg .pzs{max-height:52vh}.pzt{margin-top:6px}.pzl button{min-height:36px!important}
 }
+.rmfq{position:absolute;right:12px;bottom:calc(214px + env(safe-area-inset-bottom));display:flex;gap:6px;opacity:0;pointer-events:none;transition:opacity .12s}
+.rmfq.on{opacity:1;pointer-events:auto}
+.rmfq button{height:40px;padding:0 11px;border-radius:999px;border:2px solid rgba(255,255,255,.5);background:radial-gradient(circle at 40% 30%,#c080ff,#6a1ab8);color:#fff;font-weight:800;font-size:12px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.45);touch-action:none}
+.rmfq button.down{transform:scale(.9);filter:brightness(1.3)}
+@media (orientation:landscape){.rmfq{bottom:calc(200px + env(safe-area-inset-bottom))}}
 
 </style>
 </head>
@@ -6498,7 +6503,7 @@ function rulesHtml(){
     'チームスタイル：ショートカウンター・ロングカウンター・ポゼッション・ロングボール・サイドアタック・サイドカウンター・ポゼッションティキタカの7種類。監督にはそれぞれ得意な戦術が1つあり、チームスタイルを監督の得意に合わせないと、選手の能力を最大限に引き出せない（全員の能力−6%）',
     '監督強化ガチャ：1回200コイン。監督につける強化アイテム（全選手の全能力+2：3%、FWのスピード+1：12%）が出る。監督1人に1個まで、スカッドの監督の枠からつけ外しできる',
     '育成の出来事：1,200種類以上。特訓・試合の場面・休日・メディア・チームメイト・遠征・食事・ファン・監督・学生生活・ちょっとした運などのほか、レジェンドとの交流、過去に育てたマイ選手（OB）の登場、レジェンドの教えで選んだレジェンドにまつわる出来事も起きる。同じ出来事は2シーズン続けては起きにくい',
-    'リアルマッチ：対戦メニューから、自分のスカッドを操作して戦う3Dアクションモード（スマホを横にして遊ぶ）。操作はイーフトのクラシック操作と同じ。移動はスティック（少し倒すとフィネスドリブル、大きく倒し続けるかダッシュボタンでダッシュ）。急加速・急停止・方向転換・ボールキープで相手の逆を取れる。パス・スルー・フライ（サイドの深い位置ではクロス）・シュートは長押しでゲージ、少し引っ張って離すとグラウンダー、押し続けるとインパクト。シュートは引っ張る向きで上＝ループ、横＝コントロール、下＝グラウンダー。パスが飛んでいる間にスルーでワンツー、ダッシュをポンでパス＆ゴー、シュートやパスを押しておくとダイレクト・ボレー・ヘディング。シュートを溜めている間にパスでキックフェイント。フェイントボタンでダブルタッチ・エラシコ・ルーレットなど14種（技術が高いほど成功しやすい）。守備はブロック（横からはショルダーチャージ、引っ張るとスライディング）・マッチアップ・プレス・チームプレス・切替・GK飛び出し。ファウルでフリーキック、エリア内ならPK、コーナーキックもある。一時停止で攻撃レベル・フォーメーション・選手交代（5回）。自陣ではシュートがクリア。特殊能力はランダムで自動発動。試合が終わると体力は全回復',
+    'リアルマッチ：対戦メニューから、自分のスカッドを操作して戦う3Dアクションモード（スマホを横にして遊ぶ）。操作はイーフトのクラシック操作と同じ。移動はスティック（少し倒すとフィネスドリブル、大きく倒し続けるかダッシュボタンでダッシュ）。急加速・急停止・方向転換・ボールキープで相手の逆を取れる。パス・スルー・フライ（サイドの深い位置ではクロス）・シュートは長押しでゲージ、少し引っ張って離すとグラウンダー、押し続けるとインパクト。シュートは引っ張る向きで上＝ループ、横＝コントロール、下＝グラウンダー。パスが飛んでいる間にスルーでワンツー、ダッシュをポンでパス＆ゴー、シュートやパスを押しておくとダイレクト・ボレー・ヘディング。フェイントはボールを持つと出るボタン（ダブルタッチ・エラシコ・ルーレット・ボディフェイント）をタップ（技術が高いほど成功しやすい）。守備はブロック（横からはショルダーチャージ、引っ張るとスライディング）・マッチアップ・プレス・チームプレス・切替・GK飛び出し。ファウルでフリーキック、エリア内ならPK、コーナーキックもある。一時停止で攻撃レベル・フォーメーション・選手交代（5回）。自陣ではシュートがクリア。特殊能力はランダムで自動発動。試合が終わると体力は全回復',
     'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる。左の「×1」ボタンで速さを1・2・4・8倍に切り替えられる（育成と試合の両方）',
     '体力ゲージ：試合中は走るほど体力が減り（フィジカルが高いほど減りにくい）、体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる。試合が終わると全員の体力が全回復する',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
@@ -9356,16 +9361,16 @@ function rmMount(){
   <div class="rmhud"><div class="rmsc"><span class="t0">${esc(RM.A.name)}</span><b id="rmscore">0 - 0</b><span class="t1">${esc(RM.B.name)}</span></div><div id="rmtime">0'</div><button class="rmq" id="rmquit">II</button></div>
   <div id="rmply"></div><div id="rmmsg"></div><div id="rmcut"></div>
   <div class="rmstick" id="rmstick"><i></i></div>
-  <div id="rmrot"><b>📱↻</b><span>スマホを横にしてね</span></div><div id="rmvar"></div><div id="rmhint"></div><div id="rmft" class="rmft" hidden></div><div class="rmbtns"><button id="rmb-ft" class="ft">フェイント</button><button id="rmb-fl" class="fl">フライ<i class="gg" id="rmg-fl"></i></button><button id="rmb-th" class="th">スルー<i class="gg" id="rmg-th"></i></button><button id="rmb-ps" class="ps">パス<i class="gg" id="rmg-ps"></i></button><button id="rmb-sh" class="sh">シュート<i class="gg" id="rmg-sh"></i></button><button id="rmb-ds" class="ds">ダッシュ</button></div>
+  <div id="rmrot"><b>📱↻</b><span>スマホを横にしてね</span></div><div id="rmvar"></div><div id="rmhint"></div><div id="rmfq" class="rmfq"><button data-ft="dt">ダブルタッチ</button><button data-ft="ela">エラシコ</button><button data-ft="rou">ルーレット</button><button data-ft="bod">ボディフェイント</button></div><div class="rmbtns"><button id="rmb-fl" class="fl">フライ<i class="gg" id="rmg-fl"></i></button><button id="rmb-th" class="th">スルー<i class="gg" id="rmg-th"></i></button><button id="rmb-ps" class="ps">パス<i class="gg" id="rmg-ps"></i></button><button id="rmb-sh" class="sh">シュート<i class="gg" id="rmg-sh"></i></button><button id="rmb-ds" class="ds">ダッシュ</button></div>
   <div id="rmsk" class="rmsk" hidden></div><div id="rmpz" class="rmpz" hidden></div>`;
   document.body.appendChild(el);document.body.classList.add('rmon');
   const cv=document.getElementById('rmc');RM.cv=cv;RM.cx=cv.getContext('2d');rmResize();
   const stick=document.getElementById('rmstick'),knob=stick.querySelector('i');let sid=null,ox=0,oy=0;
   const setK=(dx,dy)=>{const m=Math.hypot(dx,dy),r=50;if(m>r){dx=dx/m*r;dy=dy/m*r}knob.style.transform=`translate(${dx}px,${dy}px)`;RM.inp.jx=-dy/r;RM.inp.jy=-dx/r};
-  el.addEventListener('touchstart',e=>{if(RM&&RM.ftOpen&&![...e.changedTouches].some(t=>t.target.closest&&(t.target.closest('#rmft')||t.target.closest('#rmb-ft'))))rmFeintPanel(false);for(const t of e.changedTouches){if(t.target.closest('button')||t.target.closest('.rmsk')||t.target.closest('.rmpz'))continue;if(t.clientX<innerWidth*.55&&sid===null){sid=t.identifier;ox=t.clientX;oy=t.clientY;stick.style.left=(ox-60)+'px';stick.style.top=(oy-60)+'px';stick.classList.add('on');setK(0,0)}else{RM.gest=RM.gest||{};RM.gest[t.identifier]={x:t.clientX,y:t.clientY,t:performance.now()}}}
+  el.addEventListener('touchstart',e=>{for(const t of e.changedTouches){if(t.target.closest('button')||t.target.closest('.rmsk')||t.target.closest('.rmpz'))continue;if(t.clientX<innerWidth*.55&&sid===null){sid=t.identifier;ox=t.clientX;oy=t.clientY;stick.style.left=(ox-60)+'px';stick.style.top=(oy-60)+'px';stick.classList.add('on');setK(0,0)}else{RM.gest=RM.gest||{};RM.gest[t.identifier]={x:t.clientX,y:t.clientY,t:performance.now()}}}
     if(![...e.changedTouches].some(t=>t.target.closest&&(t.target.closest('button')||t.target.closest('.rmpz')||t.target.closest('.rmsk'))))e.preventDefault()},{passive:false});
   el.addEventListener('touchmove',e=>{for(const t of e.changedTouches)if(t.identifier===sid)setK(t.clientX-ox,t.clientY-oy);if(!e.target.closest('.rmsk')&&!e.target.closest('.rmpz'))e.preventDefault()},{passive:false});
-  const tend=e=>{for(const t of e.changedTouches){if(t.identifier===sid){sid=null;setK(0,0);stick.classList.remove('on')}const g=RM&&RM.gest&&RM.gest[t.identifier];if(g){delete RM.gest[t.identifier];const dy=t.clientY-g.y,dx=t.clientX-g.x;if(performance.now()-g.t<450){if(Math.abs(dy)>28&&Math.abs(dy)>Math.abs(dx)*1.2)rmDoubleTouch(dy<0?1:-1);else if(dx>34&&dx>Math.abs(dy)*1.2&&RM.ball.own===RM.ctrl)rmFeint(RM.ctrl,'sharp')}}}};
+  const tend=e=>{for(const t of e.changedTouches){if(t.identifier===sid){sid=null;setK(0,0);stick.classList.remove('on')}const g=RM&&RM.gest&&RM.gest[t.identifier];if(g){delete RM.gest[t.identifier];const dy=t.clientY-g.y,dx=t.clientX-g.x;if(performance.now()-g.t<450){if(Math.abs(dy)>28&&Math.abs(dy)>Math.abs(dx)*1.2)rmDoubleTouch(dy<0?1:-1);}}}};
   el.addEventListener('touchend',tend);el.addEventListener('touchcancel',tend);
   // マウス（パソコン）
   let md=false;el.addEventListener('mousedown',e=>{if(e.target.closest('button')||e.target.closest('.rmsk')||e.target.closest('.rmpz'))return;md=true;ox=e.clientX;oy=e.clientY;stick.style.left=(ox-60)+'px';stick.style.top=(oy-60)+'px';stick.classList.add('on')});
@@ -9385,15 +9390,11 @@ function rmMount(){
     b.addEventListener('touchend',e=>{e.preventDefault();up()});b.addEventListener('touchcancel',()=>up());
     b.addEventListener('mousedown',e=>{e.stopPropagation();down(e.clientX,e.clientY)});addEventListener('mousemove',e=>{if(st)move(e.clientX,e.clientY)});addEventListener('mouseup',()=>{if(st)up()})};
   gauge('rmb-sh','shoot');gauge('rmb-ps','pass');gauge('rmb-th','through');gauge('rmb-fl','fly');
-  // フェイント：押すとリスト（スロー）、指をすべらせて離すか、タップで選ぶ
-  {const fb=document.getElementById('rmb-ft');let ft=null;const pick=t=>{const h=document.elementFromPoint(t.clientX,t.clientY);return h&&h.closest?h.closest('#rmft button'):null};
-    fb.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();const t=e.changedTouches[0];if(RM.ftOpen){rmFeintPanel(false);ft=null;return}ft={id:t.identifier};rmFeintPanel(true)},{passive:false});
-    fb.addEventListener('touchmove',e=>{e.preventDefault();if(!ft)return;const t=[...e.changedTouches].find(x=>x.identifier===ft.id);if(!t)return;const c=pick(t);document.querySelectorAll('#rmft button.on').forEach(x=>x!==c&&x.classList.remove('on'));if(c)c.classList.add('on')},{passive:false});
-    fb.addEventListener('touchend',e=>{e.preventDefault();if(!ft)return;const t=[...e.changedTouches].find(x=>x.identifier===ft.id)||e.changedTouches[0];ft=null;const c=pick(t);if(c)rmFeintGo(c.dataset.ft)});
-    fb.addEventListener('mousedown',e=>{e.stopPropagation();rmFeintPanel(!RM.ftOpen)})}
+  // フェイント：タップするとすぐ出る
+  document.querySelectorAll('#rmfq button').forEach(bt=>{const go=e=>{e.preventDefault();e.stopPropagation();bt.classList.add('down');setTimeout(()=>bt.classList.remove('down'),150);if(RM&&RM.ctrl&&!RM.freezeMenu)rmFeint(RM.ctrl,bt.dataset.ft)};bt.addEventListener('touchstart',go,{passive:false});bt.addEventListener('mousedown',go)});
   const qb=document.getElementById('rmquit');qb.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();rmPauseMenu(true)});qb.addEventListener('click',()=>rmPauseMenu(true));
   // キーボード
-  const K={};addEventListener('keydown',RM.kd=e=>{if(K[e.code])return;K[e.code]=1;const kk={KeyJ:'pass',KeyL:'through',KeyK:'shoot',KeyU:'fly'}[e.code];if(kk){RM.inp.charge={kind:kk,t0:performance.now(),ground:!!K.Space,drag:!!K.Space,v:K.Space&&kk==='shoot'?'ground':null};rmPress(kk+'Down')}if(e.code==='KeyF'&&RM.ctrl)rmFeint(RM.ctrl,'auto');if(e.code==='KeyR'&&RM.ctrl)rmFeint(RM.ctrl,'sharp');if(e.code==='ShiftLeft'||e.code==='ShiftRight'){RM.inp.dash=true;RM.dsT=performance.now()}if(e.code==='Escape')rmPauseMenu(true);rmKeys(K)});
+  const K={};addEventListener('keydown',RM.kd=e=>{if(K[e.code])return;K[e.code]=1;const kk={KeyJ:'pass',KeyL:'through',KeyK:'shoot',KeyU:'fly'}[e.code];if(kk){RM.inp.charge={kind:kk,t0:performance.now(),ground:!!K.Space,drag:!!K.Space,v:K.Space&&kk==='shoot'?'ground':null};rmPress(kk+'Down')}{const fk={Digit1:'dt',Digit2:'ela',Digit3:'rou',Digit4:'bod'}[e.code];if(fk&&RM.ctrl)rmFeint(RM.ctrl,fk)}if(e.code==='ShiftLeft'||e.code==='ShiftRight'){RM.inp.dash=true;RM.dsT=performance.now()}if(e.code==='Escape')rmPauseMenu(true);rmKeys(K)});
   addEventListener('keyup',RM.ku=e=>{K[e.code]=0;const kk={KeyJ:'pass',KeyL:'through',KeyK:'shoot',KeyU:'fly'}[e.code];if(kk&&RM.inp.charge){const c=RM.inp.charge;RM.inp.charge=null;const el=performance.now()-c.t0;rmPress(kk+'Up',{pw:rmClamp(el/900,.08,1),ground:c.ground||!!K.Space,drag:c.drag||!!K.Space,v:c.v,impact:el>1300})}if(e.code.startsWith('Shift')){RM.inp.dash=false;if(performance.now()-(RM.dsT||0)<260)rmPress('dashTap')}rmKeys(K)});
   addEventListener('keydown',RM.kd2=e=>{if(e.code==='KeyQ')rmDoubleTouch(1);if(e.code==='KeyE')rmDoubleTouch(-1)});
   addEventListener('resize',RM.rs=rmResize);document.addEventListener('visibilitychange',RM.vc=()=>{if(document.hidden&&RM&&!RM.ended)rmPauseMenu(true)});
@@ -9434,7 +9435,6 @@ function rmPress(a,o){const R=RM;if(!R||R.pause>0||R.ended||R.freezeMenu)return;
   const pw=rmClamp(o.pw==null?.5:o.pw,.08,1),imp=!!o.impact&&!R.setp;
   if(cx==='att'){
     if(a==='shootDown'){R.inp.shootHeld=true;return}
-    if(a==='passDown'&&R.inp.shootHeld&&!R.setp){R.inp.shootHeld=false;R.inp.kfShoot=1;R.inp.kfPass=1;rmFeint(c,'kick');return}
     if(a==='shootUp'){R.inp.shootHeld=false;if(R.inp.kfShoot){R.inp.kfShoot=0;return}rmDoShoot(c,pw,{ground:o.ground,v:o.v,impact:imp})}
     else if(a==='passUp'){if(R.inp.kfPass){R.inp.kfPass=0;return}rmPass(c,false,null,pw,o.ground,{impact:imp})}
     else if(a==='throughUp')rmPass(c,true,null,pw,o.ground,{impact:imp});
@@ -9477,10 +9477,10 @@ function rmShoot(p,pw,aim,ground,o){const R=RM,b=R.ball,gy=p.side===0?0:RM_L,gx=
   let tx=gx+(aim||0)*3.1+(p.side===1&&!pk&&!fk?rmRnd(-2.6,2.6):0);
   if(v==='ctrl'){const s=Math.abs(aim||0)>.3?Math.sign(aim):(gkO&&gkO.x<gx?1:-1);tx=gx+s*2.75}
   let err=sup?0.25:Math.max(.06,1.12-Math.min(130,sho)/105)*(0.7+pw*.9)*(dist/16)*1.6+((R.inp.dash||R.inp.hold>.35)&&p===R.ctrl&&!o.impact&&!fk&&!pk?.5:0);
-  if(v==='ctrl')err*=.62;if(v==='loop')err*=.8;if(o.impact)err*=1.12;if(how==='touch')err*=1.1;if(how==='volley')err*=1.35;if(how==='head')err*=(1.45-phy/250);if(fk)err*=.8;if(pk)err*=.35;
+  if(v==='ctrl')err*=.62;if(v==='loop')err*=.8;if(o.impact)err*=1.12;if(how==='touch')err*=1.1;if(how==='volley')err*=1.35;if(how==='head')err*=(1.45-phy/250);if(fk)err*=1.05;if(pk)err*=.35;
   tx+=rmRnd(-err,err)*2;
   let sp=(14+pw*14+(Math.min(130,sho)-60)*.2)*(sup?1.45:1);if(v==='ctrl')sp=13+pw*8+(Math.min(130,sho)-60)*.15;
-  if(o.impact)sp*=1.22;if(how==='volley')sp*=1.06;if(how==='head')sp=sp*.55+(phy-60)*.08;
+  if(o.impact)sp*=1.22;if(how==='volley')sp*=1.06;if(how==='head')sp=sp*.68+(phy-60)*.08;
   let vz,curl=0,dip=0;const z0=(how==='head'||how==='volley')?Math.max(.2,b.z):.2;
   if(v==='loop'){const d=Math.max(4,Math.hypot(tx-p.x,gy-p.y));sp=rmClamp(9+d*.22,9,17)*(.92+pw*.16);const tg=d/sp*1.06;vz=(1.5+4.9*tg*tg)/tg}
   else if(fk){sp=20+pw*6+(Math.min(130,sho)-60)*.12;vz=6.6+pw*3.6;dip=6;curl=5}
@@ -9493,7 +9493,7 @@ function rmShoot(p,pw,aim,ground,o){const R=RM,b=R.ball,gy=p.side===0?0:RM_L,gx=
   if(v==='ctrl')curl=4;
   let ax=tx,ay=gy;if(curl){const c=rmCurlAim(p,tx,gy,sp,curl,(nx)=>-nx*(tx-gx||(Math.random()-.5)));ax=c.ax;ay=c.ay;curl=c.curl}
   const ang=Math.atan2(ay-p.y,ax-p.x);
-  b.own=null;b.vx=Math.cos(ang)*sp;b.vy=Math.sin(ang)*sp;b.z=z0;b.vz=vz;b.curl=curl;b.dip=dip;b.ground=!!ground;b.last=p.side;b.pass=null;b.cross=null;b.shot={side:p.side,by:p,sup,t:R.t};p.kickCd=R.t+.4;
+  b.own=null;b.vx=Math.cos(ang)*sp;b.vy=Math.sin(ang)*sp;b.z=z0;b.vz=vz;b.curl=curl;b.dip=dip;b.ground=!!ground;b.last=p.side;b.pass=null;b.cross=null;b.shot={side:p.side,by:p,sup,t:R.t,how};p.kickCd=R.t+.4;
   // PK：キーパーが飛ぶ
   if(pk&&gkO){let dx=0;if(p.side===0){const r=Math.random();dx=r<.4?-2.9:r<.8?2.9:0}else{const j=R.inp.jx;dx=j>.3?2.9:j<-.3?-2.9:0}gkO.dive={x:gx+dx,until:R.t+1.4}}
   if(p.side===0&&!how){if(v==='loop')rmMsg('ループシュート！',700);else if(v==='ctrl')rmMsg('コントロールシュート！',700);else if(fk)rmMsg('フリーキック！',700)}}
@@ -9558,12 +9558,12 @@ const rmMin=()=>RM?Math.min(90,Math.floor(RM.t/RM.len*90)):0;
 /* ----- ループ ----- */
 function rmLoop(now){const R=RM;if(!R||!R.running)return;let dt=Math.min(.05,(now-R.last)/1000);R.last=now;
   const port=innerHeight>innerWidth;const ro=document.getElementById('rmrot');if(ro)ro.classList.toggle('on',port);
-  if(!R.freezeMenu&&!R.ended&&!port)rmTick(R.ftOpen?dt*.3:dt);
+  if(!R.freezeMenu&&!R.ended&&!port)rmTick(dt);
   rmUI();
   rmDraw();requestAnimationFrame(rmLoop)}
 function rmTick(dt){const R=RM;if(R.pause>0){R.pause-=dt;if(R.pause<=0&&R.pendKick!=null){const k=R.pendKick;R.pendKick=null;rmKickoff(k)}}else rmStep(dt)}
 function rmUI(){const R=RM;if(!R)return;const cx=rmCtx(),b=R.ball,c=R.ctrl;
-  if(R.ftOpen&&(cx!=='att'||performance.now()-R.ftOpenT>4000))rmFeintPanel(false);
+  {const fq=document.getElementById('rmfq');if(fq)fq.classList.toggle('on',cx==='att'&&!R.setp&&!R.ended)}
   const ch=R.inp.charge,el0=ch?(performance.now()-ch.t0)/1000:0,pw=rmClamp(el0/.9,0,1);if(ch)ch.impact=el0>1.3;
   const live=cx==='att'||cx==='flight'||cx==='loose';
   ['sh','ps','th','fl'].forEach(k=>{const e=document.getElementById('rmg-'+k);if(e){const on=live&&ch&&ch.kind==={sh:'shoot',ps:'pass',th:'through',fl:'fly'}[k];e.style.width=(on?pw*100:0)+'%';e.classList.toggle('gr',!!(on&&ch.drag));e.classList.toggle('imp',!!(on&&ch.impact&&!R.setp))}});
@@ -9580,7 +9580,7 @@ function rmUI(){const R=RM;if(!R)return;const cx=rmCtx(),b=R.ball,c=R.ctrl;
   const key=L.sh+L.ps+L.th+L.fl+L.ds+L.ft+(L.def||'')+(L.wait||'');if(key===R.lblKey)return;R.lblKey=key;
   const set=(id,t)=>{const e=document.getElementById(id);if(e&&e.firstChild)e.firstChild.nodeValue=t};
   set('rmb-sh',L.sh);set('rmb-ps',L.ps);set('rmb-th',L.th);set('rmb-fl',L.fl);set('rmb-ds',L.ds);
-  const sh=document.getElementById('rmb-sh');if(sh)sh.classList.toggle('def',!!L.def);const ft=document.getElementById('rmb-ft');if(ft)ft.classList.toggle('off',!L.ft);
+  const sh=document.getElementById('rmb-sh');if(sh)sh.classList.toggle('def',!!L.def);
   const bx=document.querySelector('.rmbtns');if(bx){bx.classList.toggle('wait',!!L.wait);bx.classList.toggle('def',!!L.def)}
   ['rmb-th','rmb-fl','rmb-ds'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.toggle('sm',(e.firstChild&&e.firstChild.nodeValue||'').length>4)})}
 function rmStep(dt){const R=RM,b=R.ball,stop=performance.now()<R.stopUntil;
@@ -9605,10 +9605,10 @@ function rmStep(dt){const R=RM,b=R.ball,stop=performance.now()<R.stopUntil;
     if(stop&&p!==R.stopper){p.vx=p.vy=0;return}
     if(p.away){if(R.t>=p.away){p.away=0;if(p.nico){p.buf.push({k:'spd',v:14,until:R.t+30},{k:'sho',v:16,until:R.t+30});rmMsg(`${p.n.split(' ').pop()} ニコチンゾーン突入！`,1500)}}else{p.x+=( (p.side===0?-3:RM_W+3)-p.x)*dt*2;return}}
     let tx=p.x,ty=p.y,dash=false;const own=b.own===p;
-    if(p.dive&&p.dive.until>R.t){p.vx=rmClamp((p.dive.x-p.x)*9,-8,8);p.vy=0;p.x=rmClamp(p.x+p.vx*dt,RM_W/2-4.2,RM_W/2+4.2);return}
+    if(p.dive&&b.own===p)p.dive=null;if(p.dive&&p.dive.until>R.t){p.vx=rmClamp((p.dive.x-p.x)*9,-8,8);p.vy=0;p.x=rmClamp(p.x+p.vx*dt,RM_W/2-4.2,RM_W/2+4.2);return}
     if(p.stun>R.t&&!p.slide){p.vx*=.9;p.vy*=.9}
     else if(p.ft&&p.ft.until>R.t&&own){const f=Math.pow(.35,dt);p.vx*=f;p.vy*=f}
-    else if(p.side===0&&p===R.ctrl&&!p.dog&&!mu&&(Math.hypot(R.inp.jx,R.inp.jy)>.15||!rmAutoMove(p))){const m=Math.hypot(R.inp.jx,R.inp.jy);
+    else if(p.side===0&&p===R.ctrl&&!p.dog&&!mu&&!(R.queue&&!b.own&&b.pass&&b.pass.to===p)&&(Math.hypot(R.inp.jx,R.inp.jy)>.15||!rmAutoMove(p))){const m=Math.hypot(R.inp.jx,R.inp.jy);
       if(m>.15){const run=R.inp.dash||R.inp.hold>.35,fin=own&&m<.55&&!run;
         // 急加速：相手の近くでダッシュを始めた瞬間
         if(own&&run&&!p.wasRun){p.burstUntil=R.t+.6;rmFool(p,4.5,.3)}
@@ -9628,18 +9628,18 @@ function rmStep(dt){const R=RM,b=R.ball,stop=performance.now()<R.stopUntil;
   });
   // 選手どうしの押し合い
   for(let i=0;i<R.P.length;i++)for(let j=i+1;j<R.P.length;j++){const a=R.P[i],c=R.P[j];if(a.away||c.away)continue;const dx=c.x-a.x,dy=c.y-a.y,d=Math.hypot(dx,dy);if(d>0&&d<1.1){const o=(1.1-d)/2;a.x-=dx/d*o;a.y-=dy/d*o;c.x+=dx/d*o;c.y+=dy/d*o}}
-  R.P.forEach(p=>{if(!p.away){p.x=rmClamp(p.x,-2,RM_W+2);p.y=rmClamp(p.y,-2.5,RM_L+2.5)}});
+  R.P.forEach(p=>{if(!p.away){p.x=rmClamp(p.x,-2,RM_W+2);p.y=p.role==='GK'?rmClamp(p.y,.3,RM_L-.3):rmClamp(p.y,-2.5,RM_L+2.5)}});
   // インパクトの溜め（蹴るまでの時間）
   if(R.wind){const w=R.wind;if(b.own!==w.p)R.wind=null;else{w.p.vx*=.8;w.p.vy*=.8;if(R.t>=w.t){R.wind=null;w.fn()}}}
   // ボール
-  if(b.own){const o=b.own;b.curl=0;b.dip=0;b.cross=null;if(o.away){b.own=null}else{const m=Math.hypot(o.vx,o.vy);const fx=m>.5?o.vx/m:o.fx,fy=m>.5?o.vy/m:o.fy,off=o.isDash?1.2:o.fin?.5:.75;b.x+=(o.x+fx*off-b.x)*Math.min(1,dt*18);b.y+=(o.y+fy*off-b.y)*Math.min(1,dt*18);if(o.side===1&&b.y<.3)b.y=.3;if(o.side===0&&b.y>RM_L-.3)b.y=RM_L-.3;b.z=0;b.vx=o.vx;b.vy=o.vy;
+  if(b.own){const o=b.own;b.curl=0;b.dip=0;b.cross=null;if(o.away){b.own=null}else{const m=Math.hypot(o.vx,o.vy);const fm0=Math.hypot(o.fx,o.fy)||1,fx=m>.5?o.vx/m:o.fx/fm0,fy=m>.5?o.vy/m:o.fy/fm0,off=o.isDash?1.2:o.fin?.5:.75;b.x+=(o.x+fx*off-b.x)*Math.min(1,dt*18);b.y+=(o.y+fy*off-b.y)*Math.min(1,dt*18);if(o.side===1&&b.y<.3)b.y=.3;if(o.side===0&&b.y>RM_L-.3)b.y=RM_L-.3;b.z=0;b.vx=o.vx;b.vy=o.vy;
     // 相手に奪われる
-    if(!stop&&!((o.dtUntil||0)>R.t)&&!R.wind)for(const q of R.P){if(q.side===o.side||q.away||q.stun>R.t)continue;const d=rmD(q,b);if(d>=1.15)continue;
+    if(!stop&&!((o.dtUntil||0)>R.t))for(const q of R.P){if(q.side===o.side||q.away||q.stun>R.t)continue;const d=rmD(q,b);if(d>=1.15)continue;
       const behind=((q.y-o.y)*(o.side===0?-1:1))<=-.2;
       let pr=rmClamp(.5+(rmSt(q,'def')-rmSt(o,'tec'))/90+(rmSt(q,'phy')-rmSt(o,'phy'))/220-(o.side===0&&o===R.ctrl?.08:0),.08,.85)*dt*.62*(behind?.35:1);
       if(o.isDash)pr*=1.35;if(o.fin)pr*=rmClamp(1-(rmSt(o,'tec')-50)/160,.55,1);
       const osp=Math.hypot(o.vx,o.vy),fm=Math.hypot(o.fx,o.fy)||1;if(osp<3.2&&((q.x-o.x)*o.fx+(q.y-o.y)*o.fy)/fm<0)pr*=rmClamp(1-rmSt(o,'phy')/240,.4,.9);
-      if(q===R.ctrl&&mu)pr*=1.2;if((q.lagUntil||0)>R.t)pr*=.3;
+      if(q===R.ctrl&&mu)pr*=1.2;if(R.wind&&R.wind.p===o)pr*=1.8;if((q.lagUntil||0)>R.t)pr*=.3;
       if(Math.random()<pr){if(behind&&Math.random()<.3){rmFoul(q,o);return}rmLoose(o,(q.x-o.x)*-2,(q.y-o.y)*-2);b.own=q;b.last=q.side;o.stun=R.t+.5;q.kickCd=R.t+.3;break}}}}
   if(b.own&&(b.y<0||b.y>RM_L||b.x<0||b.x>RM_W)){const o=b.own;b.last=o.side;b.own=null;b.shot=null;rmLines();return}
   if(!b.own){if(!stop){b.x+=b.vx*dt;b.y+=b.vy*dt;b.z+=b.vz*dt;
@@ -9647,7 +9647,7 @@ function rmStep(dt){const R=RM,b=R.ball,stop=performance.now()<R.stopUntil;
       if(b.z>0)b.vz-=(9.8+(b.dip||0))*dt;if(b.z<=0){b.z=0;b.curl=0;b.dip=0;if(b.vz<-2)b.vz=-b.vz*.45;else b.vz=0;const f=Math.pow(.42,dt);b.vx*=f;b.vy*=f}else{const f=Math.pow(.92,dt);b.vx*=f;b.vy*=f}}
     const inField=b.y>=0&&b.y<=RM_L&&b.x>=0&&b.x<=RM_W;
     // ブロック：ブロック中の選手・壁・ゴール前のDFがシュートコースにいる
-    if(b.shot&&!stop&&inField){for(const p of R.P){if(p.side===b.shot.side||p.away||p.role==='GK')continue;const d=rmD(p,b);const act=(p.block||0)>R.t,wall=(p.wall||0)>R.t;if(d<(wall?1.05:act?1.5:.9)&&b.z<(wall?2.1:1.9)&&!(p.blkT>R.t)){p.blkT=R.t+.8;const pr=wall?.85:act?rmClamp(.55+(rmSt(p,'def')-60)/120,.3,.9):.22;if(Math.random()<pr){b.vx=-b.vx*.35+rmRnd(-4,4);b.vy=-b.vy*.35+rmRnd(-3,3);b.vz=rmRnd(1,4);b.curl=0;b.dip=0;b.shot=null;b.last=p.side;rmMsg(wall?'壁に当たった！':'ブロック！',800);break}}}}
+    if(b.shot&&!stop&&inField){for(const p of R.P){if(p.side===b.shot.side||p.away||p.role==='GK')continue;const d=rmD(p,b);const act=(p.block||0)>R.t,wall=(p.wall||0)>R.t;if(d<(wall?1.1:act?1.5:.9)&&b.z<(wall?2.35:1.9)&&!(p.blkT>R.t)){p.blkT=R.t+.8;const pr=wall?.85:act?rmClamp(.55+(rmSt(p,'def')-60)/120,.3,.9):.22;if(Math.random()<pr){b.vx=-b.vx*.35+rmRnd(-4,4);b.vy=-b.vy*.35+rmRnd(-3,3);b.vz=rmRnd(1,4);b.curl=0;b.dip=0;b.shot=null;b.last=p.side;rmMsg(wall?'壁に当たった！':'ブロック！',800);break}}}}
     if(b.pass&&b.pass.side!==0&&!stop){for(const p of R.P){if(p.side!==0||p.away||!(p.block>R.t))continue;if(rmD(p,b)<1.6&&b.z<1.6&&Math.random()<(b.pass.impact?.4:.7)){b.own=p;b.last=0;b.pass=null;rmMsg('カット！',700);break}}}
     // クロス：いちばん近い選手が競る（守備はヘディングでクリア、攻撃はヘディング・ボレー）
     if(b.cross&&!stop&&inField&&b.z>.45&&b.z<2.7){let best=null,bd=9;for(const p of R.P){if(p.away||p.dog||p.role==='GK'||(p.hdT||0)>R.t||(p.kickCd||0)>R.t)continue;const atk=p.side===b.cross.side,d=rmD(p,b);if(d>(atk?1.3:1.15)||(!atk&&b.z<1.2))continue;if(d<bd){bd=d;best=p}}
@@ -9682,7 +9682,7 @@ function rmLines(){const R=RM,b=R.ball;
       const gk=R.P.find(p=>p.side===side&&p.role==='GK'&&!p.away);let saved=false;
       if(b.shot&&b.shot.side!==side){
         if(side===0&&R.arm.save>0){R.arm.save--;saved=true;rmCutin(R.P.find(p=>p.side===0&&(p.oib||p.uhho||(p.sx||[]).some(k=>SX[k]&&SX[k].save)))||gk,'ここは通さない！')}
-        else if(gk){const reach=1.3+(rmSt(gk,'def')-50)/30,dx=Math.hypot(Math.abs(gk.x-b.x),Math.max(0,Math.abs(gk.y-gy)-1.8)),sp=Math.hypot(b.vx,b.vy);let pr=dx<reach?rmClamp(.92-(sp-18)*.03-(b.shot.sup===2?.7:b.shot.sup?.45:0),.05,.95):rmClamp(.25-(dx-reach)*.12,0,.25)*(b.shot.sup?.2:1);
+        else if(gk){const reach=1.3+(rmSt(gk,'def')-50)/30+(b.shot.how==='head'?.1:0),dx=Math.hypot(Math.abs(gk.x-b.x),Math.max(0,Math.abs(gk.y-gy)-1.8)),sp=Math.hypot(b.vx,b.vy);let pr=dx<reach?rmClamp(.92-(sp-18)*.03-(b.shot.sup===2?.7:b.shot.sup?.45:0),.05,.95):rmClamp(.25-(dx-reach)*.12,0,.25)*(b.shot.sup?.2:1);
           if(side===0)pr=pr*1.05;else pr=pr*(1.0+(R.L.lv-70)/200);saved=Math.random()<pr}}
       if(saved){R.P.forEach(p=>p.kickCd=0);if(Math.random()<.5&&gk){b.own=gk;b.vx=b.vy=b.vz=0;b.x=gk.x;b.y=gk.y+(side===0?-1:1);b.shot=null;R.pause=.6;rmMsg('セーブ！',900)}else{b.vx=rmRnd(-8,8);b.vy=(side===0?-1:1)*-rmRnd(-6,-3);b.y=gy+(side===0?-.5:.5);b.shot=null;rmMsg('はじいた！',800)}return}
       const sc=1-side;R.sc[sc]++;rmGoal(sc,b.shot&&b.shot.by);return}
@@ -9715,7 +9715,7 @@ function rmAI(p){const R=RM,b=R.ball,me=p.side,att=me===0?-1:1,oppGoal={x:RM_W/2
     if(R.inp.mu&&b.own&&b.own.side===1){const c=b.own,dx=RM_W/2-c.x,dy=RM_L-c.y,d=Math.hypot(dx,dy)||1,tx=c.x+dx/d*1.9+R.inp.jx*1.6,ty=c.y+dy/d*1.9+R.inp.jy*1.2;p.block=R.t+.25;return [tx,ty,Math.hypot(tx-p.x,ty-p.y)>4]}
     if(!b.own){const [ix,iy]=rmIntercept(p);return [ix,iy,true]}const c=b.own;return [c.x,c.y+1,true]}
   // GKがボールを持ったら早めに味方へ
-  if(b.own===p&&p.role==='GK'){if(!p.gkT||p.gkT<R.t-5)p.gkT=R.t;if(R.t-p.gkT>(me===0&&p===R.ctrl?3:.9)){const mates=R.P.filter(q=>q.side===me&&q!==p&&!q.away&&!q.dog);const open=mates.map(q=>({q,s:-Math.min(...R.P.filter(o=>o.side!==me&&!o.away).map(o=>rmD(o,q)))+rmD(q,p)*.02})).sort((a,c)=>a.s-c.s)[0];if(open){p.fx=open.q.x-p.x;p.fy=open.q.y-p.y;rmPass(p,false,open.q);p.gkT=0}}return [p.x,p.y,false]}
+  if(b.own===p&&p.role==='GK'){if(!p.gkT||p.gkT<R.t-5)p.gkT=R.t;if(R.t-p.gkT>(me===0&&p===R.ctrl?3:.9)){const mates=R.P.filter(q=>q.side===me&&q!==p&&!q.away&&!q.dog);const open=mates.map(q=>({q,s:-Math.min(...R.P.filter(o=>o.side!==me&&!o.away).map(o=>rmD(o,q)))+rmD(q,p)*.02})).sort((a,c)=>a.s-c.s)[0];if(open){const dd=rmD(open.q,p)||1;p.fx=(open.q.x-p.x)/dd;p.fy=(open.q.y-p.y)/dd;rmPass(p,false,open.q);p.gkT=0}}return [p.x,rmClamp(p.y,.8,RM_L-.8),false]}
   // ボールを持っている
   if(b.own===p){const dG=rmD(p,oppGoal),press=R.P.filter(q=>q.side!==me&&!q.away&&rmD(q,p)<3).length;
     if((p.decide||0)<R.t){p.decide=R.t+rmRnd(.35,.8)*(110-lv)/40;
@@ -9724,16 +9724,16 @@ function rmAI(p){const R=RM,b=R.ball,me=p.side,att=me===0?-1:1,oppGoal={x:RM_W/2
       if(p.role!=='GK'&&rmCrossZone(p)&&Math.random()<.45){rmCross(p,rmRnd(.4,.85),Math.random()<.3,false,{now:1});return [p.x,p.y,false]}
       if(press>0&&Math.random()<.6||Math.random()<.08){const mates=R.P.filter(q=>q.side===me&&q!==p&&!q.away&&!q.dog&&q.role!=='GK');
         const open=mates.map(q=>{const fw=(q.y-p.y)*att,opn=Math.min(...R.P.filter(o=>o.side!==me&&!o.away).map(o=>rmD(o,q)));return {q,s:fw*.55+Math.min(opn,8)*1.6-(rmD(q,p)>38?18:0)-(fw<-6?6:0)}}).sort((a,c)=>c.s-a.s)[0];
-        if(open){p.fx=open.q.x-p.x;p.fy=open.q.y-p.y;const d=rmD(open.q,p);rmPass(p,Math.random()<.25,open.q,rmClamp(d/45,.15,1),d<20);return [p.x,p.y,false]}}}
+        if(open){const d=rmD(open.q,p)||1;p.fx=(open.q.x-p.x)/d;p.fy=(open.q.y-p.y)/d;rmPass(p,Math.random()<.25,open.q,rmClamp(d/45,.15,1),d<20);return [p.x,p.y,false]}}}
     // ドリブル：ゴールへ、相手をよける
     let tx=oppGoal.x+(p.x-oppGoal.x)*.4,ty=p.y+att*8;const near=R.P.filter(q=>q.side!==me&&!q.away).sort((a,c)=>rmD(a,p)-rmD(c,p))[0];
     if(near&&rmD(near,p)<5){tx+=(p.x-near.x)*1.5}
-    if(near&&rmD(near,p)<2.8&&(p.ftCd||0)<R.t&&Math.random()<.035){const tec=rmSt(p,'tec'),ks=['bod','sci','dt','edg','dt','ela','rou','lf'];rmFeint(p,ks[Math.floor(Math.random()*(tec>85?8:tec>70?6:4))])}
+    if(near&&rmD(near,p)<2.8&&(p.ftCd||0)<R.t&&Math.random()<.035){const tec=rmSt(p,'tec'),ks=['bod','dt','bod','dt','ela','rou'];rmFeint(p,ks[Math.floor(Math.random()*(tec>85?6:tec>70?5:4))])}
     return [rmClamp(tx,3,RM_W-3),ty,dG>20]}
   // パスの受け手
   if(p.recv&&p.recv>R.t&&!b.own&&b.pass&&b.pass.to===p){const [ix,iy]=rmIntercept(p);return [ix,iy,true]}
   // GK
-  if(p.role==='GK'){if((p.rush||0)>R.t){if(b.own&&b.own.side!==me)return [b.own.x,b.own.y,true];const [ix,iy]=rmIntercept(p);return [ix,iy,true]}const gy=myGoal.y+att*1.6,bx=b.x;const t=[RM_W/2+(bx-RM_W/2)*.18,gy];if(!hasBall&&b.own&&rmD(b,myGoal)<16)return [b.x*.5+RM_W/4,myGoal.y+att*4,true];
+  if(p.role==='GK'){if((p.rush||0)>R.t&&!(b.own&&b.own.side===me)){if(b.own&&b.own.side!==me)return [rmClamp(b.own.x,1,RM_W-1),rmClamp(b.own.y,.8,RM_L-.8),true];const [ix,iy]=rmIntercept(p);return [ix,iy,true]}const gy=myGoal.y+att*1.6,bx=b.x;if(!b.own&&b.cross&&b.cross.side!==me){const lx=b.pass?b.pass.tx:b.x;return [rmClamp(RM_W/2+(lx-RM_W/2)*.3,RM_W/2-2.4,RM_W/2+2.4),gy,true]}const t=[RM_W/2+(bx-RM_W/2)*.18,gy];if(!hasBall&&b.own&&rmD(b,myGoal)<16)return [b.x*.5+RM_W/4,myGoal.y+att*4,true];
     if(!b.own&&rmD(b,myGoal)<14&&!b.shot)return [rmClamp(b.x,1,RM_W-1),rmClamp(b.y,.6,RM_L-.6),true];return [rmClamp(t[0],RM_W/2-3,RM_W/2+3),gy,false]}
   // 守備
   if(!hasBall){const carrier=b.own||b;const presser=R.P.filter(q=>q.side===me&&!q.away&&q.role!=='GK'&&!(me===0&&q===R.ctrl)).sort((a,c)=>rmD(a,carrier)-rmD(c,carrier));
@@ -9801,7 +9801,7 @@ ACT.rmGo=v=>{const [lv,len]=String(v).split(':').map(Number);rmStart(lv,len)};
 ACT.rmLen=v=>{G.rmLen=+v};
 function rmMenuHtml(){const len=G.rmLen||5,R0=M.rmRec||{w:0,d:0,l:0};
   return `<div class="kick">リアルマッチ<span class="r">${R0.w}勝${R0.d}分${R0.l}敗</span></div>
-  <p class="note">自分のスカッドを操作して戦うアクションモード。スマホを横にして遊ぶ3Dモード。操作はイーフトのクラシック操作と同じ：パス・スルー・フライ（クロス）・シュート・ダッシュ・フェイント（ダブルタッチ・エラシコ・ルーレットなど14種）、ワンツー、ループ／コントロール／インパクトシュート、ボレー・ヘディング、守備はマッチアップ・プレス・チームプレス・スライディング。ファウルでFK・PK、一時停止で攻撃レベル・フォーメーション・選手交代。MAOなどの特殊能力は試合中にランダムで自動発動する。</p>
+  <p class="note">自分のスカッドを操作して戦うアクションモード。スマホを横にして遊ぶ3Dモード。操作はイーフトのクラシック操作と同じ：パス・スルー・フライ（クロス）・シュート・ダッシュ・フェイント（ダブルタッチ・エラシコ・ルーレット・ボディフェイントのボタンをタップ）、ワンツー、ループ／コントロール／インパクトシュート、ボレー・ヘディング、守備はマッチアップ・プレス・チームプレス・スライディング。ファウルでFK・PK、一時停止で攻撃レベル・フォーメーション・選手交代。MAOなどの特殊能力は試合中にランダムで自動発動する。</p>
   <div class="seg c3" style="margin-bottom:8px">${RM_LEN.map(([m,n])=>`<button class="opt" aria-pressed="${len===m}" data-act="rmLen" data-v="${m}">${n}</button>`).join('')}</div>
   <div class="acts">${CPU_LV.map((L,i)=>`<button class="act rmact" data-act="rmGo" data-v="${i}:${len}"><b>${esc(L.n)}</b><span>強さ ${L.lv}</span><em>勝ち${(L.rw[0]*3).toLocaleString('ja-JP')}・引分${L.rw[1]*3}・負け${L.rw[2]*3}コイン</em></button>`).join('')}</div>`}
 {const _sm=spMenuHtml;spMenuHtml=function(){return rmMenuHtml()+_sm()}}
@@ -9825,7 +9825,7 @@ const RM_FT={
   sharp:{n:'シャープタッチ',sharp:1,t:.3,cd:.6},
   kick:{n:'キックフェイント',lat:3,fw:0,t:.4,st:.65,diff:-6,fake:1,kick:1},
 };
-const RM_FTL=['auto','dt','sci','bod','stp','ela','rou','lf','dro','drc','edg','hl','cha','sharp','kick'];
+const RM_FTL=['dt','ela','rou','bod'];
 
 /* ----- 場面 ----- */
 const rmCrossZone=p=>!!p&&(p.side===0?p.y<38:p.y>RM_L-38)&&(p.x<17||p.x>RM_W-17);
@@ -9844,10 +9844,7 @@ function rmFool(p,rad,dur,stopType){const R=RM,tec=rmSt(p,'tec');R.P.forEach(q=>
   q.lagUntil=Math.max(q.lagUntil||0,R.t+dur*rmClamp((tec-rmSt(q,'def')+40)/55,.35,1.4))})}
 
 /* ----- フェイント ----- */
-function rmFeintAuto(p){const R=RM,opp=R.P.filter(q=>q.side!==p.side&&!q.away&&!q.dog);let near=null,nd=99;opp.forEach(q=>{if(q.role==='GK')return;const d=rmD(q,p);if(d<nd){nd=d;near=q}});
-  const gk=opp.find(q=>q.role==='GK'),gy=p.side===0?0:RM_L;if(gk&&rmD(gk,p)<5&&Math.abs(gk.y-gy)>4)return 'cha';
-  if(!near||nd>4.5)return 'sharp';const fm=Math.hypot(p.fx,p.fy)||1,rel=((near.x-p.x)*p.fx+(near.y-p.y)*p.fy)/fm/nd;if(rel<.3)return 'edg';
-  const tec=rmSt(p,'tec'),L=tec>90?['ela','dt','rou']:tec>75?['dt','rou','sci']:['bod','sci','dt'];return L[Math.floor(Math.random()*L.length)]}
+function rmFeintAuto(p){const tec=rmSt(p,'tec'),L=tec>90?['ela','dt','rou']:tec>75?['dt','rou','bod']:['bod','dt'];return L[Math.floor(Math.random()*L.length)]}
 function rmFeint(p,k,o){const R=RM;if(!R||R.pause>0||R.ended||R.setp)return false;const b=R.ball;o=o||{};
   if(!p||b.own!==p||(p.ftCd||0)>R.t||p.stun>R.t)return false;
   if(k==='auto')k=rmFeintAuto(p);const F=RM_FT[k];if(!F)return false;
@@ -9868,12 +9865,8 @@ function rmFeint(p,k,o){const R=RM;if(!R||R.pause>0||R.ended||R.setp)return fals
   if(ok){p.dtUntil=R.t+F.t;if(near)fool(F.st,F.fake?3:1.5);if(F.kick){const gk=opp.find(q=>q.role==='GK');if(gk&&rmD(gk,p)<20)gk.stun=Math.max(gk.stun,R.t+.5)}if(show)rmMsg(pre+F.n+'！',800)}
   else{p.dtUntil=0;if(near&&nd<2.4&&Math.random()<.55){b.own=near;b.last=near.side;near.kickCd=R.t+.2;p.stun=R.t+.4}else rmLoose(p,p.vx*.6,p.vy*.6);if(show)rmMsg(pre+F.n+'…失敗',800)}
   return ok}
-function rmFeintPanel(open){const R=RM,el=document.getElementById('rmft');if(!el||!R)return;
-  if(!open){el.hidden=true;R.ftOpen=false;el.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));return}
-  if(rmCtx()!=='att'||R.setp){rmMsg('ボールを持っているときに使える',800);return}
-  if(!el.dataset.built){el.innerHTML=RM_FTL.map(k=>`<button data-ft="${k}" class="${k==='auto'?'au':''}">${RM_FT[k].n}</button>`).join('');el.dataset.built=1;el.querySelectorAll('button').forEach(bt=>rmTap(bt,()=>rmFeintGo(bt.dataset.ft)))}
-  el.hidden=false;R.ftOpen=true;R.ftOpenT=performance.now()}
-function rmFeintGo(k){const R=RM;if(!R)return;rmFeintPanel(false);if(R.ctrl)rmFeint(R.ctrl,k)}
+function rmFeintPanel(){}
+function rmFeintGo(k){if(RM&&RM.ctrl)rmFeint(RM.ctrl,k)}
 
 /* ----- カーブ：曲がる分だけ外側を狙う ----- */
 function rmCurlAim(p,tx,ty,sp,curl,ref){const d=Math.max(1,Math.hypot(tx-p.x,ty-p.y)),t=d/Math.max(4,sp),ux=(tx-p.x)/d,uy=(ty-p.y)/d,nx=-uy,ny=ux,disp=.5*curl*t*t;
@@ -9923,7 +9916,7 @@ function rmFoul(f,v){const R=RM;if(R.setp||R.pause>0)return;const side=v.side,gy
   rmRestart(side,rmClamp(v.x,1,RM_W-1),rmClamp(v.y,1,RM_L-1),`ファウル！ フリーキック（${f.n.split(' ').pop()}）`,v)}
 function rmSetPiece(type,side,x,y){const R=RM,b=R.ball,gy=side===0?0:RM_L,att=side===0?-1:1,G={x:RM_W/2,y:gy};
   const A=R.P.filter(q=>q.side===side&&!q.away&&!q.dog),D=R.P.filter(q=>q.side!==side&&!q.away&&!q.dog),field=A.filter(q=>q.role!=='GK'),gkD=D.find(q=>q.role==='GK');
-  if(!field.length)return;
+  if(!field.length){const q=A[0]||R.P.find(o=>o.side===side);if(q)rmRestart(side,rmClamp(x==null?RM_W/2:x,1,RM_W-1),rmClamp(y==null?RM_L/2:y,1,RM_L-1),'フリーキック',q);return}
   let k;if(type==='pk'){x=RM_W/2;y=gy-att*11;k=field.slice().sort((a,c)=>rmSt(c,'sho')-rmSt(a,'sho'))[0]}
   else if(type==='fk')k=field.slice().sort((a,c)=>rmSt(c,'sho')+rmSt(c,'tec')*.3-rmSt(a,'sho')-rmSt(a,'tec')*.3)[0];
   else k=field.slice().sort((a,c)=>rmSt(c,'pas')-rmSt(a,'pas'))[0];
@@ -9987,7 +9980,7 @@ function rmFormation(key){const R=RM,F=FORMS[key];if(!F)return;R.form=key;
   rmMsg(`フォーメーション ${F.n}`,1100)}
 function rmBench(){const R=RM;return (M.squad.bench||[]).map(id=>cardById(id)).filter(c=>c&&!isMgr(c)&&!(typeof isLegSup==='function'&&isLegSup(c))&&!(c.gikkuri>0)&&!R.P.some(q=>q.card&&q.card.id===c.id)&&!R.outIds.has(c.id))}
 function rmSub(p,c){const R=RM;if(!p||!c||R.subs>=5)return;const st={};for(const k of KEYS)st[k]=Math.min(150,effSt(c,k));
-  R.outIds.add(p.card?p.card.id:'f:'+p.n);const old=p.n;
+  R.outIds.add(p.card?p.card.id:'f:'+p.n);const old=p.n;R.skills=R.skills.filter(x=>x.who!==p);R.auto=R.auto.filter(x=>x.s.who!==p);if(R.ball.own===p&&R.wind)R.wind=null;
   const keep=['side','i','hx','hy','slot','role','x','y','vx','vy','fx','fy','num'];Object.keys(p).forEach(k=>{if(!keep.includes(k))delete p[k]});
   Object.assign(p,{n:c.name,r:Math.round(cardOvr(c,p.role)*fitMul(c.pos,p.role)),spd:st.spd,tec:st.tec,sho:st.sho,pas:st.pas,phy:st.phy,def:st.def,card:c,
     sta:typeof cardSta==='function'?cardSta(c):100,stun:0,buf:[],away:0,mao:c.special==='mao',emp:c.special==='empire',kpass:c.special==='kpass',kama:c.special==='renkei',oib:c.special==='oibore'&&p.role==='GK',uhho:c.special==='uhho',tabako:c.special==='tabako',doc:c.special==='doctor',santa:c.special==='santa',sx:c.sx&&c.sx.length?c.sx:null});
@@ -10014,9 +10007,8 @@ const RM_HELP=`<b>移動</b>：左側をドラッグ。ふつうは歩き（通�
 ワンツー：パスを出した直後（ボールが飛んでいる間）にスルー→出した選手が前へ走り、受けた選手がダイレクトで返す／パス＆ゴー：パスを出した直後にダッシュをポンと押す→出した選手が前へ走る<br>
 <b>シュート</b>：長押しでパワー。引っ張って離す向きで種類が変わる：上＝ループ、横＝コントロール（カーブでコースを狙う）、下＝グラウンダー。押し続けるとインパクトシュート（強いけど蹴るまで時間がかかる）<br>
 ワンタッチ・ボレー・ヘディング：味方のパスやクロスが飛んでいる間にシュート（パス）を押しておくと、届いた瞬間にダイレクトで蹴る。浮いていればボレー、高ければヘディング<br>
-キックフェイント：シュートを溜めている間にパスを押す<br>
-<b>フェイント</b>：フェイントボタンを押すとリストが出る（その間スロー）。指をすべらせて離すか、タップで選ぶ。ダブルタッチ・シザーズ・ボディフェイント・ステップオーバー・エラシコ・ルーレット・Lフェイント・ドローオープン・ドロークローズ・エッジターン・ヒールリフト・シャペウ・シャープタッチ・キックフェイント・おまかせ。技術が高いほど成功しやすく、相手が反応した瞬間に逆へ抜ける<br>
-ジェスチャー：進む方向にスティックを倒しながら、ボタン以外の右側を上下にフリック＝ダブルタッチ、右にフリック＝シャープタッチ<br>
+<b>フェイント</b>：ボールを持つとボタンの上に「ダブルタッチ・エラシコ・ルーレット・ボディフェイント」が出る。タップするとすぐ発動。技術が高いほど成功しやすく、相手が反応した瞬間に逆へ抜ける。進む方向にスティックを倒しながら、ボタン以外の右側を上下にフリックしてもダブルタッチ<br>
+
 自陣ではシュートボタンがクリア（大きく蹴り出す）<br>
 <b>守備</b>：ブロック（シュート）＝近ければ奪いに行き、横に並んでいればショルダーチャージ、コースを体で止める／引っ張って離すとスライディング（後ろからはファウルになりやすい）<br>
 マッチアップ（スルー長押し）＝相手とゴールの間に立って進路を塞ぐ／プレス（ダッシュだけ押す）＝ボールに寄せる／チームプレス（フライ長押し）＝味方2人も寄せる／切替（パス）＝スティックの方向の味方へ、何も倒していなければボールに近い味方へ<br>
@@ -10024,7 +10016,7 @@ GK飛び出し：相手がゴール前に来るとフライボタンが「GK飛�
 <b>セットプレー</b>：ファウルでフリーキック、ペナルティエリア内ならPK。直接FKはスティックでコース・ゲージで高さ。コーナーはクロスかショートコーナー。相手のPKはスティックの上下でGKが飛ぶ方向を決める<br>
 <b>戦術</b>：一時停止（II）で攻撃レベル（1〜5）・フォーメーション・選手交代（5回まで）<br>
 特殊能力は試合中にランダムで自動発動<br>
-パソコン：WASD移動・J パス・L スルー・K シュート・U フライ・Shift ダッシュ・F フェイント（おまかせ）・Q／E ダブルタッチ・R シャープタッチ（Spaceを押しながらでグラウンダー）`;
+パソコン：WASD移動・J パス・L スルー・K シュート・U フライ・Shift ダッシュ・1 ダブルタッチ・2 エラシコ・3 ルーレット・4 ボディフェイント・Q／E ダブルタッチ（Spaceを押しながらでグラウンダー）`;
 
 /* ========== リアルマッチの3D描画（中継カメラ・人の形をした選手・スタジアム） ========== */
 const R3={crowd:null,noise:null,looks:new WeakMap(),faces:new Map()};
