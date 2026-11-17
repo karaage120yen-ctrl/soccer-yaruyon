@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-093700';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-094021';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -438,7 +438,7 @@ nav.tabs button .dot{position:absolute;top:9px;right:22%;width:7px;height:7px;bo
 .slot.emp{border-color:var(--gold);box-shadow:0 0 12px rgba(205,167,94,.35)}
 .slot.emp b{color:var(--gold)}
 
-.bench{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.bench{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .bslot{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;line-height:1.2;cursor:pointer;min-width:0}
 .bslot .sr{font-family:var(--num);font-size:10px;color:var(--accent);letter-spacing:.12em}
 .bslot b{font-size:18px}
@@ -763,6 +763,8 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .mini b.sup2{color:var(--up)}
 .autospd{position:fixed;right:98px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;height:42px;padding:0 10px;border-radius:21px;border:1.5px solid var(--gold);background:rgba(16,16,16,.92);color:var(--gold);font:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.45)}
 .autospd b{font-size:14px;line-height:1.1}.autospd span{font-size:9px;opacity:.75}.autospd.on{background:rgba(215,180,74,.22)}
+.sqedit{background:var(--surface);border:1px solid var(--gold);border-radius:12px;padding:8px 12px 10px;margin-top:10px}
+.mvrow{display:grid;grid-template-columns:repeat(4,44px) 1fr;gap:6px;margin-top:8px}.mvrow .opt{padding:8px 0}.mvrow .opt.on{background:var(--gold);color:#1a1408}
 
 </style>
 </head>
@@ -3740,11 +3742,11 @@ const EMP_SKILL={n:'シャンチー帝国',q:'ここから先は一歩も通さ�
 const CAP_SKILL={n:'キャプテンしー',q:'キャプテンとして絶対に俺が守るんだ！アッセンブル！！',d:'スタメンにいると、味方全員の能力＋4'};
 
 function metaDefault(){return {v:1,t:0,coins:1000,mats:Object.fromEntries(MATK.map(k=>[k,0])),roster:[],mgrs:[],
- squad:{form:'433',slots:Array(11).fill(null),bench:Array(5).fill(null),maoSub:true,mgr:null,name:'マイイレブン'},pulls:0,ichHits:0,freeDay:'',hist:[],claimed:{},rec:{w:0,d:0,l:0}}}
+ squad:{form:'433',slots:Array(11).fill(null),bench:Array(12).fill(null),maoSub:true,mgr:null,name:'マイイレブン'},pulls:0,ichHits:0,freeDay:'',hist:[],claimed:{},rec:{w:0,d:0,l:0}}}
 let M=metaDefault();
 function metaFix(m){const d=metaDefault();m=Object.assign(d,m||{});m.mats=Object.assign(d.mats,m.mats||{});m.squad=Object.assign(metaDefault().squad,m.squad||{});
  if(!Array.isArray(m.squad.slots))m.squad.slots=Array(11).fill(null);while(m.squad.slots.length<11)m.squad.slots.push(null);m.squad.slots=m.squad.slots.slice(0,11);
- if(!Array.isArray(m.squad.bench))m.squad.bench=Array(5).fill(null);while(m.squad.bench.length<5)m.squad.bench.push(null);m.squad.bench=m.squad.bench.slice(0,5);if(m.squad.maoSub===undefined)m.squad.maoSub=true;
+ if(!Array.isArray(m.squad.bench))m.squad.bench=Array(12).fill(null);while(m.squad.bench.length<12)m.squad.bench.push(null);m.squad.bench=m.squad.bench.slice(0,12);if(m.squad.form==='custom'&&!(Array.isArray(m.squad.custom)&&m.squad.custom.length===11&&m.squad.custom.filter(s=>s[0]==='GK').length===1))m.squad.form='433';if(m.squad.maoSub===undefined)m.squad.maoSub=true;
  (m.roster||[]).forEach(c=>{if(c&&c.id==='doctor'){c.pos='FW';c.pos2=['MF','GK']}if(c&&c.from==='育成'&&!c.sx&&(c.skills||[]).includes('神の子'))c.sx=['messi'];if(c&&c.id==='inkansu'){c.special='kpass';c.style=INKANSU.style;c.st=Object.assign({},c.st||{},{phy:78,pas:80})}if(c&&c.id==='lg_kame')c.name='アームストロングかめを';if(c&&c.gikkuri)c.gikkuri=0});
  const lgId=id=>typeof id==='string'&&id.startsWith('lg_');m.squad.slots=m.squad.slots.map(id=>lgId(id)?null:id);m.squad.bench=m.squad.bench.map(id=>lgId(id)?null:id);return m}
 function metaLoadLocal(){try{const d=JSON.parse(localStorage.getItem(META_KEY)||'null');if(d)M=metaFix(d)}catch(e){}_metaLast=JSON.stringify(Object.assign({},M,{t:0}))}
@@ -5427,16 +5429,18 @@ H.squad=()=>{
   const seg=`<div class="seg c4 subnav">${[['form','編成'],['enh','強化'],['list','一覧'],['trade','交換']].map(([k,n])=>`<button class="opt" aria-pressed="${t===k}" data-act="sqTab" data-v="${k}">${n}</button>`).join('')}</div>`;
   if(t==='enh')return seg+enhHtml();
   if(t==='trade')return seg+tradeHtml();
-  if(t==='list')return seg+`<div class="kick">マイ選手<span class="r">${M.roster.length}人</span></div>${M.roster.length?M.roster.map(c=>cardTile(c)).join(''):'<p class="note">まだいない。</p>'}<div class="kick">マイ監督<span class="r">${M.mgrs.length}人</span></div>${M.mgrs.length?M.mgrs.map(c=>cardTile(c)).join(''):'<p class="note">まだいない。</p>'}`;
+  if(t==='list'&&typeof rcHtml==='function'&&G.rc&&G.rc.on)return seg+rcHtml();
+  if(t==='list')return seg+`${typeof rcHtml==='function'?rcHtml():''}<div class="kick">マイ選手<span class="r">${M.roster.length}人</span></div>${M.roster.length?M.roster.map(c=>cardTile(c)).join(''):'<p class="note">まだいない。</p>'}<div class="kick">マイ監督<span class="r">${M.mgrs.length}人</span></div>${M.mgrs.length?M.mgrs.map(c=>cardTile(c)).join(''):'<p class="note">まだいない。</p>'}`;
   const mg=T.mg;
   return `${seg}
   <div class="label">チーム名</div><div class="field one"><input id="tname" aria-label="チーム名" value="${esc(M.squad.name)}" maxlength="14"></div>
-  <div class="label">フォーメーション</div><div class="seg c4">${Object.entries(FORMS).map(([k,F])=>`<button class="opt" aria-pressed="${M.squad.form===k}" data-act="sqForm" data-v="${k}">${F.n}</button>`).join('')}</div>
+  <div class="label">フォーメーション</div><div class="seg c4">${Object.entries(FORMS).map(([k,F])=>`<button class="opt" aria-pressed="${M.squad.form===k}" data-act="sqForm" data-v="${k}">${F.n}</button>`).join('')}</div>${typeof customFormHtml==='function'?customFormHtml():''}
   ${typeof autoBtns==='function'?autoBtns():''}
   ${typeof chemHtml==='function'?chemHtml():''}
   <div class="label">戦術<span class="r">試合の最初の戦術（CPU戦は試合中に変えられる）</span></div><div class="seg c3">${Object.entries(TACS).map(([k,t])=>`<button class="opt" aria-pressed="${(M.squad.tac||'bal')===k}" data-act="sqTac" data-v="${k}">${t.n}<span class="d">${t.d}</span></button>`).join('')}</div>
   ${pitchHtml(T)}
-  <div class="label">ベンチ（交代要員・5人まで）</div>
+  ${typeof slotEditHtml==='function'?slotEditHtml():''}
+  <div class="label">ベンチ（交代要員・12人まで）</div>
   <div class="bench">${M.squad.bench.map((id,i)=>{const c=cardById(id);return `<button class="bslot ${c?'':'empty'} ${c&&c.special?'emp':''}" aria-pressed="${G.sq.slot==='b'+i}" data-act="sqSlot" data-v="b${i}"><span class="sr">${c?c.pos:'空き'}</span><b class="num">${c?cardOvr(c):'—'}</b><span class="sn">${c?esc(c.name.split(' ').pop().replace(/^・/,'')):'ベンチ'}</span></button>`}).join('')}</div>
   <button class="mgslot" aria-pressed="${G.sq.slot==='mgr'}" data-act="sqSlot" data-v="mgr"><span class="sr">監督</span><b>${mg?esc(mg.n):'未設定（代行監督）'}</b>${mg?`<span class="sub">${MKEYS.map(k=>MLBL[k]+mg.st[k]).join(' ')}</span>`:''}</button>
   ${T.hasMao?`<div class="toast"><b>${MAO_SKILL.n}</b>：試合中1回の決定機でシュート＋25、発動の瞬間に本人の全能力−10。<div class="seg c2" style="margin-top:8px"><button class="opt" aria-pressed="${M.squad.maoSub!==false}" data-act="sqMaoSub" data-v="1">発動後ベンチに下げる<span class="d">交代：${esc(T.sub?T.sub.n:'控え')}（${T.sub?Math.round(T.sub.r):'—'}）・チーム全能力＋2</span></button><button class="opt" aria-pressed="${M.squad.maoSub===false}" data-act="sqMaoSub" data-v="0">出し続ける<span class="d">全能力−10のまま最後まで</span></button></div></div>`:''}
@@ -5444,7 +5448,7 @@ H.squad=()=>{
   ${T.hasCap?`<div class="toast"><b>${CAP_SKILL.n}発動中。</b>「${esc(CAP_SKILL.q)}」味方全員の能力＋4。</div>`:''}
   <div class="kick">チーム力<span class="r">マイ選手 ${T.real}/11人</span></div>
   <div class="statgrid"><div><b>${Math.round(T.atk)}</b><span>攻撃</span></div><div><b>${Math.round(T.mid)}</b><span>中盤</span></div><div><b>${Math.round(T.def)}</b><span>守備</span></div><div><b>${T.tot}</b><span>総合</span></div></div>
-  ${G.sq.slot!=null?pickerHtml():'<p class="note" style="margin-top:12px">ピッチ上の枠をタップすると、入れる選手を選べる。</p>'}
+  ${G.sq.slot!=null?pickerHtml():'<p class="note" style="margin-top:12px">ピッチ上の枠をタップすると、入れる選手を選べる。選手をタップしてから別の枠（ベンチも）をタップすると、その場で入れ替わる。</p>'}
   <div class="stack" style="margin-top:18px"><button class="btn red" data-act="go" data-v="battle">このスカッドで対戦へ</button></div>`;
 };
 function enhHtml(){
@@ -6282,6 +6286,8 @@ function rulesHtml(){
     '実況：試合中、ゴールや特殊能力の発動に合わせて実況が入る',
     '超レジェンド：育成でまれに15人の超レジェンドが現れる（ふつうのレジェンドの1/10の確率）。「教わる」に成功すると特殊能力がつき、引退してマイ選手になったあとも試合で発動する（ガチャキャラより少し弱め）。リオネル・メツシに勝つと「神の子」に加えて「アルゼンチンの神の子」の能力と称号',
     '結婚相手：日本だけでなく世界各国の人と出会う。出会いのときに国・職業・月収がわかる（暮らしタブの家族にも表示）。まれに（5%）トランス女性・トランス男性のパートナーとも出会えて、結婚もできる。その相手と最後まで添い遂げると、引退時に全能力+5と特殊能力「LGBTQに配慮した人」（試合中1回、自分の全能力+5・自分以外が3秒止まってフリーで決定機）',
+    '編成：ベンチは12人まで。選手の枠をタップしてから別の枠（ベンチも）をタップすると入れ替わる。フォーメーションの「カスタム」では、枠ごとにポジション（GK・DF・MF・FW）と位置を自分で決められる（GKは1人）',
+    'いらない選手：スカッドの「一覧」の「いらない選手を素材に変える」で、10人ごとに育成素材を全種類100個ずつに変えられる（スタメン・ベンチの選手は対象外）',
     'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる。左の「×1」ボタンで速さを1・2・4・8倍に切り替えられる（育成と試合の両方）',
     '体力ゲージ：選手は対戦や試合のたびに体力が減る（フィジカルが高いほど減りにくい）。1時間で12ずつ回復。体力60未満だと能力が下がり、試合中に体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
@@ -8105,8 +8111,8 @@ function autoPlan(form){
   // 3) ベンチ：残りから総合力の高い順（GKの控えを1人は入れる）
   const rest=pool.filter(c=>!slots.includes(c.id)).sort((a,b)=>cardOvr(b)-cardOvr(a));
   const bench=[];const gk=rest.find(c=>c.pos==='GK');if(gk)bench.push(gk.id);
-  for(const c of rest){if(bench.length>=5)break;if(!bench.includes(c.id))bench.push(c.id)}
-  while(bench.length<5)bench.push(null);
+  for(const c of rest){if(bench.length>=12)break;if(!bench.includes(c.id))bench.push(c.id)}
+  while(bench.length<12)bench.push(null);
   const mg=M.mgrs.slice().sort((a,b)=>mgrOvr(b)-mgrOvr(a))[0];
   return {form,slots,bench,mgr:mg?mg.id:M.squad.mgr,tot:Math.round(best/3*10)/10};
 }
@@ -8725,6 +8731,53 @@ const lgbtMarried=p=>{const P=p&&p.fam&&p.fam.partner;return !!(P&&P.married&&P.
 /* ----- 特殊能力「LGBTQに配慮した人」 ----- */
 SX.lgbtq={n:'LGBTQに配慮した人',d:'試合中に一度だけランダムに発動。自分の全能力+5、自分以外の全員が3秒止まる（その間にフリーで決定機。GKなら相手の決定機を1回止める）'};
 SKILLS.sx_lgbtq={n:SX.lgbtq.n,d:SX.lgbtq.d};
+
+/* ========== 編成：タップで入れ替え・カスタム布陣（位置とポジションを自分で決める） ========== */
+const BENCH_N=12;
+Object.defineProperty(FORMS,'custom',{enumerable:false,configurable:true,get(){const s=typeof M!=='undefined'&&M&&M.squad&&Array.isArray(M.squad.custom)&&M.squad.custom.length===11?M.squad.custom:FORMS['433'].s;return {n:'カスタム',s}}});
+function sqRef(k){const sq=M.squad;if(typeof k==='string'&&k[0]==='b')return [sq.bench,+k.slice(1)];return [sq.slots,+k]}
+function sqSwap(a,b){const [A,i]=sqRef(a),[B,j]=sqRef(b);const t=A[i];A[i]=B[j]===undefined?null:B[j];B[j]=t===undefined?null:t}
+{const _ss=ACT.sqSlot;ACT.sqSlot=v=>{syncInputs();const i=v==='mgr'||String(v)[0]==='b'?v:+v,cur=G.sq.slot;
+  if(cur!=null&&cur!=='mgr'&&i!=='mgr'&&cur!==i){const [A,x]=sqRef(cur),[B,y]=sqRef(i);if(A[x]||B[y]){sqSwap(cur,i);G.sq.slot=null;G.sq.place=false;G.toastMsg='入れ替えた';setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},1200);return}}
+  G.sq.place=false;G.sq.slot=cur===i?null:i}}
+ACT.sqCustom=()=>{syncInputs();const sq=M.squad;if(!Array.isArray(sq.custom)||sq.custom.length!==11){const F=FORMS[sq.form]||FORMS['433'];sq.custom=F.s.map(x=>x.slice())}sq.form='custom';G.sq.slot=null};
+ACT.sqCustomReset=()=>{const F=FORMS['433'];M.squad.custom=F.s.map(x=>x.slice())};
+ACT.sqCustomFrom=v=>{const F=FORMS[v];if(F&&v!=='custom'){M.squad.custom=F.s.map(x=>x.slice());M.squad.form='custom'}};
+ACT.sqRole=v=>{const i=G.sq.slot,C=M.squad.custom;if(M.squad.form!=='custom'||typeof i!=='number'||!C||!['GK','DF','MF','FW'].includes(v))return;
+  if(C[i][0]==='GK'&&v!=='GK'){G.toastMsg='GKは1人必要。ほかの枠をGKにすると、ここは自動でDFになる';setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},2500);return}
+  if(v==='GK')C.forEach((s,j)=>{if(j!==i&&s[0]==='GK')s[0]='DF'});C[i][0]=v};
+ACT.sqMove=v=>{const i=G.sq.slot,C=M.squad.custom;if(M.squad.form!=='custom'||typeof i!=='number'||!C)return;const d={u:[0,-4],d:[0,4],l:[-4,0],r:[4,0]}[v];if(!d)return;
+  C[i][1]=clamp(C[i][1]+d[0],6,94);C[i][2]=clamp(C[i][2]+d[1],8,92)};
+ACT.sqPlace=()=>{G.sq.place=!G.sq.place};
+if(typeof document!=='undefined')document.addEventListener('click',e=>{if(!G.sq||!G.sq.place||M.squad.form!=='custom')return;const pt=e.target.closest('.pitch');if(!pt||e.target.closest('.slot'))return;
+  const i=G.sq.slot;if(typeof i!=='number')return;const r=pt.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*100,y=(e.clientY-r.top)/r.height*100;
+  M.squad.custom[i][1]=Math.round(clamp(x,6,94));M.squad.custom[i][2]=Math.round(clamp(y,8,92));G.sq.place=false;try{metaSave();render()}catch(err){}});
+function customFormHtml(){const cus=M.squad.form==='custom';
+  return `<div class="seg c2" style="margin-top:6px"><button class="opt" aria-pressed="${cus}" data-act="sqCustom">カスタム<span class="d">位置とポジションを自分で決める</span></button>${cus?`<button class="opt" data-act="sqCustomReset">4-3-3に戻す<span class="d">カスタムの形をリセット</span></button>`:`<button class="opt" data-act="sqCustomFrom" data-v="${M.squad.form}">今の形をもとに作る<span class="d">${esc((FORMS[M.squad.form]||{}).n||'')}をコピー</span></button>`}</div>`}
+function slotEditHtml(){const i=G.sq.slot,cus=M.squad.form==='custom';
+  if(typeof i!=='number'||!cus)return '';const s=M.squad.custom[i];
+  return `<div class="sqedit"><div class="label">この枠の設定（カスタム）</div>
+  <div class="seg c4">${['GK','DF','MF','FW'].map(r=>`<button class="opt" aria-pressed="${s[0]===r}" data-act="sqRole" data-v="${r}">${r}</button>`).join('')}</div>
+  <div class="mvrow"><button class="opt" data-act="sqMove" data-v="l">←</button><button class="opt" data-act="sqMove" data-v="u">↑</button><button class="opt" data-act="sqMove" data-v="d">↓</button><button class="opt" data-act="sqMove" data-v="r">→</button>
+  <button class="opt ${G.sq.place?'on':''}" data-act="sqPlace">${G.sq.place?'ピッチをタップ…':'タップで置く'}</button></div>
+  <p class="sub">ポジションを選ぶと、その枠の役割が変わる。矢印で少しずつ動かすか、「タップで置く」を押してからピッチの好きな場所をタップ。ほかの枠を設定するときは、この枠をもう一度タップして選択を外してから（そのまま別の枠をタップすると選手が入れ替わる）。</p></div>`}
+
+/* ========== いらない選手を素材に変える（10人 → 全素材100個ずつ） ========== */
+const RC_N=10,RC_Q=100;
+G.rc=G.rc||{on:false,sel:[]};
+const rcOk=c=>c&&!isMgr(c)&&!M.squad.slots.includes(c.id)&&!M.squad.bench.includes(c.id);
+ACT.rcOpen=()=>{G.rc.on=!G.rc.on;G.rc.sel=[]};
+ACT.rcPick=v=>{const c=cardById(v);if(!rcOk(c))return;const s=G.rc.sel,i=s.indexOf(v);if(i>=0)s.splice(i,1);else s.push(v)};
+ACT.rcGo=()=>{const s=G.rc.sel.filter(id=>rcOk(cardById(id)));const n=Math.floor(s.length/RC_N)*RC_N;if(!n)return;const use=s.slice(0,n),k=n/RC_N;
+  M.roster=M.roster.filter(c=>!use.includes(c.id));MATK.forEach(m=>M.mats[m]=(M.mats[m]||0)+RC_Q*k);G.rc.sel=[];G.rc.on=false;metaSave();
+  G.toastMsg=`${n}人を素材に変えた：育成素材${MATK.length}種類を${RC_Q*k}個ずつ獲得`;setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},4000)};
+function rcHtml(){
+  if(!G.rc.on)return `<div class="stack" style="margin:4px 0 10px"><button class="btn ghost" data-act="rcOpen">いらない選手を素材に変える（${RC_N}人で全素材${RC_Q}個ずつ）</button></div>`;
+  const L=M.roster.filter(rcOk).sort((a,b)=>cardOvr(a)-cardOvr(b)),n=G.rc.sel.length,k=Math.floor(n/RC_N);
+  return `<div class="kick">素材に変える選手を選ぶ<span class="r">${n}人選択中</span></div>
+  <p class="note">${RC_N}人ごとに、育成素材${MATK.length}種類を${RC_Q}個ずつもらえる。スタメンとベンチの選手は選べない。変えた選手は元に戻せない。</p>
+  ${L.length?`<div class="plist">${L.map(c=>`<button class="prow" aria-pressed="${G.rc.sel.includes(c.id)}" data-act="rcPick" data-v="${c.id}"><span class="po">${c.pos}</span><b>${esc(c.name)}</b><span class="sub">${esc(c.from||'')}${c.special||c.legend?'・特別な選手':''}</span><span class="num">${cardOvr(c)}</span></button>`).join('')}</div>`:'<p class="note">変えられる選手がいない（スタメン・ベンチ以外の選手が対象）。</p>'}
+  <div class="stack" style="margin-top:10px"><button class="btn red" data-act="rcGo" ${k?'':'disabled'}>${k?`${k*RC_N}人を素材に変える（全素材+${k*RC_Q}個ずつ）`:`あと${RC_N-n%RC_N}人選んでね`}</button><button class="btn ghost" data-act="rcOpen">やめる</button></div>`}
 
 /* ========== スカッドの表示：スキルで上がった状態の能力（試合の途中で上がるものは含めない） ========== */
 let DISPC=null;
