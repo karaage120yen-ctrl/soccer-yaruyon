@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-092339';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-092826';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6282,7 +6282,7 @@ function rulesHtml(){
     '実況：試合中、ゴールや特殊能力の発動に合わせて実況が入る',
     '超レジェンド：育成でまれに15人の超レジェンドが現れる（ふつうのレジェンドの1/10の確率）。「教わる」に成功すると特殊能力がつき、引退してマイ選手になったあとも試合で発動する（ガチャキャラより少し弱め）。リオネル・メツシに勝つと「神の子」に加えて「アルゼンチンの神の子」の能力と称号',
     '結婚相手：日本だけでなく世界各国の人と出会う。出会いのときに国・職業・月収がわかる（暮らしタブの家族にも表示）。まれに（5%）トランス女性・トランス男性のパートナーとも出会えて、結婚もできる。その相手と最後まで添い遂げると、引退時に全能力+5と特殊能力「LGBTQに配慮した人」（試合中1回、自分の全能力+5・自分以外が3秒止まってフリーで決定機）',
-    'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる。左の「×1」ボタンで速さを1・2・4・8・16・32・64倍に切り替えられる（育成と試合の両方）',
+    'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる。左の「×1」ボタンで速さを1・2・4・8倍に切り替えられる（育成と試合の両方）',
     '体力ゲージ：選手は対戦や試合のたびに体力が減る（フィジカルが高いほど減りにくい）。1時間で12ずつ回復。体力60未満だと能力が下がり、試合中に体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
     `素材ガチャ：育成素材を全種類${MATG_COST}個ずつ使うと、好きなガチャを1回引ける。キャラが出る確率は${Math.round(MATG_PU*100)}%`,
@@ -8242,7 +8242,7 @@ const DOC_GIFT=5000;
 
 /* ========== オート（育成・試合） ========== */
 const AP={cr:false,bt:0,miss:0,t:null,sp:1,acc:0};// bt: 0=オフ 1=オート 2=高速オート
-const AP_SP=[1,2,4,8,16,32,64];
+const AP_SP=[1,2,4,8];
 try{const v=+localStorage.getItem('kj_autobt');if(v===1||v===2)AP.bt=v;const s2=+localStorage.getItem('kj_autosp');if(AP_SP.includes(s2))AP.sp=s2}catch(e){}
 const apEl=sel=>{const r=document.querySelector('#app');if(!r)return null;return [...document.querySelectorAll(sel)].find(b=>!b.disabled&&b.offsetParent!==null&&!b.closest('#tabs'))||null};
 const apAll=sel=>[...document.querySelectorAll(sel)].filter(b=>!b.disabled&&b.offsetParent!==null&&!b.closest('#tabs'));
