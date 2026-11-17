@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-091445';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-091529';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -8697,7 +8697,7 @@ function jobInc(j,s){const J=JOBS[j]||JOBS[0];return Math.round(Math.exp(Math.lo
 // 出会いのイベントID：fm:meet:<相手>:<職業>:<収入の位置>
 function meetId(){const r=Math.random(),code=r<.05?`q-${ri(0,PARTNER_Q.length-1)}`:r<.5?`j-${ri(0,PARTNER.length-1)}`:`w-${ri(0,PARTNER_W.length-1)}`;
   return `fm:meet:${code}:${ri(0,JOBS.length-1)}:${ri(0,999)}`}
-const partnerTag=P=>!P?'':`<span class="sub" style="display:block">${P.cty?`${ctyFl(P.cty)} ${esc(P.cty)}`:''}${P.g&&P.g!=='f'?`・<b style="color:#e0b0f8">${PG_N[P.g]}</b>`:''}${P.job?`・${esc(P.job.n)}（月収 ${yen(P.job.inc)}）`:''}</span>`;
+const partnerTag=P=>!P?'':`<span class="sub" style="display:block">${P.cty?`${ctyFl(P.cty)} ${esc(P.cty)}`:''}${P.g&&P.g!=='f'?`・<span style="color:#e0b0f8;font-weight:700">${PG_N[P.g]}</span>`:''}${P.job?`・${esc(P.job.n)}（月収 ${yen(P.job.inc)}）`:''}</span>`;
 {const _fe=famEv;famEv=function(id,p){const [,t,a,jb,sd]=id.split(':');
   if(t!=='meet'||jb==null)return _fe(id,p);
   const Q=partnerOf(a),inc=jobInc(+jb,+sd),job=JOBS[+jb]?JOBS[+jb][0]:'会社員',who=`${Q.n}（${Q.cty}出身${Q.g!=='f'?'・'+PG_N[Q.g]:''}・${job}・月収${yen(inc)}）`;
