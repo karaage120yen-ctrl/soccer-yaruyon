@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-095546';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-100608';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -777,6 +777,11 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .inslist .opt.on.d{background:#2f6fd6;color:#fff;border-color:#2f6fd6}.inslist .opt.on.a{background:#e2462b;color:#fff;border-color:#e2462b}
 .slot .insb{position:absolute;left:-7px;top:-7px;font-style:normal;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff}
 .slot .insb.d{background:#2f6fd6}.slot .insb.a{background:#e2462b}
+.toast.bad{border-color:var(--down)}.toast.bad b{color:var(--down)}
+.stylesel .opt.fav{border-color:var(--gold)}
+.mpg{background:linear-gradient(135deg,rgba(47,111,214,.18),rgba(215,180,74,.1));border:1px solid var(--gold);border-radius:14px;padding:12px 14px;margin:0 0 12px}
+.mpgh{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}.mpgh b{font-size:16px;color:var(--gold)}
+.mpi{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line);font-size:13px}
 
 </style>
 </head>
@@ -3961,9 +3966,9 @@ function teamCalc(sq){
   const pl=cards.map(({role,c})=>{
     const chb=CH&&CH.get(c)?CH.get(c).b:0;
     const bonus=(hasCap&&c.special!=='captain'?4:0)+chb,st={},gp=hasDoc&&typeof isGramps==='function'&&isGramps(c);
-    for(const k of KEYS)st[k]=Math.min(TEAM_CAP,effSt(c,k)+bonus+(gp?50:0)+(typeof sxSt==='function'?sxSt(cards,c,k):0));
+    for(const k of KEYS)st[k]=Math.min(TEAM_CAP,effSt(c,k)+bonus+(gp?50:0)+(typeof sxSt==='function'?sxSt(cards,c,k):0)+(typeof mgPerkSt==='function'?mgPerkSt(sq,role,k):0));
     const tmp={st,pos:c.pos},sta=typeof cardSta==='function'?cardSta(c):100;
-    const r=Math.round(ovrRaw(st,role)*(typeof fitOf==='function'?fitOf(c,role):fitMul(c.pos,role))*(typeof staFac==='function'?staFac(sta):1)*10)/10;
+    const r=Math.round(ovrRaw(st,role)*(typeof styleFac==='function'?styleFac(sq):1)*(typeof fitOf==='function'?fitOf(c,role):fitMul(c.pos,role))*(typeof staFac==='function'?staFac(sta):1)*10)/10;
     return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',kpass:c.special==='kpass',kama:c.special==='renkei',oib:c.special==='oibore'&&role==='GK',uhho:c.special==='uhho',tabako:c.special==='tabako',inu:c.special==='inu'&&!c.filler,doc:c.special==='doctor',santa:c.special==='santa',insD:!c.filler&&(sq.insD||[]).includes(c.id)&&(role==='MF'||role==='FW'),insA:!c.filler&&(sq.insA||[]).includes(c.id)&&(role==='MF'||role==='DF'),sx:c.sx&&c.sx.length?c.sx:null,gp,sta,filler:!!c.filler,legend:!!c.legend,id:c.id};
   });
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
@@ -3972,6 +3977,7 @@ function teamCalc(sq){
   const boost=(ms('tac')-50)*.08+(ms('coa')-50)*.02+(ms('lea')-50)*.03;
   let atk=av('FW')*.62+av('MF')*.38+boost,mid=av('MF')*.75+av('FW')*.1+av('DF')*.15+boost,def=av('DF')*.68+av('GK')*.32+boost,dogB=null;
   pl.forEach(x=>{if(x.insD){def+=1.2+(x.r-65)*.04;atk-=.7}if(x.insA){atk+=1.2+(x.r-65)*.04;def-=.7}});
+  if(typeof styleFx==='function'){const sf=styleFx(sq);atk+=sf.atk;mid+=sf.mid;def+=sf.def}
   if(pl.some(x=>x.inu)&&typeof dogEntry==='function'){const d=dogEntry(hasCap);pl.push(d);dogB=dogBonus(d);atk+=dogB.atk;mid+=dogB.mid;def+=dogB.def}
   atk=Math.min(TEAM_CAP,atk);mid=Math.min(TEAM_CAP,mid);def=Math.min(TEAM_CAP,def);
   const tot=Math.min(TEAM_CAP,Math.round((atk+mid+def)/3));
@@ -5360,7 +5366,7 @@ function cardMini(c){
 function cardTile(c,opts={}){
   const mg=isMgr(c),o=mg?mgrOvr(c):typeof dispOvr==='function'?dispOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
   const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:c.special==='kpass'?`<span class="sk">${KPASS_SKILL.n}</span>`:c.special==='doctor'?`<span class="sk">ヤハ・ウラ・プルャ‼︎</span>`:c.special==='santa'?`<span class="sk">${SANTA_SKILL.n}</span>`:c.special==='renkei'?`<span class="sk">${RENKEI_SKILL.n}</span>`:c.special==='oibore'?`<span class="sk">${OIBORE_SKILL.n}</span>`:c.special==='uhho'?`<span class="sk">${UHHO_SKILL.n}</span>`:c.special==='tabako'?`<span class="sk">${TABAKO_SKILL.n}</span>`:c.special==='inu'?`<span class="sk">タッグ・${INU_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
-  const sxTag=typeof sxOf==='function'?sxOf(c).map(k=>`<span class="sk sxk">${esc(SX[k].n)}</span>`).join(''):'';
+  const sxTag=(typeof sxOf==='function'?sxOf(c).map(k=>`<span class="sk sxk">${esc(SX[k].n)}</span>`).join(''):'')+(typeof mgTag==='function'?mgTag(c):'');
   return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${standArt3(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos+(c.pos2?'/'+c.pos2.join('/'):'')}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${c.title?`<b style="color:var(--gold)">${esc(c.title)}</b>・`:''}${c.height?c.height+'cm・':''}${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span>${!mg&&!isLegSup(c)&&typeof staBar==='function'?staBar(c):''}</div></div>${tag||sxTag||c.gikkuri>0?`<div class="tags">${tag}${sxTag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
 }
 
@@ -5397,7 +5403,7 @@ H.gacha=()=>{
   <div class="lgal">${GLEGS.map(l=>`<figure>${fullArt(l.id)}<figcaption>${l.pu?'<b class="gold">PU</b> ':''}${esc(l.name)}</figcaption></figure>`).join('')}</div>
   <div class="plist" style="margin-top:10px">${GLEGS.map(l=>{const o=M.roster.find(c=>c.id===l.id);return `<div class="prow wf" style="cursor:default"><span class="pf">${sprOf(l)}</span><span class="po">${l.pu?'PU':l.pos}</span><b>${esc(l.name)}</b><span class="sub">${esc(legText(l))}${o?'・所持':''}</span><span class="num">${cardOvr(l)}</span></div>`}).join('')}</div>`;
   const BL=Object.entries(BANNERS).filter(([k,B])=>!B.on||B.on()).sort((a,b)=>(b[1].on?1:0)-(a[1].on?1:0));
-  return `${BANNERS.inu&&BANNERS.inu.on()?`<div class="toast"><b>本日限定！</b>「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ。残り${inuLeft()}</div>`:`<p class="note" style="margin:0 0 8px">「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ登場。</p>`}${typeof docBannerNote==='function'?docBannerNote():''}${typeof seasonNote==='function'?seasonNote():''}<div class="seg c3 subnav">${BL.map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${B.multi?`${legOwned().length}/${GLEGS.length}人`:B.pair?`${B.pair.filter(c=>M.roster.some(x=>x.id===c.id)).length}/2人・NEW`:M.roster.some(c=>c.id===B.card().id)?'所持':'1%'}</span></button>`).join('')}</div>
+  return `${BANNERS.inu&&BANNERS.inu.on()?`<div class="toast"><b>本日限定！</b>「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ。残り${inuLeft()}</div>`:`<p class="note" style="margin:0 0 8px">「犬を飼ってる政夫（67歳）」ガチャは毎週火曜日だけ登場。</p>`}${typeof docBannerNote==='function'?docBannerNote():''}${typeof seasonNote==='function'?seasonNote():''}${typeof mpGachaHtml==='function'?mpGachaHtml():''}<div class="seg c3 subnav">${BL.map(([k,B])=>`<button class="opt" aria-pressed="${bk===k}" data-act="gBanner" data-v="${k}">${B.short}<span class="d">${B.multi?`${legOwned().length}/${GLEGS.length}人`:B.pair?`${B.pair.filter(c=>M.roster.some(x=>x.id===c.id)).length}/2人・NEW`:M.roster.some(c=>c.id===B.card().id)?'所持':'1%'}</span></button>`).join('')}</div>
   ${BN.multi?legArt:BN.pair?pairArt(BN):`<article class="front gban"><div><div class="dateline"><span>${pu.tag?'タッグキャラ・毎週火曜日だけ':'ピックアップ・'+(pu.style?esc(pu.style):pu.pos)}</span><span>排出率 1%</span></div>
    <p class="deck">${esc(pu.name)}</p>${fullArt(pu.id)?'':`<div class="gface">${sprOf(pu)}</div>`}
    ${pu.tag?'<p class="sub" style="margin:4px 0 2px">政夫（DF）</p>':''}<div class="ichst">${KEYS.map(k=>`<span>${LBL[k]}<b>${pu.st[k]}</b></span>`).join('')}</div>${pu.tag?`<p class="sub" style="margin:8px 0 2px">飼っているワンちゃん（FW）</p><div class="ichst">${KEYS.map(k=>`<span>${LBL[k]}<b>${MASAO_DOG.st[k]}</b></span>`).join('')}</div>`:''}
@@ -5456,12 +5462,13 @@ H.squad=()=>{
   ${typeof autoBtns==='function'?autoBtns():''}
   ${typeof chemHtml==='function'?chemHtml():''}
   <div class="label">戦術<span class="r">試合の最初の戦術（CPU戦は試合中に変えられる）</span></div><div class="seg c3">${Object.entries(TACS).map(([k,t])=>`<button class="opt" aria-pressed="${(M.squad.tac||'bal')===k}" data-act="sqTac" data-v="${k}">${t.n}<span class="d">${t.d}</span></button>`).join('')}</div>
+  ${typeof styleHtml==='function'?styleHtml():''}
   ${pitchHtml(T)}
   ${typeof slotEditHtml==='function'?slotEditHtml():''}
   ${typeof insHtml==='function'?insHtml(T):''}
   <div class="label">ベンチ（交代要員・12人まで）</div>
   <div class="bench">${M.squad.bench.map((id,i)=>{const c=cardById(id);return `<button class="bslot ${c?'':'empty'} ${c&&c.special?'emp':''}" aria-pressed="${G.sq.slot==='b'+i}" data-act="sqSlot" data-v="b${i}"><span class="sr">${c?c.pos:'空き'}</span><b class="num">${c?(typeof dispOvr==='function'?dispOvr(c):cardOvr(c)):'—'}</b>${c?`<span class="simg">${sprOf(c)}</span>`:''}<span class="sn">${c?esc(c.name.split(' ').pop().replace(/^・/,'')):'ベンチ'}</span></button>`}).join('')}</div>
-  <button class="mgslot" aria-pressed="${G.sq.slot==='mgr'}" data-act="sqSlot" data-v="mgr"><span class="sr">監督</span><b>${mg?esc(mg.n):'未設定（代行監督）'}</b>${mg?`<span class="sub">${MKEYS.map(k=>MLBL[k]+mg.st[k]).join(' ')}</span>`:''}</button>
+  <button class="mgslot" aria-pressed="${G.sq.slot==='mgr'}" data-act="sqSlot" data-v="mgr"><span class="sr">監督</span><b>${mg?esc(mg.n):'未設定（代行監督）'}</b>${(()=>{const m=typeof sqMgr==='function'&&sqMgr();return m?`<span class="sub">得意：${STYLES[mgPref(m)].n}${m.perk?'・'+MPERKS[m.perk].n:''}</span>`:''})()}${mg?`<span class="sub">${MKEYS.map(k=>MLBL[k]+mg.st[k]).join(' ')}</span>`:''}</button>
   ${T.hasMao?`<div class="toast"><b>${MAO_SKILL.n}</b>：試合中1回の決定機でシュート＋25、発動の瞬間に本人の全能力−10。<div class="seg c2" style="margin-top:8px"><button class="opt" aria-pressed="${M.squad.maoSub!==false}" data-act="sqMaoSub" data-v="1">発動後ベンチに下げる<span class="d">交代：${esc(T.sub?T.sub.n:'控え')}（${T.sub?Math.round(T.sub.r):'—'}）・チーム全能力＋2</span></button><button class="opt" aria-pressed="${M.squad.maoSub===false}" data-act="sqMaoSub" data-v="0">出し続ける<span class="d">全能力−10のまま最後まで</span></button></div></div>`:''}
   ${T.hasEmp?`<div class="toast"><b>${EMP_SKILL.n}あり。</b>試合の後半、味方全員の守備＋6。</div>`:''}
   ${T.hasCap?`<div class="toast"><b>${CAP_SKILL.n}発動中。</b>「${esc(CAP_SKILL.q)}」味方全員の能力＋4。</div>`:''}
@@ -6309,6 +6316,8 @@ function rulesHtml(){
     '指示：スカッドで、守備時のディフェンス指示（MF・FWから2人まで：守備力アップ・攻撃力少しダウン）と、攻撃時のアタック指示（MF・DFから2人まで：攻撃力アップ・本人が得点しやすい・守備力少しダウン）を出せる。指示を出した選手は体力の減りが少し早い',
     'いらない選手：スカッドの「一覧」の「いらない選手を素材に変える」で、10人ごとに育成素材を全種類100個ずつに変えられる（スタメン・ベンチの選手は対象外）',
     'チーム力の上限：攻撃・中盤・守備・総合はそれぞれ150まで。選手の能力は素の値が99までだが、キャプテンや超レジェンドなどスキルで上がった分は150まで伸びる',
+    'チームスタイル：ショートカウンター・ロングカウンター・ポゼッション・ロングボール・サイドアタック・サイドカウンター・ポゼッションティキタカの7種類。監督にはそれぞれ得意な戦術が1つあり、チームスタイルを監督の得意に合わせないと、選手の能力を最大限に引き出せない（全員の能力−6%）',
+    '監督強化ガチャ：1回200コイン。監督につける強化アイテム（全選手の全能力+2：3%、FWのスピード+1：12%）が出る。監督1人に1個まで、スカッドの監督の枠からつけ外しできる',
     'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる。左の「×1」ボタンで速さを1・2・4・8倍に切り替えられる（育成と試合の両方）',
     '体力ゲージ：選手は対戦や試合のたびに体力が減る（フィジカルが高いほど減りにくい）。1時間で12ずつ回復。体力60未満だと能力が下がり、試合中に体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
@@ -8817,6 +8826,56 @@ function insHtml(T){const sq=M.squad,row=(k,lbl,d)=>{const E=insElig(k),key=k===
   ${E.length?`<div class="inslist">${E.map(e=>{const c=cardById(e.id),a=on.includes(e.id);return `<button class="opt ${a?'on '+k:''}" aria-pressed="${a}" data-act="insT" data-v="${k}:${e.id}"><span class="po">${e.role}</span>${esc(c.name.split(' ').pop().replace(/^・/,''))}</button>`}).join('')}</div>`:'<p class="note">対象の選手がいない。</p>'}`};
   return `<div class="insbox">${row('d','守備時のディフェンス指示（MF・FW）','守備に戻ってチームの守備力が上がる。そのぶん攻撃力が少し下がり、得点しにくくなる。体力の減りが少し早い。')}
   ${row('a','攻撃時のアタック指示（MF・DF）','前に出て攻撃に加わり、チームの攻撃力が上がって本人も得点しやすくなる。そのぶん守備力が少し下がる。体力の減りが少し早い。')}</div>`}
+
+/* ========== 監督の得意戦術（チームスタイル）と監督強化ガチャ ========== */
+const STYLES={
+ sc:{n:'ショートカウンター',d:'高い位置で奪って、素早くゴールへ',fx:{atk:2,mid:-1,def:1}},
+ lc:{n:'ロングカウンター',d:'引いて守り、奪ったら一気に裏へ',fx:{atk:1,mid:-2,def:2}},
+ po:{n:'ポゼッション',d:'ボールを持って主導権を握る',fx:{atk:0,mid:3,def:0}},
+ lb:{n:'ロングボール',d:'前線へ長いボールを送り込む',fx:{atk:2,mid:-2,def:1}},
+ sa:{n:'サイドアタック',d:'サイドから崩してクロス',fx:{atk:3,mid:0,def:-1}},
+ scn:{n:'サイドカウンター',d:'奪ったらサイドへ素早く展開',fx:{atk:1,mid:-1,def:2}},
+ tk:{n:'ポゼッションティキタカ',d:'短いパスをつないで崩し切る',fx:{atk:1,mid:4,def:-2}},
+};
+const STY_K=Object.keys(STYLES),STYLE_PEN=.94;
+function mgPref(c){if(!c||!isMgr(c))return null;if(!c.pref||!STYLES[c.pref])c.pref=STY_K[HASH(String(c.id||c.name))%STY_K.length];return c.pref}
+const sqStyle=sq=>STYLES[(sq||M.squad).style]?(sq||M.squad).style:'po';
+function sqMgr(sq){const c=cardById((sq||M.squad).mgr);return c&&isMgr(c)?c:null}
+function styleFac(sq){const m=sqMgr(sq);return m&&mgPref(m)!==sqStyle(sq)?STYLE_PEN:1}
+function styleFx(sq){return STYLES[sqStyle(sq)].fx}
+ACT.sqStyle=v=>{if(STYLES[v])M.squad.style=v};
+function styleHtml(){const m=sqMgr(),pf=m?mgPref(m):null,cur=sqStyle();
+  return `<div class="label">チームスタイル<span class="r">${m?`${esc(m.name)}の得意：${STYLES[pf].n}`:'監督がいないので得意はなし'}</span></div>
+  <div class="seg c2 stylesel">${STY_K.map(k=>{const S0=STYLES[k],f=S0.fx;return `<button class="opt ${k===pf?'fav':''}" aria-pressed="${cur===k}" data-act="sqStyle" data-v="${k}">${k===pf?'★ ':''}${S0.n}<span class="d">${S0.d}・攻${f.atk>=0?'+':''}${f.atk} 中${f.mid>=0?'+':''}${f.mid} 守${f.def>=0?'+':''}${f.def}</span></button>`}).join('')}</div>
+  ${m&&pf!==cur?`<div class="toast bad"><b>得意な戦術ではない！</b>${esc(m.name)}の得意は「${STYLES[pf].n}」。今のままだと選手の能力を最大限に引き出せない（全員の能力−${Math.round((1-STYLE_PEN)*100)}%）。</div>`:m?`<p class="sub" style="color:var(--up)">監督の得意な戦術。選手の力を最大限に引き出せる。</p>`:''}`}
+
+/* ----- 監督強化（1人に1個つけられる・つけ外し自由） ----- */
+const MPERKS={
+ all2:{n:'全選手の全能力+2',d:'スタメン全員の全能力+2',r:.03},
+ fwspd:{n:'FWのスピード+1',d:'FWの枠の選手のスピード+1',r:.12},
+};
+const MPG_COST=200,MPG_MATS=2;
+function mgPerkSt(sq,role,k){const m=sqMgr(sq);if(!m||!m.perk)return 0;if(m.perk==='all2')return 2;if(m.perk==='fwspd'&&role==='FW'&&k==='spd')return 1;return 0}
+function mpPull(n){const cost=MPG_COST*n;if(M.coins<cost)return null;M.coins-=cost;M.mperk=M.mperk||{};const out=[];
+  for(let i=0;i<n;i++){let x=Math.random(),got=null;for(const [k,P] of Object.entries(MPERKS)){if(x<P.r){got=k;break}x-=P.r}
+    if(got){M.mperk[got]=(M.mperk[got]||0)+1;out.push({k:got})}else{M.mats.mgr=(M.mats.mgr||0)+MPG_MATS;out.push({mat:MPG_MATS})}}
+  if(typeof dmAdd==='function')dmAdd('gacha');metaSave();return out}
+ACT.mpG=v=>{const r=mpPull(+v||1);G.mpRes=r||'nocoin'};
+ACT.mpEq=v=>{const m=sqMgr();if(!m)return;M.mperk=M.mperk||{};if(m.perk){M.mperk[m.perk]=(M.mperk[m.perk]||0)+1;m.perk=null}if(v&&MPERKS[v]&&(M.mperk[v]||0)>0){M.mperk[v]--;m.perk=v}};
+function mpGachaHtml(){const P=M.mperk||{},R=G.mpRes;
+  return `<article class="mpg"><div class="mpgh"><b>監督強化ガチャ</b><span class="sub">監督につける強化アイテムが出る（1人に1個・つけ外し自由）</span></div>
+  ${Object.entries(MPERKS).map(([k,x])=>`<div class="mpi"><span>${esc(x.n)}</span><span class="sub">${(x.r*100).toFixed(0)}%・所持${P[k]||0}</span></div>`).join('')}
+  <p class="sub" style="margin:4px 0 8px">はずれは戦術ノート×${MPG_MATS}（${(100-Object.values(MPERKS).reduce((s,x)=>s+x.r*100,0)).toFixed(0)}%）。つけるのはスカッドの「監督」の枠から。</p>
+  ${R==='nocoin'?'<p class="note bad">コインが足りない。</p>':R&&R.length?`<div class="chips">${R.map(x=>x.k?`<span class="chip gold">★ ${esc(MPERKS[x.k].n)}</span>`:`<span class="chip">戦術ノート×${x.mat}</span>`).join('')}</div>`:''}
+  <div class="seg c2" style="margin-top:8px"><button class="opt" data-act="mpG" data-v="1" ${M.coins>=MPG_COST?'':'disabled'}>1回<span class="d">${MPG_COST}コイン</span></button><button class="opt" data-act="mpG" data-v="10" ${M.coins>=MPG_COST*10?'':'disabled'}>10回<span class="d">${(MPG_COST*10).toLocaleString('ja-JP')}コイン</span></button></div></article>`}
+function mgPerkHtml(){const m=sqMgr();if(!m)return '<p class="note">監督を選ぶと、ここで強化アイテムをつけられる。</p>';const P=M.mperk||{};
+  return `<div class="kick">${esc(m.name)}の強化<span class="r">1個まで</span></div>
+  <p class="note">得意な戦術：<b class="gold">${STYLES[mgPref(m)].n}</b>${m.perk?`・つけている強化：<b class="gold">${esc(MPERKS[m.perk].n)}</b>`:''}</p>
+  <div class="plist">${m.perk?`<button class="prow" data-act="mpEq" data-v=""><b>強化を外す</b><span class="sub">${esc(MPERKS[m.perk].n)}を持ち物に戻す</span></button>`:''}
+  ${Object.entries(MPERKS).map(([k,x])=>`<button class="prow" aria-pressed="${m.perk===k}" data-act="mpEq" data-v="${k}" ${(P[k]||0)>0||m.perk===k?'':'disabled'}><b>${esc(x.n)}</b><span class="sub">${esc(x.d)}・所持${P[k]||0}</span><span class="num">${m.perk===k?'装備中':(P[k]||0)>0?'つける':'—'}</span></button>`).join('')}</div>
+  <p class="sub">強化アイテムは監督強化ガチャ（ガチャ画面）で手に入る。</p>`}
+const mgTag=c=>{if(!isMgr(c))return '';const pf=mgPref(c);return `<span class="sk">得意：${STYLES[pf].n}</span>${c.perk&&MPERKS[c.perk]?`<span class="sk sxk">${esc(MPERKS[c.perk].n)}</span>`:''}`};
+{const _ph=pickerHtml;pickerHtml=function(){const h=_ph();return G.sq.slot==='mgr'?h+mgPerkHtml():h}}
 
 /* ========== スカッドの表示：スキルで上がった状態の能力（試合の途中で上がるものは含めない） ========== */
 let DISPC=null;
