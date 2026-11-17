@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-080511';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-080620';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6162,7 +6162,7 @@ function rulesHtml(){
     '通常のガチャ：ピックアップ選手1%・育成素材×5が10%・×2が25%・×1が64%',
     '鎌ポコ＆丸尾ガチャ：2人それぞれ1%（合計2%）',
     '政夫＆犬ガチャ：毎週火曜日（日本時間）の1日だけ登場。ピックアップ1%。タッグキャラなので、政夫を配置すると犬も一緒に出場する',
-    'レジェンド降臨ガチャ「ドクター うさぎ」：1か月に3日だけ登場（2026年11月は17日から。ほかの日はランダム）。ピックアップ1%。MF・FW・GKのどこに置いても能力が下がらない',
+    'レジェンド降臨ガチャ「ドクター うさぎ」：1か月に3日だけ登場（2026年11月は17日から。ほかの日はランダム）。ピックアップ1%。MF・FW・GKのどこに置いても能力が下がらない。降臨日はゲームを開くと毎回5,000コインもらえる',
     '体力ゲージ：選手は対戦や試合のたびに体力が減る（フィジカルが高いほど減りにくい）。1時間で12ずつ回復。体力60未満だと能力が下がり、試合中に体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
     `素材ガチャ：育成素材を全種類${MATG_COST}個ずつ使うと、好きなガチャを1回引ける。キャラが出る確率は${Math.round(MATG_PU*100)}%`,
@@ -8112,7 +8112,12 @@ function doctorDraw(P){
 {const _fc=faCustom;faCustom=function(P,kind){if(kind==='doctor'){doctorDraw(P);return}return _fc(P,kind)}}
 
 /* ----- 画面 ----- */
-function docBannerNote(){return docOn()?`<div class="toast"><b>レジェンド降臨中！</b>「ドクター うさぎ」は1か月に3日だけ。今日の残り${inuLeft()}</div>`:`<p class="note" style="margin:0 0 8px">レジェンド「ドクター うさぎ」は1か月に3日だけ降臨。次は${docNext()}</p>`}
+function docBannerNote(){return docOn()?`<div class="toast"><b>レジェンド降臨中！</b>「ドクター うさぎ」は1か月に3日だけ。降臨日は毎回5,000コインプレゼント。今日の残り${inuLeft()}</div>`:`<p class="note" style="margin:0 0 8px">レジェンド「ドクター うさぎ」は1か月に3日だけ降臨。次は${docNext()}</p>`}
+/* ----- 降臨日は毎回5000コイン ----- */
+const DOC_GIFT=5000;
+{const _ag=applyGifts;applyGifts=function(){_ag();if(typeof M==='undefined'||!M||!docOn())return;const n=jstNow(),k=`doc${n.getUTCFullYear()}-${n.getUTCMonth()+1}-${n.getUTCDate()}`;
+  M.gifts=M.gifts||{};if(M.gifts[k])return;M.gifts[k]=Date.now();M.coins+=DOC_GIFT;metaSave();
+  if(typeof G!=='undefined'){G.toastMsg=`🎁 レジェンド降臨記念！ ${DOC_GIFT.toLocaleString('ja-JP')}コインを受け取った`;try{render()}catch(e){}setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},5000)}}}
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
