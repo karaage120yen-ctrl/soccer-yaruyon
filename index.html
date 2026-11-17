@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-091529';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-092339';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -761,6 +761,8 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .evlg{float:right;width:84px;margin:0 0 6px 10px}.evlg.sup .stb{background:radial-gradient(ellipse at 50% 40%,#6a3a8a,#1a0e24 75%);box-shadow:0 0 0 2px #c060e0}
 @media (max-width:360px){.zukan.zg{grid-template-columns:1fr}}
 .mini b.sup2{color:var(--up)}
+.autospd{position:fixed;right:98px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;height:42px;padding:0 10px;border-radius:21px;border:1.5px solid var(--gold);background:rgba(16,16,16,.92);color:var(--gold);font:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.45)}
+.autospd b{font-size:14px;line-height:1.1}.autospd span{font-size:9px;opacity:.75}.autospd.on{background:rgba(215,180,74,.22)}
 
 </style>
 </head>
@@ -6280,7 +6282,7 @@ function rulesHtml(){
     '実況：試合中、ゴールや特殊能力の発動に合わせて実況が入る',
     '超レジェンド：育成でまれに15人の超レジェンドが現れる（ふつうのレジェンドの1/10の確率）。「教わる」に成功すると特殊能力がつき、引退してマイ選手になったあとも試合で発動する（ガチャキャラより少し弱め）。リオネル・メツシに勝つと「神の子」に加えて「アルゼンチンの神の子」の能力と称号',
     '結婚相手：日本だけでなく世界各国の人と出会う。出会いのときに国・職業・月収がわかる（暮らしタブの家族にも表示）。まれに（5%）トランス女性・トランス男性のパートナーとも出会えて、結婚もできる。その相手と最後まで添い遂げると、引退時に全能力+5と特殊能力「LGBTQに配慮した人」（試合中1回、自分の全能力+5・自分以外が3秒止まってフリーで決定機）',
-    'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる',
+    'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる。左の「×1」ボタンで速さを1・2・4・8・16・32・64倍に切り替えられる（育成と試合の両方）',
     '体力ゲージ：選手は対戦や試合のたびに体力が減る（フィジカルが高いほど減りにくい）。1時間で12ずつ回復。体力60未満だと能力が下がり、試合中に体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
     `素材ガチャ：育成素材を全種類${MATG_COST}個ずつ使うと、好きなガチャを1回引ける。キャラが出る確率は${Math.round(MATG_PU*100)}%`,
@@ -8239,8 +8241,9 @@ const DOC_GIFT=5000;
   if(typeof G!=='undefined'){G.toastMsg=`🎁 レジェンド降臨記念！ ${DOC_GIFT.toLocaleString('ja-JP')}コインを受け取った`;try{render()}catch(e){}setTimeout(()=>{G.toastMsg=null;try{render()}catch(e){}},5000)}}}
 
 /* ========== オート（育成・試合） ========== */
-const AP={cr:false,bt:0,miss:0,t:null};// bt: 0=オフ 1=オート 2=高速オート
-try{const v=+localStorage.getItem('kj_autobt');if(v===1||v===2)AP.bt=v}catch(e){}
+const AP={cr:false,bt:0,miss:0,t:null,sp:1,acc:0};// bt: 0=オフ 1=オート 2=高速オート
+const AP_SP=[1,2,4,8,16,32,64];
+try{const v=+localStorage.getItem('kj_autobt');if(v===1||v===2)AP.bt=v;const s2=+localStorage.getItem('kj_autosp');if(AP_SP.includes(s2))AP.sp=s2}catch(e){}
 const apEl=sel=>{const r=document.querySelector('#app');if(!r)return null;return [...document.querySelectorAll(sel)].find(b=>!b.disabled&&b.offsetParent!==null&&!b.closest('#tabs'))||null};
 const apAll=sel=>[...document.querySelectorAll(sel)].filter(b=>!b.disabled&&b.offsetParent!==null&&!b.closest('#tabs'));
 const apClick=sel=>{const b=typeof sel==='string'?apEl(sel):sel;if(!b)return false;b.click();return true};
@@ -8302,7 +8305,10 @@ function apCareer(){
 /* ----- 試合：決定機・ケガ・ハーフタイムを自動で ----- */
 function apBattle(){
   const B=G.bt;if(G.mode!=='battle'||B.view!=='match'||!B.play||B.play.done)return;
-  if(typeof isPaused==='function'&&isPaused(B)){if(AP.bt===2)B.play.pauseUntil=Date.now()-1;return}
+  const now=Date.now();
+  if(typeof isPaused==='function'&&isPaused(B)){if(AP.bt===2){B.play.pauseUntil=now-1;return}
+    if(AP.sp>1&&B.play._spPU!==B.play.pauseUntil){const d=(B.play.pauseUntil-now)*(1-1/AP.sp);B.play.pauseUntil-=d;B.play.t0-=d;B.play._spPU=B.play.pauseUntil}return}
+  if(AP.sp>1&&!(B.match&&B.match.live&&B.match.live.pend&&matchMin()>=B.match.live.pend.m))B.play.t0-=AP_DT*(AP.sp-1);
   const L=B.match&&B.match.live;
   if(L&&L.pend&&!L.done&&matchMin()>=L.pend.m){
     const P=L.pend;
@@ -8318,16 +8324,21 @@ function apBattle(){
   }
   if(AP.bt===2)apClick('[data-act=btSkip]');
 }
-function apTick(){try{if(AP.cr)apCareer();if(AP.bt)apBattle()}catch(e){console.warn('auto',e)}}
-if(typeof window!=='undefined')AP.t=setInterval(apTick,280);
+const AP_DT=100;
+function apTick(){try{if(AP.cr){AP.acc+=AP.sp*AP_DT/300;const t0=performance.now();let n=0;while(AP.acc>=1&&AP.cr&&performance.now()-t0<85){AP.acc-=1;apCareer();n++}if(AP.acc>4)AP.acc=4}else AP.acc=0;if(AP.bt)apBattle()}catch(e){console.warn('auto',e)}}
+if(typeof window!=='undefined')AP.t=setInterval(apTick,AP_DT);
 
 /* ----- ボタン ----- */
 ACT.autoCr=()=>{AP.cr=!AP.cr;AP.miss=0;apToast(AP.cr?'育成オート：自動で進めるよ。もう一度押すと止まる':'育成オートを止めた')};
+ACT.autoSp=()=>{AP.sp=AP_SP[(AP_SP.indexOf(AP.sp)+1)%AP_SP.length];try{localStorage.setItem('kj_autosp',String(AP.sp))}catch(e){}};
 ACT.autoBt=()=>{AP.bt=(AP.bt+1)%3;try{localStorage.setItem('kj_autobt',String(AP.bt))}catch(e){}apToast(['試合オートを止めた','試合オート：決定機・交代・ハーフタイムを自動で選ぶ','高速オート：決定機も自動で、試合結果まで一気に進める'][AP.bt])};
 function apMount(){
   let b=document.getElementById('autobtn');
   const cr=G.mode==='career'&&typeof inCareer==='function'&&inCareer(),bt=G.mode==='battle'&&G.bt&&G.bt.view==='match';
-  if(!cr&&!bt){if(b)b.remove();return}
+  let sb=document.getElementById('autospd');
+  if(!cr&&!bt){if(b)b.remove();if(sb)sb.remove();return}
+  if(!sb){sb=document.createElement('button');sb.id='autospd';sb.className='autospd';sb.dataset.act='autoSp';document.body.appendChild(sb)}
+  sb.innerHTML=`<b>×${AP.sp}</b><span>速さ</span>`;sb.classList.toggle('on',AP.sp>1);
   if(!b){b=document.createElement('button');b.id='autobtn';document.body.appendChild(b)}
   const on=cr?AP.cr:AP.bt>0;b.dataset.act=cr?'autoCr':'autoBt';b.className='autobtn'+(on?' on':'');
   b.innerHTML=cr?(AP.cr?'<b>オート中</b><span>止める</span>':'<b>オート</b><span>育成</span>'):(['<b>オート</b><span>試合</span>','<b>オート中</b><span>次は高速</span>','<b>高速オート</b><span>止める</span>'][AP.bt]);
