@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-092826';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-093700';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3745,7 +3745,7 @@ let M=metaDefault();
 function metaFix(m){const d=metaDefault();m=Object.assign(d,m||{});m.mats=Object.assign(d.mats,m.mats||{});m.squad=Object.assign(metaDefault().squad,m.squad||{});
  if(!Array.isArray(m.squad.slots))m.squad.slots=Array(11).fill(null);while(m.squad.slots.length<11)m.squad.slots.push(null);m.squad.slots=m.squad.slots.slice(0,11);
  if(!Array.isArray(m.squad.bench))m.squad.bench=Array(5).fill(null);while(m.squad.bench.length<5)m.squad.bench.push(null);m.squad.bench=m.squad.bench.slice(0,5);if(m.squad.maoSub===undefined)m.squad.maoSub=true;
- (m.roster||[]).forEach(c=>{if(c&&c.from==='育成'&&!c.sx&&(c.skills||[]).includes('神の子'))c.sx=['messi'];if(c&&c.id==='inkansu'){c.special='kpass';c.style=INKANSU.style;c.st=Object.assign({},c.st||{},{phy:78,pas:80})}if(c&&c.id==='lg_kame')c.name='アームストロングかめを';if(c&&c.gikkuri)c.gikkuri=0});
+ (m.roster||[]).forEach(c=>{if(c&&c.id==='doctor'){c.pos='FW';c.pos2=['MF','GK']}if(c&&c.from==='育成'&&!c.sx&&(c.skills||[]).includes('神の子'))c.sx=['messi'];if(c&&c.id==='inkansu'){c.special='kpass';c.style=INKANSU.style;c.st=Object.assign({},c.st||{},{phy:78,pas:80})}if(c&&c.id==='lg_kame')c.name='アームストロングかめを';if(c&&c.gikkuri)c.gikkuri=0});
  const lgId=id=>typeof id==='string'&&id.startsWith('lg_');m.squad.slots=m.squad.slots.map(id=>lgId(id)?null:id);m.squad.bench=m.squad.bench.map(id=>lgId(id)?null:id);return m}
 function metaLoadLocal(){try{const d=JSON.parse(localStorage.getItem(META_KEY)||'null');if(d)M=metaFix(d)}catch(e){}_metaLast=JSON.stringify(Object.assign({},M,{t:0}))}
 let _metaLast='';
@@ -8166,7 +8166,7 @@ function staSeg(X){
 function staCarry(X,h,old,S){const mp={};old.pl.forEach(p=>mp[p.n]=p);S.pl.forEach(p=>{const o=mp[p.n];if(o&&o.ms!=null){p.ms=o.ms;if(o.ms1){p.ms1=1;staPen(S,p,-3)}if(o.ms2){p.ms2=1;staPen(S,p,-4)}}else if(p.ms==null)p.ms=p.sta==null?100:p.sta})}
 
 /* ----- ドクター うさぎ ----- */
-const DOCTOR={id:'doctor',kind:'pl',name:'ドクター うさぎ',pos:'MF',pos2:['FW','GK'],style:'グラウンドの名医',special:'doctor',from:'ガチャ',legendG:1,
+const DOCTOR={id:'doctor',kind:'pl',name:'ドクター うさぎ',pos:'FW',pos2:['MF','GK'],style:'グラウンドの名医',special:'doctor',from:'ガチャ',legendG:1,
  st:{spd:94,tec:90,sho:96,pas:20,phy:70,def:70}};
 const DOC_SK=[
  {n:'ヤハ',d:'ケガをした味方を試合中3回まで治して復活させる。治った選手は体力が全回復し、調子が一段階上がる'},
