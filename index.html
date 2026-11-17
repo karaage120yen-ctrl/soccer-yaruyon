@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-094021';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-094339';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -765,6 +765,12 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .autospd b{font-size:14px;line-height:1.1}.autospd span{font-size:9px;opacity:.75}.autospd.on{background:rgba(215,180,74,.22)}
 .sqedit{background:var(--surface);border:1px solid var(--gold);border-radius:12px;padding:8px 12px 10px;margin-top:10px}
 .mvrow{display:grid;grid-template-columns:repeat(4,44px) 1fr;gap:6px;margin-top:8px}.mvrow .opt{padding:8px 0}.mvrow .opt.on{background:var(--gold);color:#1a1408}
+.slot .simg,.bslot .simg{display:block;width:34px;height:34px;margin:1px auto 1px}
+.slot .simg .sprw,.bslot .simg .sprw{width:100%;height:100%;border-radius:7px}
+.pitch{aspect-ratio:68/118}
+.slot{width:19%;min-width:56px;padding:3px 2px 4px}
+.slot b{font-size:17px;line-height:1.1}
+.slot .simg{width:28px;height:28px}
 
 </style>
 </head>
@@ -5407,7 +5413,7 @@ function slotLabel(i){const F=FORMS[M.squad.form];return F.s[i][0]}
 function pitchHtml(T){
   const F=FORMS[M.squad.form];
   return `<div class="pitch" role="group" aria-label="${F.n}の布陣">${F.s.map(([role,x,y],i)=>{const p=T.pl[i],sel=G.sq.slot===i;
-    return `<button class="slot ${p.filler?'empty':''} ${p.cap?'cap':''} ${p.emp||p.mao||p.starter||p.kpass?'emp':''} ${p.legend?'leg':''}" style="left:${x}%;top:${y}%" aria-pressed="${sel}" data-act="sqSlot" data-v="${i}"><span class="sr">${role}</span><b class="num">${Math.round(p.r)}</b><span class="sn">${esc(p.filler?'空き':p.n.split(' ').pop().replace(/^・/,''))}</span>${!p.filler&&p.sta!=null?`<span class="stabar sl"><i style="width:${p.sta}%;background:${staCol(p.sta)}"></i></span>`:''}${p.inu?'<i class="dogb">🐕</i>':''}</button>`}).join('')}</div>`;
+    return `<button class="slot ${p.filler?'empty':''} ${p.cap?'cap':''} ${p.emp||p.mao||p.starter||p.kpass?'emp':''} ${p.legend?'leg':''}" style="left:${x}%;top:${y}%" aria-pressed="${sel}" data-act="sqSlot" data-v="${i}"><span class="sr">${role}</span><b class="num">${Math.round(p.r)}</b>${(()=>{const c=!p.filler&&cardById(M.squad.slots[i]);return c?`<span class="simg">${sprOf(c)}</span>`:''})()}<span class="sn">${esc(p.filler?'空き':p.n.split(' ').pop().replace(/^・/,''))}</span>${!p.filler&&p.sta!=null?`<span class="stabar sl"><i style="width:${p.sta}%;background:${staCol(p.sta)}"></i></span>`:''}${p.inu?'<i class="dogb">🐕</i>':''}</button>`}).join('')}</div>`;
 }
 function pickerHtml(){
   const i=G.sq.slot;
@@ -5441,7 +5447,7 @@ H.squad=()=>{
   ${pitchHtml(T)}
   ${typeof slotEditHtml==='function'?slotEditHtml():''}
   <div class="label">ベンチ（交代要員・12人まで）</div>
-  <div class="bench">${M.squad.bench.map((id,i)=>{const c=cardById(id);return `<button class="bslot ${c?'':'empty'} ${c&&c.special?'emp':''}" aria-pressed="${G.sq.slot==='b'+i}" data-act="sqSlot" data-v="b${i}"><span class="sr">${c?c.pos:'空き'}</span><b class="num">${c?cardOvr(c):'—'}</b><span class="sn">${c?esc(c.name.split(' ').pop().replace(/^・/,'')):'ベンチ'}</span></button>`}).join('')}</div>
+  <div class="bench">${M.squad.bench.map((id,i)=>{const c=cardById(id);return `<button class="bslot ${c?'':'empty'} ${c&&c.special?'emp':''}" aria-pressed="${G.sq.slot==='b'+i}" data-act="sqSlot" data-v="b${i}"><span class="sr">${c?c.pos:'空き'}</span><b class="num">${c?(typeof dispOvr==='function'?dispOvr(c):cardOvr(c)):'—'}</b>${c?`<span class="simg">${sprOf(c)}</span>`:''}<span class="sn">${c?esc(c.name.split(' ').pop().replace(/^・/,'')):'ベンチ'}</span></button>`}).join('')}</div>
   <button class="mgslot" aria-pressed="${G.sq.slot==='mgr'}" data-act="sqSlot" data-v="mgr"><span class="sr">監督</span><b>${mg?esc(mg.n):'未設定（代行監督）'}</b>${mg?`<span class="sub">${MKEYS.map(k=>MLBL[k]+mg.st[k]).join(' ')}</span>`:''}</button>
   ${T.hasMao?`<div class="toast"><b>${MAO_SKILL.n}</b>：試合中1回の決定機でシュート＋25、発動の瞬間に本人の全能力−10。<div class="seg c2" style="margin-top:8px"><button class="opt" aria-pressed="${M.squad.maoSub!==false}" data-act="sqMaoSub" data-v="1">発動後ベンチに下げる<span class="d">交代：${esc(T.sub?T.sub.n:'控え')}（${T.sub?Math.round(T.sub.r):'—'}）・チーム全能力＋2</span></button><button class="opt" aria-pressed="${M.squad.maoSub===false}" data-act="sqMaoSub" data-v="0">出し続ける<span class="d">全能力−10のまま最後まで</span></button></div></div>`:''}
   ${T.hasEmp?`<div class="toast"><b>${EMP_SKILL.n}あり。</b>試合の後半、味方全員の守備＋6。</div>`:''}
