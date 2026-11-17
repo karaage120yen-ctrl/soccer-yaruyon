@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-100922';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-101331';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -829,6 +829,45 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .h2m:active{transform:scale(.96)}.h2m i{font-style:normal;font-size:26px}.h2m b{font-size:14px}.h2m span{font-size:10px;color:var(--muted);text-align:center;line-height:1.3}
 .h2how{margin-top:18px;border:1px solid var(--line);border-radius:12px;padding:10px 14px}.h2how summary{cursor:pointer;font-weight:700}
 @media (prefers-reduced-motion:reduce){.hero2 *{animation:none!important}}
+/* ===== アプリ全体の仕上げ ===== */
+body{background:radial-gradient(ellipse 120% 60% at 50% -10%,#1a2240 0%,rgba(11,11,12,0) 60%),radial-gradient(ellipse 80% 40% at 50% 110%,rgba(30,90,50,.18),transparent 70%),var(--bg);background-attachment:fixed}
+.mast{padding:18px 0 12px;border-bottom:0;position:relative}
+.mast::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold) 20%,var(--accent) 50%,var(--gold) 80%,transparent);opacity:.55}
+.brand .jp{background:linear-gradient(180deg,#fffaf0 10%,#e8d4a4 60%,#c9a35c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 rgba(0,0,0,.6))}
+.brand .en{color:#9fb0d8}
+.ticker{border-bottom:0;background:linear-gradient(90deg,rgba(255,81,38,.08),transparent 30%,transparent 70%,rgba(205,167,94,.08));border-radius:0 0 10px 10px}
+.kick{position:relative;padding-left:2px}
+.btn{transition:transform .12s,box-shadow .2s,background .2s}
+.btn:active{transform:scale(.97)}
+.btn.red{background:linear-gradient(180deg,#ff7a4d 0%,#ff5126 45%,#e2401c 100%);border-color:#ff7a4d;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 18px rgba(255,81,38,.32);text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.btn.ghost{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.01));box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.opt{background:linear-gradient(180deg,#1b1b1f,#141417);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.opt[aria-pressed="true"]{box-shadow:0 0 0 1px rgba(255,255,255,.4),0 4px 14px rgba(255,255,255,.08)}
+.act,.prow,.ctile,.dmbox,.insbox,.bteam{background-image:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0) 40%)}
+.act:active,.prow:active{transform:scale(.985)}
+.act.gold{box-shadow:0 0 0 1px var(--gold),0 0 18px rgba(205,167,94,.18)}
+nav.tabs{background:linear-gradient(180deg,rgba(14,16,24,.82),rgba(8,9,12,.96));border-top:0;box-shadow:0 -1px 0 rgba(205,167,94,.25),0 -10px 30px rgba(0,0,0,.5)}
+nav.tabs .in{grid-template-columns:repeat(6,1fr)!important;padding:4px 4px 0}
+nav.tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 10px;font-size:10.5px;letter-spacing:.06em;border-radius:14px;transition:color .2s}
+nav.tabs button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+nav.tabs button[aria-current="page"]{color:#fff;background:radial-gradient(ellipse 70% 80% at 50% 30%,rgba(255,81,38,.28),transparent 70%)}
+nav.tabs button[aria-current="page"] svg{stroke:#ff7a4d;transform:translateY(-1px) scale(1.08);filter:drop-shadow(0 0 6px rgba(255,81,38,.6))}
+nav.tabs button[aria-current="page"]::before{left:30%;right:30%;top:0;height:3px;border-radius:0 0 3px 3px;background:linear-gradient(90deg,#ff7a4d,#ffb36b);box-shadow:0 0 10px rgba(255,81,38,.7)}
+nav.tabs button .dot{position:absolute;top:6px;right:calc(50% - 16px)}
+#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#1b2a55 0%,#05070f 70%);transition:opacity .55s,transform .55s}
+#splash.out{opacity:0;transform:scale(1.08);pointer-events:none}
+#splash .spc{text-align:center;line-height:1}
+#splash .spball{font-size:54px;animation:spb 1s cubic-bezier(.3,1.6,.5,1) both;filter:drop-shadow(0 8px 10px rgba(0,0,0,.6))}
+@keyframes spb{0%{transform:translateY(-140px) rotate(-200deg);opacity:0}100%{transform:none;opacity:1}}
+#splash .spl1,#splash .spl2{font-family:var(--display);font-weight:900;transform:skewX(-8deg);-webkit-background-clip:text;background-clip:text;color:transparent;animation:spl .7s .25s both}
+#splash .spl1{font-size:44px;margin-top:10px;background-image:linear-gradient(180deg,#fff7d6,#f2c94c 50%,#b8860b 56%,#ffe9a0)}
+#splash .spl2{font-size:56px;background-image:linear-gradient(180deg,#fff,#ffd0c0 40%,#e2462b 56%,#ff8a5a);animation-delay:.4s}
+@keyframes spl{0%{opacity:0;transform:skewX(-8deg) translateY(16px) scale(.9)}100%{opacity:1;transform:skewX(-8deg)}}
+#splash .spl3{margin-top:10px;font-family:var(--num);font-size:11px;letter-spacing:.55em;color:#9fb0d8;animation:spl .6s .6s both}
+#splash .spbar{width:160px;height:3px;margin:22px auto 0;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
+#splash .spbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f2c94c,#ff5126);animation:spbar 1.3s .1s ease-out forwards}
+@keyframes spbar{to{width:100%}}
+@media (prefers-reduced-motion:reduce){#splash{display:none}}
 
 </style>
 </head>
@@ -8979,6 +9018,20 @@ H.title=()=>{
    <li>引退した選手は「マイ選手」になり、スカッドで布陣に入れて対戦できる。ガチャの特別な選手も一緒に使える</li>
   </ol></details>`;
 };
+
+/* ========== アプリ全体の見た目：タブのアイコン・起動画面 ========== */
+const TAB_IC={
+ career:'<svg viewBox="0 0 24 24"><circle cx="14" cy="4.5" r="2.2"/><path d="M9 21l2.5-6 3 2.5V22M7 11l3-3.2 4.5 1.2 2.5 3.5M11.5 15l1-6"/><circle cx="6" cy="19" r="2.4"/></svg>',
+ mgr:'<svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.8h6V4M8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg>',
+ gacha:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><circle cx="12" cy="12" r="2.6"/></svg>',
+ squad:'<svg viewBox="0 0 24 24"><rect x="3.5" y="3" width="17" height="18" rx="2"/><path d="M3.5 12h17"/><circle cx="12" cy="12" r="2.6"/><circle cx="8" cy="7" r="1"/><circle cx="16" cy="7" r="1"/><circle cx="8" cy="17" r="1"/><circle cx="16" cy="17" r="1"/></svg>',
+ battle:'<svg viewBox="0 0 24 24"><path d="M4 4l9 9M4 4h4M4 4v4M20 4l-9 9M20 4h-4M20 4v4M7 14l3 3M17 14l-3 3M5 19l3-3M19 19l-3-3"/></svg>',
+ rec:'<svg viewBox="0 0 24 24"><path d="M7 3.5h10v5a5 5 0 01-10 0z"/><path d="M7 5H4v1.5a3 3 0 003 3M17 5h3v1.5a3 3 0 01-3 3M12 13.5V17M8 21h8M9.5 17h5v4h-5z"/></svg>'};
+{const _r=render;render=function(){_r();try{const t=document.getElementById('tabs');if(!t)return;t.querySelectorAll('button[data-act=go]').forEach(b=>{if(b.querySelector('svg'))return;const ic=TAB_IC[b.dataset.v];if(!ic)return;const dot=b.querySelector('.dot');const txt=[...b.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('');b.innerHTML=`${ic}<span class="tl">${txt}</span>`;if(dot)b.appendChild(dot)})}catch(e){}}}
+// 起動画面（1回のセッションで1回だけ）
+if(typeof document!=='undefined'){try{if(!sessionStorage.getItem('kj_splash')){sessionStorage.setItem('kj_splash','1');const d=document.createElement('div');d.id='splash';
+  d.innerHTML='<div class="spc"><div class="spball">⚽</div><div class="spl1">サッカー</div><div class="spl2">やるよん</div><div class="spl3">SOCCER YARUYON</div><div class="spbar"><i></i></div></div>';
+  (document.body||document.documentElement).appendChild(d);setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),600)},1500)}}catch(e){}}
 
 /* ========== スカッドの表示：スキルで上がった状態の能力（試合の途中で上がるものは含めない） ========== */
 let DISPC=null;
