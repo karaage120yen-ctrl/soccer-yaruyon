@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-090506';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-091445';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3005,7 +3005,7 @@ function legendSlot(p){
 }
 function famCandidate(p){
   const F=p.fam,P=F.partner,y=calYear(p);
-  if(!P){if(p.age>=18&&Math.random()<.06)return `fm:meet:${ri(0,PARTNER.length-1)}`;return null}
+  if(!P){if(p.age>=18&&Math.random()<.06)return typeof meetId==='function'?meetId():`fm:meet:${ri(0,PARTNER.length-1)}`;return null}
   if(!P.married){
     if(P.love<=10)return 'fm:breakup';
     if(P.love>=70&&P.months>=10&&Math.random()<.3)return 'fm:propose';
@@ -3786,7 +3786,8 @@ function addPlayerCard(p,sum){
   const fx=p.legFx||{},end=[];
   if(fx.endDef){st.def=Math.min(99,st.def+fx.endDef);end.push(`カカオ・マメオの教え：守備+${fx.endDef}`)}
   if(fx.inuMarry&&p.fam&&p.fam.partner&&p.fam.partner.married){KEYS.forEach(k=>st[k]=Math.min(99,st[k]+3));end.push('かわいいいぬの教え：結婚していたので全能力+3')}
-  if(p.fam&&p.fam.partner&&p.fam.partner.married){KEYS.forEach(k=>st[k]=Math.min(99,st[k]+1));end.push(`${p.fam.partner.n}と最後まで添い遂げた：全能力+1`)}
+  if(p.fam&&p.fam.partner&&p.fam.partner.married){const lgq=typeof lgbtMarried==='function'&&lgbtMarried(p),bn=lgq?5:1;KEYS.forEach(k=>st[k]=Math.min(99,st[k]+bn));end.push(`${p.fam.partner.n}と最後まで添い遂げた：全能力+${bn}${lgq?'・特殊能力「LGBTQに配慮した人」':''}`);
+    if(lgq){p.sx=p.sx||[];if(!p.sx.includes('lgbtq'))p.sx.push('lgbtq');if(!p.skills.includes('sx_lgbtq'))p.skills.push('sx_lgbtq')}}
   if(sum)sum.legEnd=end;
   const c={id:uidGen('p'),kind:'pl',name:`${p.sei} ${p.mei}`,pos:p.pos,style:POS[p.pos].styles[p.style].n,st,plus:{},enh:0,
    legend:has(p,'legend'),genius:has(p,'monster'),skills:p.skills.map(k=>SKILLS[k].n),grade:sum.grade,peak:p.peak,from:'育成',t:Date.now(),height:p.height||null,title:p.title||null,nation:p.nation||null,sx:p.sx&&p.sx.length?p.sx.slice():(p.skills.includes('kaminoko')?['messi']:null),clubs:(p.hist||[]).map(h=>h.n).filter((n,i,a)=>n&&a.indexOf(n)===i&&n!==p.school)};
@@ -5187,7 +5188,7 @@ H.life=()=>{
   if(!p)return `<div class="kick">暮らし</div><div class="empty">現役の選手がいない。新しい人生を始めると、お金や家族の管理ができる。</div>`;
   const P=p.fam.partner,costs=monthlyCost(p),inc=monthlyIncome(p),cost=costs.reduce((s,x)=>s+x[1],0);
   const homeN={dorm:'寮',apart:'賃貸マンション',tower:'高級タワーマンション',house:'一戸建て',mansion:'豪邸'}[p.home];
-  const fam=P?`<div class="famcard-row"><div><span class="sub">${P.married?'パートナー（結婚）':'恋人'}</span><b>${esc(P.n)}</b></div><div><span class="sub">${P.married?'家族の満足度':'愛情'}</span><b class="num">${Math.round(P.married?p.fam.happy:P.love)}</b></div></div>
+  const fam=P?`<div class="famcard-row"><div><span class="sub">${P.married?'パートナー（結婚）':'恋人'}</span><b>${esc(P.n)}</b>${typeof partnerTag==='function'?partnerTag(P):''}</div><div><span class="sub">${P.married?'家族の満足度':'愛情'}</span><b class="num">${Math.round(P.married?p.fam.happy:P.love)}</b></div></div>
     ${p.fam.kids.length?`<p class="sub" style="margin:8px 0 0">子ども：${p.fam.kids.map(k=>`${esc(k.n)}（${calYear(p)-k.y}歳）`).join('、')}</p>`:''}
     ${isAbroad(p)&&P.married?`<p class="sub" style="margin:4px 0 0">${p.fam.abroad?'家族と一緒に海外で暮らしている':'家族は日本に残っている'}</p>`:''}`:'<p class="note" style="margin:0">今は恋人がいない。出会いは突然やってくる。</p>';
   const cat=S.shopCat;
@@ -6278,6 +6279,7 @@ function rulesHtml(){
     '季節イベント：12月1日〜25日はクリスマス限定「サンタ・クロース」ガチャ。12月24・25日はプレゼント、1月1〜7日はお年玉（10,000コイン）を配布',
     '実況：試合中、ゴールや特殊能力の発動に合わせて実況が入る',
     '超レジェンド：育成でまれに15人の超レジェンドが現れる（ふつうのレジェンドの1/10の確率）。「教わる」に成功すると特殊能力がつき、引退してマイ選手になったあとも試合で発動する（ガチャキャラより少し弱め）。リオネル・メツシに勝つと「神の子」に加えて「アルゼンチンの神の子」の能力と称号',
+    '結婚相手：日本だけでなく世界各国の人と出会う。出会いのときに国・職業・月収がわかる（暮らしタブの家族にも表示）。まれに（5%）トランス女性・トランス男性のパートナーとも出会えて、結婚もできる。その相手と最後まで添い遂げると、引退時に全能力+5と特殊能力「LGBTQに配慮した人」（試合中1回、自分の全能力+5・自分以外が3秒止まってフリーで決定機）',
     'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる',
     '体力ゲージ：選手は対戦や試合のたびに体力が減る（フィジカルが高いほど減りにくい）。1時間で12ずつ回復。体力60未満だと能力が下がり、試合中に体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
@@ -7803,9 +7805,10 @@ function proposeEv(p){const P=p.fam.partner;if(p.flags.propose&&P&&!P.married){p
 function proposeHtml(p){
   const P=p.fam.partner;if(!P)return '';giveJob(P);
   const job=`<p class="sub" style="margin:6px 0 0">${esc(P.n)}の仕事：<b>${esc(P.job.n)}</b>（月収 ${yen(P.job.inc)}）${P.married?'・家計に加わっている':'・結婚すると家計に加わる'}</p>`;
-  if(P.married)return job+`<p class="sub" style="margin:4px 0 0">最後まで添い遂げると、引退時に全能力+1。</p>`;
+  const lgq=P.g&&P.g!=='f',bnTx=lgq?'全能力+5と特殊能力「LGBTQに配慮した人」':'全能力+1';
+  if(P.married)return job+`<p class="sub" style="margin:4px 0 0">最後まで添い遂げると、引退時に${bnTx}。</p>`;
   return job+`<div class="kick" style="margin-top:14px">結婚を申し込む</div>
-   <p class="note" style="margin:0 0 8px">申し込むと、次のターンの最初にプロポーズの場面が来る。成功率は今なら約${Math.round(proposeRate(p)*100)}%（愛情・指輪・人気で上がる）。</p>
+   <p class="note" style="margin:0 0 8px">結婚して最後まで添い遂げると、引退時に${bnTx}。申し込むと、次のターンの最初にプロポーズの場面が来る。成功率は今なら約${Math.round(proposeRate(p)*100)}%（愛情・指輪・人気で上がる）。</p>
    ${p.flags.propose?'<div class="toast">次のターンにプロポーズする。</div><button class="btn ghost" data-act="proposeCancel">やっぱりやめる</button>':`<button class="btn" data-act="propose">次のターンにプロポーズする</button>`}`;
 }
 
@@ -8636,6 +8639,7 @@ function sxStart(X,seed){
       if(S0.ch){const used=new Set();for(let n=0;n<S0.ch.n;n++){let s;do{s=2+Math.floor(rk()*15)}while(used.has(s));used.add(s);X.sxq[i].push({seg:s,n:p.n,k,ty:'ch'})}}
       if(S0.pass)X.sxq[i].push({seg:1,n:p.n,k,ty:'pass'});
       if(S0.save)X.sxSv[i].push({n:p.n,k,left:1});
+      if(k==='lgbtq')X.sxq[i].push({seg:2+Math.floor(rk()*15),n:p.n,k,ty:'lg'});
     })}));
   X.sxq.forEach(q=>q.sort((a,b)=>a.seg-b.seg));
 }
@@ -8643,6 +8647,12 @@ function sxTeam(X,i){
   if(!X.sxq||!X.sxq[i].length)return false;const q=X.sxq[i],e=q.find(e=>!e.done&&e.seg<=X.seg);if(!e)return false;e.done=1;
   const Y=X.T[i],O=X.T[1-i],r=X.r,ok=p=>p&&!p.gone&&!injOut(X,p)&&!(typeof tbAway==='function'&&tbAway(X,p));
   const me=Y.pl.find(p=>p.n===e.n);if(!ok(me))return false;const S0=SX[e.k];
+  if(e.ty==='lg'){me.r+=5;me.sho+=5;me.pas+=5;shiftTeam(Y,me.role,5);const m0=X.seg*5+1+Math.floor(r()*5);
+    X.ev.push({m:m0,s:i,ty:'skill',tx:`${me.n}「${S0.n}」発動！ ピッチの時間が3秒止まった…${me.n}だけが動ける。全能力+5`});
+    if(me.role==='GK'){X.sxSv[i].push({n:me.n,k:e.k,left:1,tx:'止まった時間の中で、もうシュートコースに入っていた！'});return false}
+    const gk=(O.pl.find(p=>p.role==='GK')||{n:'GK'}).n,odef=mDef(X,1-i),pg=clamp(.42+(mAtk(X,i)-odef)*.0075+(me.sho+10-75)*.003,.25,.8);X.sh[i]++;
+    const info={i,m:m0,n:me.n,pg,gk};if(X.human===i){X.pend={ty:'shot',...info};return true}if(X.human===1-i){X.pend={ty:'def',...info};return true}
+    mBig(X,info,Math.floor(r()*3),Math.floor(r()*3));return true}
   let sc=me,b=S0.ch?S0.ch.b:0,kp=null;
   if(e.ty==='pass'){const rc=Y.pl.filter(p=>p!==me&&p.role!=='GK'&&ok(p));if(!rc.length)return false;sc=wPick(r,rc,p=>({FW:5,MF:2.2,DF:.5}[p.role]||1)*Math.pow(Math.max(30,p.sho+3)/60,3));b=S0.pass.b;kp=me.n}
   const m=e.ty==='pass'?7:X.seg*5+1+Math.floor(r()*5),gk=(O.pl.find(p=>p.role==='GK')||{n:'GK'}).n,odef=mDef(X,1-i);
@@ -8654,7 +8664,7 @@ function sxTeam(X,i){
   mBig(X,info,Math.floor(r()*3),Math.floor(r()*3));return true;
 }
 function sxSave(X,d,m,p){if(!X.sxSv||p<.3)return p;const L=X.sxSv[d].find(s=>s.left>0);if(!L)return p;const g=X.T[d].pl.find(q=>q.n===L.n);if(!g||g.gone||injOut(X,g))return p;
-  L.left=0;X.ev.push({m,s:d,ty:'skill',tx:`${g.n}「${SX[L.k].n}」 ${SX[L.k].save.tx}`});return p*.3}
+  L.left=0;X.ev.push({m,s:d,ty:'skill',tx:`${g.n}「${SX[L.k].n}」 ${L.tx||SX[L.k].save.tx}`});return p*.3}
 
 /* ----- 育成：超レジェンドの出来事と習得 ----- */
 {const _le=legendEv;legendEv=function(id,p){const e=_le(id,p),L=e.legend;if(!L||!L.sup||!SX[L.sk])return e;const S0=SX[L.sk];
@@ -8668,6 +8678,42 @@ function sxSave(X,d,m,p){if(!X.sxSv||p<.3)return p;const L=X.sxSv[d].find(s=>s.l
     if(v==='messi')p.title='アルゼンチンの神の子';
     return ['特殊能力',SX[v].n+(v==='messi'?'・称号「アルゼンチンの神の子」':''),1]}
   return _a2(p,k,v)}}
+
+/* ========== 結婚相手：世界の名前・職業と収入の表示・LGBTQのパートナー ========== */
+// [名前, 国]（日本の名前は今までどおり）
+const PARTNER_W=[['ソフィア','イタリア'],['エマ','フランス'],['ミア','ドイツ'],['オリビア','イングランド'],['イザベラ','ブラジル'],['ルシア','スペイン'],['カミラ','アルゼンチン'],
+ ['アナスタシア','ロシア'],['ハナ','韓国'],['ジウ','韓国'],['メイリン','中国'],['アイシャ','モロッコ'],['ファトゥ','セネガル'],['アマラ','ナイジェリア'],['プリヤ','インド'],
+ ['プトゥリ','インドネシア'],['マリア','メキシコ'],['ヴァレンティナ','コロンビア'],['エルサ','スウェーデン'],['ノラ','ノルウェー'],['ゼイネプ','トルコ'],['レイラ','イラン'],
+ ['ナタリア','ポーランド'],['エレニ','ギリシャ'],['クロエ','アメリカ'],['アメリア','オーストラリア'],['アイノ','フィンランド'],['マイ','ベトナム'],['ニン','タイ'],['カタリナ','ポルトガル'],
+ ['ルナ','チリ'],['アンナ','オランダ'],['ヤスミン','エジプト'],['ザイナブ','ガーナ'],['テレサ','フィリピン'],['オルガ','ウクライナ'],['リーヴ','デンマーク'],['ネハ','ネパール']];
+// LGBTQのパートナー（tw：トランス女性、tm：トランス男性）
+const PARTNER_Q=[['カオル','日本','tw'],['ミチル','日本','tw'],['アンジェリカ','ブラジル','tw'],['ルビー','アメリカ','tw'],['ジュリエット','フランス','tw'],
+ ['ハル','日本','tm'],['アキラ','日本','tm'],['マックス','ドイツ','tm'],['レオ','スペイン','tm'],['ジェイ','イングランド','tm']];
+const PG_N={f:'女性',tw:'トランス女性',tm:'トランス男性'};
+const ctyFl=n=>{try{const N=Object.values(NATIONS).find(x=>x.n===n);return N?N.fl:''}catch(e){return ''}};
+function partnerOf(code){const [kind,i]=code.split('-');if(kind==='q'){const q=PARTNER_Q[+i];return {n:q[0],cty:q[1],g:q[2]}}
+  if(kind==='w'){const w=PARTNER_W[+i];return {n:w[0],cty:w[1],g:'f'}}return {n:PARTNER[+i]||'美咲',cty:'日本',g:'f'}}
+function jobInc(j,s){const J=JOBS[j]||JOBS[0];return Math.round(Math.exp(Math.log(J[1])+(s/1000)*(Math.log(J[2])-Math.log(J[1]))))}
+// 出会いのイベントID：fm:meet:<相手>:<職業>:<収入の位置>
+function meetId(){const r=Math.random(),code=r<.05?`q-${ri(0,PARTNER_Q.length-1)}`:r<.5?`j-${ri(0,PARTNER.length-1)}`:`w-${ri(0,PARTNER_W.length-1)}`;
+  return `fm:meet:${code}:${ri(0,JOBS.length-1)}:${ri(0,999)}`}
+const partnerTag=P=>!P?'':`<span class="sub" style="display:block">${P.cty?`${ctyFl(P.cty)} ${esc(P.cty)}`:''}${P.g&&P.g!=='f'?`・<b style="color:#e0b0f8">${PG_N[P.g]}</b>`:''}${P.job?`・${esc(P.job.n)}（月収 ${yen(P.job.inc)}）`:''}</span>`;
+{const _fe=famEv;famEv=function(id,p){const [,t,a,jb,sd]=id.split(':');
+  if(t!=='meet'||jb==null)return _fe(id,p);
+  const Q=partnerOf(a),inc=jobInc(+jb,+sd),job=JOBS[+jb]?JOBS[+jb][0]:'会社員',who=`${Q.n}（${Q.cty}出身${Q.g!=='f'?'・'+PG_N[Q.g]:''}・${job}・月収${yen(inc)}）`;
+  const x=Q.g==='f'?`友人の誕生日会で、${who}と話が弾んだ。サッカーのことはほとんど知らないらしいが、それが妙に心地いい。`
+    :`友人の誕生日会で、${who}と話が弾んだ。自分らしく生きることを大切にしている人で、話していると不思議と肩の力が抜ける。`;
+  return {id,fam:1,t:'思いがけない出会い',x,ch:[
+    {l:'連絡先を交換する',d:'交際が始まるかもしれない',pr:c=>.55+c.p.pop/400,ok:{m:`後日、${Q.n}と食事に行った。交際が始まった。`,fx:{partner:Q.n,pmeta:`${a}:${jb}:${inc}`,cond:6}},ng:{m:'連絡先は交換したが、そのまま返事は来なかった。',fx:{}}},
+    {l:'今はサッカーに集中する',d:'',pr:()=>1,ok:{m:'その夜も、帰ってストレッチをして寝た。',fx:{key:1}},ng:{m:'',fx:{}}}]}}}
+{const _a2=applyFx2;applyFx2=function(p,k,v){if(k==='pmeta'){const P=p.fam&&p.fam.partner;if(!P)return null;const [a,jb,inc]=String(v).split(':'),Q=partnerOf(a);
+    P.cty=Q.cty;P.g=Q.g;P.job={n:JOBS[+jb]?JOBS[+jb][0]:'会社員',inc:+inc};return ['職業',`${P.job.n}・月収${yen(P.job.inc)}`,1]}
+  return _a2(p,k,v)}}
+const lgbtMarried=p=>{const P=p&&p.fam&&p.fam.partner;return !!(P&&P.married&&P.g&&P.g!=='f')};
+
+/* ----- 特殊能力「LGBTQに配慮した人」 ----- */
+SX.lgbtq={n:'LGBTQに配慮した人',d:'試合中に一度だけランダムに発動。自分の全能力+5、自分以外の全員が3秒止まる（その間にフリーで決定機。GKなら相手の決定機を1回止める）'};
+SKILLS.sx_lgbtq={n:SX.lgbtq.n,d:SX.lgbtq.d};
 
 /* ========== スカッドの表示：スキルで上がった状態の能力（試合の途中で上がるものは含めない） ========== */
 let DISPC=null;
