@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-082354';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-084823';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -750,6 +750,9 @@ details.rule .plan li{margin:6px 0;line-height:1.6}
 .flags{display:flex;flex-wrap:wrap;gap:8px}.flags span{display:flex;flex-direction:column;align-items:center;font-size:22px}.flags small{font-size:10px;color:var(--muted)}
 .ttlline{margin:4px 0 0;font-size:13px;color:var(--muted)}.ttlline b{color:var(--gold)}
 .jk{display:flex;align-items:baseline;gap:8px;background:rgba(0,0,0,.35);border-left:3px solid var(--gold);border-radius:6px;padding:8px 12px;margin:8px 0;font-size:14px;min-height:20px}.jk b{color:var(--gold);font-size:11px;flex:none}.jk .num{font-size:12px;color:var(--muted);flex:none}
+.zk.sup{border-color:#c060e0}.zk.sup.on{background:linear-gradient(135deg,rgba(192,96,224,.18),rgba(215,180,74,.12))}.zk.sup small{color:#d890f0}
+.sxe{display:block;font-style:normal;font-size:11px;color:#d890f0;margin-top:4px}
+.sk.sxk{background:rgba(192,96,224,.2);color:#e0b0f8;border-color:#c060e0}
 
 </style>
 </head>
@@ -1143,6 +1146,71 @@ const LEGENDS=[
  {id:9,nick:'永世主将',n:'柊 宗一郎',pos:'DF',cty:'日本',r:1,tip:'90分間、一度も気を抜かないことが才能だ'},
  {id:10,nick:'左足の画家',n:'七瀬 透',pos:'MF',cty:'日本',r:.8,tip:'パスは相手の足ではなく、未来に出すんだ'},
  {id:11,nick:'千本の壁',n:'鬼頭 剛志',pos:'GK',cty:'日本',r:1,tip:'怖さを知っているキーパーが、一番強い'},
+ {id:12,nick:'砂漠の鷹',n:'ハリド・アル＝ナスィーム',pos:'FW',cty:'サウジアラビア',r:0.8,tip:'ゴールは砂の上でも芝の上でも、同じ場所にある'},
+ {id:13,nick:'氷上の指揮者',n:'ミカ・ラウタヴァーラ',pos:'MF',cty:'フィンランド',r:1,tip:'寒いときほど、頭は冷静にいられる'},
+ {id:14,nick:'黒い稲妻',n:'クワメ・アサンテ',pos:'FW',cty:'ガーナ',r:0.8,tip:'最初の3歩で、勝負は決まっている'},
+ {id:15,nick:'大地の壁',n:'セルゲイ・ヴォロノフ',pos:'DF',cty:'ロシア',r:1,tip:'倒れない者が、最後に立っている'},
+ {id:16,nick:'アンデスの鷲',n:'マテオ・キスペ',pos:'GK',cty:'ペルー',r:1,tip:'空を見ろ。ボールはいつも上から落ちてくる'},
+ {id:17,nick:'港町の魔術師',n:'ラファエル・コスタ・ネヴェス',pos:'MF',cty:'ポルトガル',r:0.7,tip:'ボールは足の延長だ。体の一部にしろ'},
+ {id:18,nick:'草原の風',n:'バトバヤル・ガンゾリグ',pos:'FW',cty:'モンゴル',r:1,tip:'馬に乗るように、ボールに乗れ'},
+ {id:19,nick:'鋼の心臓',n:'ヤン・コヴァルスキ',pos:'MF',cty:'ポーランド',r:1,tip:'90分走れる心臓は、毎朝の走りで作られる'},
+ {id:20,nick:'ナイルの鉄壁',n:'オマール・ファルーク',pos:'DF',cty:'エジプト',r:1,tip:'相手の目を見れば、次の動きがわかる'},
+ {id:21,nick:'太陽の弾丸',n:'アレハンドロ・ソリス',pos:'FW',cty:'メキシコ',r:0.8,tip:'迷ったら、ゴールの一番遠い隅を狙え'},
+ {id:22,nick:'雪原の守護者',n:'ビョルン・ストランド',pos:'GK',cty:'スウェーデン',r:1,tip:'怖がるのは、ボールが来る前だけでいい'},
+ {id:23,nick:'ドナウの賢者',n:'フェレンツ・ナジ',pos:'MF',cty:'ハンガリー',r:1,tip:'サッカーは足でやる将棋だ'},
+ {id:24,nick:'赤い悪魔',n:'ルーカス・ファン・ドーレン',pos:'MF',cty:'ベルギー',r:0.7,tip:'最高のパスは、受け手が驚くパスだ'},
+ {id:25,nick:'太鼓の名手',n:'ブバカル・トラオレ',pos:'MF',cty:'マリ',r:1,tip:'リズムを持て。リズムがあれば疲れない'},
+ {id:26,nick:'摩天楼',n:'タイラー・ホイットマン',pos:'DF',cty:'アメリカ',r:1,tip:'高さは武器だ。でも使い方を知らなければただの棒だ'},
+ {id:27,nick:'オーロラの旋律',n:'イーヴァル・ソルベルグ',pos:'MF',cty:'ノルウェー',r:1,tip:'楽しむことを忘れた天才は、すぐに消える'},
+ {id:28,nick:'カリブの豹',n:'ダリオ・メンデス',pos:'FW',cty:'コロンビア',r:0.7,tip:'ゴール前では、冷たい頭と熱い足を持て'},
+ {id:29,nick:'バルカンの狼',n:'ドラガン・ペトロヴィッチ',pos:'FW',cty:'セルビア',r:0.8,tip:'狼は群れで狩る。ストライカーもそうだ'},
+ {id:30,nick:'月下の守護神',n:'白石 月斗',pos:'GK',cty:'日本',r:0.9,tip:'止めた後の一歩目が、次の攻撃を作る'},
+ {id:31,nick:'疾風',n:'風間 颯太',pos:'FW',cty:'日本',r:0.8,tip:'速さは才能じゃない。準備だ'},
+ {id:32,nick:'鉄人',n:'岩城 大地',pos:'DF',cty:'日本',r:1,tip:'休むのも練習だ。それを知らない選手は長く持たない'},
+ {id:33,nick:'精密機械',n:'宮坂 精一',pos:'MF',cty:'日本',r:0.9,tip:'同じボールを1000回蹴れ。1001回目に違いがわかる'},
+ {id:34,nick:'浪速の点取り屋',n:'大阪谷 豪',pos:'FW',cty:'日本',r:0.9,tip:'笑わせて、油断させて、決める'},
+ {id:35,nick:'ラインの番人',n:'クラウス・ヴィンターベルク',pos:'DF',cty:'ドイツ',r:0.8,tip:'最後尾から、試合全体を指揮しろ'},
+ {id:36,nick:'黒い森の狩人',n:'ティモ・ヴァルトナー',pos:'FW',cty:'ドイツ',r:1,tip:'ボールが来る場所に、先にいるだけだ'},
+ {id:37,nick:'ピレネーの頭脳',n:'ジョルディ・カサルス',pos:'MF',cty:'スペイン',r:0.8,tip:'三角形を作れ。そこに答えがある'},
+ {id:38,nick:'リヨンの貴公子',n:'ジュリアン・ボーモン',pos:'MF',cty:'フランス',r:0.7,tip:'エレガントであることは、正確であることだ'},
+ {id:39,nick:'マルセイユの拳',n:'カリム・ベナッサ',pos:'FW',cty:'フランス',r:0.9,tip:'体をぶつけてくる相手には、もっと速く動け'},
+ {id:40,nick:'カルパチアの大鷲',n:'コンスタンティン・ラドゥレスク',pos:'MF',cty:'ルーマニア',r:0.7,tip:'左足が語るものを、右足は知らなくていい'},
+ {id:41,nick:'アドリアの盾',n:'イヴァン・ブラジェヴィッチ',pos:'DF',cty:'クロアチア',r:1,tip:'一対一は、相手が仕掛ける前に終わらせろ'},
+ {id:42,nick:'南十字星',n:'ジャック・オコナー',pos:'GK',cty:'オーストラリア',r:1,tip:'ゴールマウスは君の家だ。誰も入れるな'},
+ {id:43,nick:'ソウルの心臓',n:'チェ・ミンジェ',pos:'MF',cty:'韓国',r:0.9,tip:'自分のためではなく、仲間のために走れ'},
+ {id:44,nick:'紅い竜',n:'リー・ウェイ',pos:'FW',cty:'中国',r:1,tip:'一本のシュートに、千本の練習を込めろ'},
+ {id:45,nick:'アステカの壁',n:'エミリオ・ルナ・ガルサ',pos:'DF',cty:'メキシコ',r:0.8,tip:'守備は芸術だ。誰も気づかない芸術だ'},
+ {id:46,nick:'ラプラタの鷹',n:'ガブリエル・バティステロ',pos:'FW',cty:'アルゼンチン',r:0.7,tip:'ゴールの匂いがしたら、もう走り出している'},
+ {id:47,nick:'ウルグアイの牙',n:'マルティン・カバニージャ',pos:'FW',cty:'ウルグアイ',r:0.8,tip:'負けた日の夜が、明日の自分を作る'},
+ {id:48,nick:'密林の獅子',n:'ジョゼフ・ムバンゴ',pos:'FW',cty:'カメルーン',r:0.8,tip:'ライオンは、獲物を前にして迷わない'},
+ {id:49,nick:'アトラスの魔法使い',n:'ユセフ・ベンハリ',pos:'MF',cty:'モロッコ',r:1,tip:'ドリブルは会話だ。相手の言葉を聞け'},
+ {id:50,nick:'エメラルドの韋駄天',n:'ショーン・マクギャリー',pos:'FW',cty:'アイルランド',r:1,tip:'ゴールしたら喜べ。楽しむのが一番だ'},
+ {id:51,nick:'カナリアの翼',n:'ティアゴ・ブランダン',pos:'MF',cty:'ブラジル',r:0.7,tip:'ボールと踊れ。足は勝手についてくる'},
+ {id:52,nick:'ヒマラヤの壁',n:'ラジ・タパ',pos:'GK',cty:'ネパール',r:1,tip:'高い山ほど、一歩ずつしか登れない'},
+ {id:53,nick:'ボスポラスの魔術師',n:'エムレ・ユルドゥズ',pos:'MF',cty:'トルコ',r:1,tip:'ファンの声は、もう一人の味方だ'},
+ {id:54,nick:'テムズの紳士',n:'ハリー・ウィンターボトム',pos:'DF',cty:'イングランド',r:1,tip:'タックルは、最後の手段であるべきだ'},
+ {id:55,nick:'ヴェスヴィオの炎',n:'サルヴァトーレ・エスポジト',pos:'FW',cty:'イタリア',r:0.8,tip:'情熱がなければ、技術はただの飾りだ'},
+ {id:56,nick:'南米の司令塔',n:'フアン・ロマニョーリ',pos:'MF',cty:'パラグアイ',r:1,tip:'急ぐな。ボールが走ってくれる'},
+ {id:57,nick:'テランガの壁',n:'アマドゥ・シセ',pos:'GK',cty:'セネガル',r:1,tip:'大きな声は、大きな体より役に立つ'},
+ {id:58,nick:'ペルシャの弓',n:'アリ・レザイー',pos:'FW',cty:'イラン',r:1,tip:'シュートは弓を引くように。溜めて、放て'},
+ {id:59,nick:'キウイの韋駄天',n:'リアム・テ・ランギ',pos:'FW',cty:'ニュージーランド',r:1,tip:'小さな国からでも、世界には届く'},
+ {id:60,nick:'チリの鉄人',n:'セバスティアン・オルティス',pos:'DF',cty:'チリ',r:1,tip:'泥にまみれたユニフォームは、勲章だ'},
+ {id:61,nick:'ボヘミアの守護神',n:'ズデネク・ホラーク',pos:'GK',cty:'チェコ',r:1,tip:'ゴールキックも、攻撃の一本目だ'},
+ {id:62,nick:'人間最高到達点',n:'クリスティーナ・ロナウホ',pos:'FW',cty:'ポルトガル',r:.085,sup:1,sk:'ronaldo',tip:'跳べ。誰よりも高く、誰よりも長く'},
+ {id:63,nick:'音速ディフェンダー',n:'アシュラフ・ハキキミ',pos:'DF',cty:'モロッコ',r:.085,sup:1,sk:'hakimi',tip:'守備から攻撃まで、一番速く着いた者の勝ちだ'},
+ {id:64,nick:'音速ドリブラー',n:'カカ・カ',pos:'MF',cty:'ブラジル',r:.085,sup:1,sk:'kaka',tip:'前が空いたら、迷わず運べ'},
+ {id:65,nick:'テクニックとスピードの神様',n:'ネイモアール',pos:'MF',cty:'ブラジル',r:.085,sup:1,sk:'neymar',tip:'遊び心を失ったら、サッカーは仕事になる'},
+ {id:66,nick:'全ての神',n:'ペッレ',pos:'FW',cty:'ブラジル',r:.085,sup:1,sk:'pele',tip:'サッカーは、すべてを持つ者を愛する'},
+ {id:67,nick:'神の人間',n:'マラドゥェア',pos:'FW',pos2:'MF',cty:'アルゼンチン',r:.085,sup:1,sk:'maradona',tip:'ボールを持ったら、世界はお前のものだ'},
+ {id:68,nick:'フィジカルモンスター',n:'ロメル・ルカカク',pos:'FW',cty:'ベルギー',r:.085,sup:1,sk:'lukaku',tip:'ぶつかられたら、もっと強くぶつかり返せ'},
+ {id:69,nick:'サッカーゴールは別のとこに移しました。',n:'ピーターシュマちゃん',pos:'GK',cty:'イングランド',r:.085,sup:1,sk:'schmei',tip:'ゴールはもうここにはない。そう思わせろ'},
+ {id:70,nick:'7分、パスはゴロで出せ！',n:'本田・圭之介',pos:'MF',cty:'日本',r:.085,sup:1,sk:'honda',tip:'7分だ。パスはゴロで出せ！'},
+ {id:71,nick:'オランダの鉄人',n:'フィジカル・ファンダイク',pos:'DF',cty:'オランダ',r:.085,sup:1,sk:'vandijk',tip:'慌てるな。最後に体を入れればいい'},
+ {id:72,nick:'ディフェンスの神様',n:'アレッサンドロ・ネスゴシタ',pos:'DF',cty:'イタリア',r:.085,sup:1,sk:'nesta',tip:'最高のタックルは、タックルしないことだ'},
+ {id:73,nick:'闘牛犬',n:'ジェンダーレス・ガッドゥーゾ',pos:'DF',cty:'イタリア',r:.085,sup:1,sk:'gattuso',tip:'走れ、噛みつけ、最後まで離すな'},
+ {id:74,nick:'空中の支配者',n:'パウロ・丸ディーニ',pos:'DF',cty:'イタリア',r:.085,sup:1,sk:'maldini',tip:'空中戦は、跳ぶ前の一歩で決まる'},
+ {id:75,nick:'イングランドの固定砲台',n:'スティーブン・ジェラートピケ',pos:'MF',pos2:'DF',cty:'イングランド',r:.085,sup:1,sk:'gerrard',tip:'遠くても関係ない。打てば何かが起きる'},
+ {id:76,nick:'ゴール以外も守護する守護神',n:'オリヴァー・キンコンカンコーン',pos:'GK',cty:'ドイツ',r:.085,sup:1,sk:'kahn',tip:'守るのはゴールだけじゃない。チームのすべてだ'},
 ];
 const LEG_KEY='kyukyu-jinsei.legends.v1';
 function legendsMet(){try{return JSON.parse(localStorage.getItem(LEG_KEY)||'[]')}catch(e){return S._legMem||[]}}
@@ -3004,7 +3072,7 @@ function messiNow(p){const f=p.flags&&p.flags.messi;return !!(f&&!f.done&&!OFF(p
 function spEv(id,p){
   if(typeof spEv2==='function'){const e2=spEv2(id,p);if(e2)return e2}
   if(id==='sp:messi'){const f=p.flags.messi||{ok:MESSI_OK},mt=!!(p.legFx&&p.legFx.mateo);return {id,t:'伝説降臨：リオネル・メツシ',x:`練習場に、見覚えのある小柄な男が立っていた。世界中が知る伝説の選手、リオネル・メツシだ。${mt?'マテオ・メツシ君が「パパの友だちだよ」と手を振っている。':'たまたま来日していたらしい。'}「少しだけボールを蹴ろうか」`,ch:[
-    {l:'1対1で勝負を挑む',d:`成功すると特殊能力「神の子」（テクニック・スピード・シュート+5、勝負強くなる）。成功率${Math.round(f.ok*100)}%`,fixed:1,pr:()=>f.ok,ok:{m:'一瞬だけ、伝説の足元からボールを奪った。メツシは笑って言った。「君は神の子だ」',fx:{kaminoko:1,pop:10}},ng:{m:'何度挑んでも、ボールに触れることすらできなかった。それでも、一生の宝物になった。',fx:{tec:1,cond:8}}},
+    {l:'1対1で勝負を挑む',d:`成功すると特殊能力「神の子」（テクニック・スピード・シュート+5、勝負強くなる）＋「アルゼンチンの神の子」（選手カードで試合中2回ドリブルから決定機）と称号。成功率${Math.round(f.ok*100)}%`,fixed:1,pr:()=>f.ok,ok:{m:'一瞬だけ、伝説の足元からボールを奪った。メツシは笑って言った。「君は神の子だ。アルゼンチンの神の子だ」',fx:{kaminoko:1,pop:10,sx:'messi'}},ng:{m:'何度挑んでも、ボールに触れることすらできなかった。それでも、一生の宝物になった。',fx:{tec:1,cond:8}}},
     {l:'サインと写真をお願いする',d:'',pr:()=>1,ok:{m:'ユニフォームにサインをもらった。部屋の一番目立つところに飾った。',fx:{cond:10,pop:2}},ng:{m:'',fx:{}}}]}}
   if(id==='sp:fate')return {id,t:'運命の分岐点',x:`${p.age}歳。現役生活は残りおよそ3分の1、引退まではあと7分ほどだ。ここで殻を破れるかどうかで、選手としての最後の景色が変わる。`,ch:[
     {l:'すべてを懸けて挑む',d:'成功：全能力+6／失敗：全能力-2',fixed:1,pr:()=>.4,ok:{m:'限界の向こう側に手が届いた。体が、頭が、別人のように動く。',fx:{fate:6}},ng:{m:'無理がたたって体のバランスを崩した。取り戻すには時間がかかりそうだ。',fx:{fate:-2}}}]};
@@ -3667,7 +3735,7 @@ let M=metaDefault();
 function metaFix(m){const d=metaDefault();m=Object.assign(d,m||{});m.mats=Object.assign(d.mats,m.mats||{});m.squad=Object.assign(metaDefault().squad,m.squad||{});
  if(!Array.isArray(m.squad.slots))m.squad.slots=Array(11).fill(null);while(m.squad.slots.length<11)m.squad.slots.push(null);m.squad.slots=m.squad.slots.slice(0,11);
  if(!Array.isArray(m.squad.bench))m.squad.bench=Array(5).fill(null);while(m.squad.bench.length<5)m.squad.bench.push(null);m.squad.bench=m.squad.bench.slice(0,5);if(m.squad.maoSub===undefined)m.squad.maoSub=true;
- (m.roster||[]).forEach(c=>{if(c&&c.id==='inkansu'){c.special='kpass';c.style=INKANSU.style;c.st=Object.assign({},c.st||{},{phy:78,pas:80})}if(c&&c.id==='lg_kame')c.name='アームストロングかめを';if(c&&c.gikkuri)c.gikkuri=0});
+ (m.roster||[]).forEach(c=>{if(c&&c.from==='育成'&&!c.sx&&(c.skills||[]).includes('神の子'))c.sx=['messi'];if(c&&c.id==='inkansu'){c.special='kpass';c.style=INKANSU.style;c.st=Object.assign({},c.st||{},{phy:78,pas:80})}if(c&&c.id==='lg_kame')c.name='アームストロングかめを';if(c&&c.gikkuri)c.gikkuri=0});
  const lgId=id=>typeof id==='string'&&id.startsWith('lg_');m.squad.slots=m.squad.slots.map(id=>lgId(id)?null:id);m.squad.bench=m.squad.bench.map(id=>lgId(id)?null:id);return m}
 function metaLoadLocal(){try{const d=JSON.parse(localStorage.getItem(META_KEY)||'null');if(d)M=metaFix(d)}catch(e){}_metaLast=JSON.stringify(Object.assign({},M,{t:0}))}
 let _metaLast='';
@@ -3713,7 +3781,7 @@ function addPlayerCard(p,sum){
   if(p.fam&&p.fam.partner&&p.fam.partner.married){KEYS.forEach(k=>st[k]=Math.min(99,st[k]+1));end.push(`${p.fam.partner.n}と最後まで添い遂げた：全能力+1`)}
   if(sum)sum.legEnd=end;
   const c={id:uidGen('p'),kind:'pl',name:`${p.sei} ${p.mei}`,pos:p.pos,style:POS[p.pos].styles[p.style].n,st,plus:{},enh:0,
-   legend:has(p,'legend'),genius:has(p,'monster'),skills:p.skills.map(k=>SKILLS[k].n),grade:sum.grade,peak:p.peak,from:'育成',t:Date.now(),height:p.height||null,title:p.title||null,nation:p.nation||null,clubs:(p.hist||[]).map(h=>h.n).filter((n,i,a)=>n&&a.indexOf(n)===i&&n!==p.school)};
+   legend:has(p,'legend'),genius:has(p,'monster'),skills:p.skills.map(k=>SKILLS[k].n),grade:sum.grade,peak:p.peak,from:'育成',t:Date.now(),height:p.height||null,title:p.title||null,nation:p.nation||null,sx:p.sx&&p.sx.length?p.sx.slice():(p.skills.includes('kaminoko')?['messi']:null),clubs:(p.hist||[]).map(h=>h.n).filter((n,i,a)=>n&&a.indexOf(n)===i&&n!==p.school)};
   M.roster.unshift(c);
   const coins=CAREER_COINS;
   M.coins+=coins;
@@ -3866,10 +3934,10 @@ function teamCalc(sq){
   const pl=cards.map(({role,c})=>{
     const chb=CH&&CH.get(c)?CH.get(c).b:0;
     const bonus=(hasCap&&c.special!=='captain'?4:0)+chb,st={},gp=hasDoc&&typeof isGramps==='function'&&isGramps(c);
-    for(const k of KEYS)st[k]=Math.min(99,effSt(c,k)+bonus+(gp?50:0));
+    for(const k of KEYS)st[k]=Math.min(99,effSt(c,k)+bonus+(gp?50:0)+(typeof sxSt==='function'?sxSt(cards,c,k):0));
     const tmp={st,pos:c.pos},sta=typeof cardSta==='function'?cardSta(c):100;
     const r=Math.round(cardOvr({st,plus:{},pos:role},role)*(typeof fitOf==='function'?fitOf(c,role):fitMul(c.pos,role))*(typeof staFac==='function'?staFac(sta):1)*10)/10;
-    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',kpass:c.special==='kpass',kama:c.special==='renkei',oib:c.special==='oibore'&&role==='GK',uhho:c.special==='uhho',tabako:c.special==='tabako',inu:c.special==='inu'&&!c.filler,doc:c.special==='doctor',santa:c.special==='santa',gp,sta,filler:!!c.filler,legend:!!c.legend,id:c.id};
+    return {n:c.name,role,pos:c.pos,r,st,cap:c.special==='captain',emp:c.special==='empire',mao:c.special==='mao',starter:c.special==='starter',kpass:c.special==='kpass',kama:c.special==='renkei',oib:c.special==='oibore'&&role==='GK',uhho:c.special==='uhho',tabako:c.special==='tabako',inu:c.special==='inu'&&!c.filler,doc:c.special==='doctor',santa:c.special==='santa',sx:c.sx&&c.sx.length?c.sx:null,gp,sta,filler:!!c.filler,legend:!!c.legend,id:c.id};
   });
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
   const mgc=cardById(sq.mgr);const mg=mgc&&isMgr(mgc)?{n:mgc.name,st:Object.fromEntries(MKEYS.map(k=>[k,effSt(mgc,k)])),famous:!!mgc.famous}:null;
@@ -3890,7 +3958,7 @@ function teamSnap(sq){
   const T=teamCalc(sq);
   return {v:1,dogB:T.dogB||undefined,tac:(sq||M.squad).tac||'bal',name:T.name,form:T.form,tot:T.tot,atk:T.atk,mid:T.mid,def:T.def,hasCap:T.hasCap,hasEmp:!!T.hasEmp,hasMao:!!T.hasMao,maoSub:!!T.maoSub,sub:T.sub,
    mg:T.mg?{n:T.mg.n,st:T.mg.st,famous:T.mg.famous}:null,
-   pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};if(x.kama)o.kama=1;if(x.oib)o.oib=1;if(x.uhho)o.uhho=1;if(x.tabako)o.tabako=1;if(x.kpass)o.kpass=1;if(x.inu)o.inu=1;if(x.doc)o.doc=1;if(x.santa)o.santa=1;if(x.gp)o.gp=1;if(x.sta!=null&&x.sta<100)o.sta=x.sta;if(x.dog)o.dog=1;o.phy=x.st.phy;
+   pl:T.pl.map(x=>{const o={n:x.n,role:x.role,r:x.r,sho:x.st.sho,pas:x.st.pas,cap:x.cap?1:0,emp:x.emp?1:0,mao:x.mao?1:0};if(x.kama)o.kama=1;if(x.oib)o.oib=1;if(x.uhho)o.uhho=1;if(x.tabako)o.tabako=1;if(x.kpass)o.kpass=1;if(x.inu)o.inu=1;if(x.doc)o.doc=1;if(x.santa)o.santa=1;if(x.sx)o.sx=x.sx.slice();if(x.gp)o.gp=1;if(x.sta!=null&&x.sta<100)o.sta=x.sta;if(x.dog)o.dog=1;o.phy=x.st.phy;
      if(x.starter){const st={...x.st};for(const [k,v] of Object.entries(STARTER_D))st[k]=Math.min(99,Math.max(1,st[k]+v));o.st1={r:Math.round(cardOvr({st,plus:{},pos:x.role},x.role)*fitMul(x.pos,x.role)*10)/10,pas:st.pas}}
      return o})};
 }
@@ -3960,7 +4028,7 @@ function mStart(A0,B0,seed,human){
   // 巧妙テクニックパス：試合中に5回（時間はシードで決まる）
   X.kp=T.map((Y,i)=>{if(!Y.pl.some(p=>p.kpass))return null;const rk=rng((seed^(0x9e3779b1+i*7919))>>>0),s=new Set();while(s.size<KPASS_N)s.add(1+Math.floor(rk()*17));return [...s].sort((a,b)=>a-b)});X.kpI=[0,0];
   X.tb=T.map(Y=>Y.pl.some(p=>p.tabako)?[10,26,42,58,74].map(t=>t+Math.floor(r()*7)):null);X.tbI=[0,0];X.tmods=[];
-  if(typeof docStart==='function')docStart(X,seed);if(typeof staStart==='function')staStart(X);
+  if(typeof docStart==='function')docStart(X,seed);if(typeof sxStart==='function')sxStart(X,seed);if(typeof staStart==='function')staStart(X);
   return X;
 }
 const kamaB=(X,i)=>X.kama&&X.kama[i]&&X.sc[i]<X.sc[1-i]?1:0;// 負けているあいだ味方の全能力+1
@@ -4026,6 +4094,7 @@ function mTeam(X,i){
   const T=X.T,Y=T[i],O=T[1-i],r=X.r,seg=X.seg;
   const poss=i===0?X.pa:1-X.pa,odef=mDef(X,1-i);
   const late=seg>=12?(msOf(Y,'gam')-50)*.004:0,steady=(msOf(Y,'lea')-50)*.001;
+  if(typeof sxTeam==='function'&&sxTeam(X,i))return;
   if(X.kp&&X.kp[i]&&X.kpI[i]<X.kp[i].length&&seg===X.kp[i][X.kpI[i]]){X.kpI[i]++;
     const ps=Y.pl.find(p=>p.kpass&&!p.gone&&!injOut(X,p)&&!tbAway(X,p));
     if(ps){const rc=Y.pl.filter(p=>p!==ps&&p.role!=='GK'&&!p.gone&&!injOut(X,p)&&!tbAway(X,p));
@@ -4088,7 +4157,7 @@ function mTeam(X,i){
 function mBig(X,info,a,d){
   const {i,m,n,pg,gk}=info,read=a===d;let p=read?pg*.4:Math.min(.85,pg+.28);X.lastBig={i,a,d,read,goal:false};
   X.ev.push({m,s:i,ty:'chance',tx:`決定機！ ${n}が${SHOT_OPT[a]}`});
-  const ob=oibFire(X,1-i,m);if(ob)p*=.25;
+  const ob=oibFire(X,1-i,m);if(ob)p*=.25;if(typeof sxSave==='function')p=sxSave(X,1-i,m,p);
   const hit=X.r()<p;
   if(hit&&uhhoBlock(X,1-i,n,m)){X.lastBig.read=true}
   else if(hit){X.lastBig.goal=true;X.sc[i]++;X.gl[i][n]=(X.gl[i][n]||0)+1;if(info.kp)X.as[i][info.kp]=(X.as[i][info.kp]||0)+1;X.ev.push({m,s:i,ty:'goal',tx:info.kp?`${info.kp}の絶妙なパスから、${n}が決めた！`:read?`読まれていたが、${n}が力でねじ込んだ！`:`${gk}の読みの逆を突いた！ ${n}が決めた！`,sc:X.sc.slice()})}
@@ -5133,7 +5202,7 @@ H.life=()=>{
 function zukan(){
   const met=legendsMet();
   return `<div class="kick">レジェンド図鑑<span class="r">${met.length} / ${LEGENDS.length}</span></div><p class="note">プレー中に出会った伝説の名選手がここに載る。出会えるかは確率しだい。</p>
-  <div class="zukan">${LEGENDS.map(L=>met.includes(L.id)?`<div class="zk on"><small>「${esc(L.nick)}」</small><b>${esc(L.n)}</b><span class="sub">${L.pos}・${esc(L.cty)}</span><q>${esc(L.tip)}</q></div>`:`<div class="zk"><small>未遭遇</small><b>？？？</b><span class="sub">${L.pos}・${esc(L.cty)}</span></div>`).join('')}</div>`;
+  <div class="zukan">${LEGENDS.map(L=>met.includes(L.id)?`<div class="zk on ${L.sup?'sup':''}"><small>${L.sup?'超レジェンド・':''}「${esc(L.nick)}」</small><b>${esc(L.n)}</b><span class="sub">${L.pos}${L.pos2?'/'+L.pos2:''}・${esc(L.cty)}</span><q>${esc(L.tip)}</q>${L.sup&&typeof SX!=='undefined'&&SX[L.sk]?`<em class="sxe">特殊能力「${esc(SX[L.sk].n)}」</em>`:''}</div>`:`<div class="zk ${L.sup?'sup':''}"><small>${L.sup?'超レジェンド・':''}未遭遇</small><b>？？？</b><span class="sub">${L.pos}・${esc(L.cty)}</span></div>`).join('')}</div>`;
 }
 H.hof=()=>{
   const l=hofList();
@@ -5262,7 +5331,8 @@ function cardMini(c){
 function cardTile(c,opts={}){
   const mg=isMgr(c),o=mg?mgrOvr(c):cardOvr(c),gold=!!c.special||c.legend||c.famous;
   const tag=c.special==='captain'?`<span class="sk">${CAP_SKILL.n}</span>`:c.special==='empire'?`<span class="sk">${EMP_SKILL.n}</span>`:c.special==='mao'?`<span class="sk">${MAO_SKILL.n}</span>`:c.special==='starter'?`<span class="sk">${STARTER_SKILL.n}</span>`:c.special==='kpass'?`<span class="sk">${KPASS_SKILL.n}</span>`:c.special==='doctor'?`<span class="sk">ヤハ・ウラ・プルャ‼︎</span>`:c.special==='santa'?`<span class="sk">${SANTA_SKILL.n}</span>`:c.special==='renkei'?`<span class="sk">${RENKEI_SKILL.n}</span>`:c.special==='oibore'?`<span class="sk">${OIBORE_SKILL.n}</span>`:c.special==='uhho'?`<span class="sk">${UHHO_SKILL.n}</span>`:c.special==='tabako'?`<span class="sk">${TABAKO_SKILL.n}</span>`:c.special==='inu'?`<span class="sk">タッグ・${INU_SKILL.n}</span>`:isLegSup(c)?'<span class="sk">育成専用レジェンド</span>':c.legend?'<span class="sk">伝説</span>':c.genius?'<span class="sk">天才</span>':c.famous?'<span class="sk">名監督</span>':'';
-  return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${standArt3(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos+(c.pos2?'/'+c.pos2.join('/'):'')}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${c.title?`<b style="color:var(--gold)">${esc(c.title)}</b>・`:''}${c.height?c.height+'cm・':''}${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span>${!mg&&!isLegSup(c)&&typeof staBar==='function'?staBar(c):''}</div></div>${tag||c.gikkuri>0?`<div class="tags">${tag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
+  const sxTag=typeof sxOf==='function'?sxOf(c).map(k=>`<span class="sk sxk">${esc(SX[k].n)}</span>`).join(''):'';
+  return `<div class="ctile ${gold?'gold':''}"><div class="ct-h wf"><div class="ct-face">${standArt3(c,mg?'mg':'pl')}</div><span class="ct-o num">${o}</span><span class="ct-p">${mg?'監督':c.pos+(c.pos2?'/'+c.pos2.join('/'):'')}</span><div class="ct-n"><b>${esc(c.name)}</b><span class="sub">${c.title?`<b style="color:var(--gold)">${esc(c.title)}</b>・`:''}${c.height?c.height+'cm・':''}${esc(c.from||'')}${c.grade?'・評価'+c.grade:''}${mg?'':'・'+esc(c.style||POS[c.pos].n)}・強化${c.enh||0}/${ENH_MAX}</span>${!mg&&!isLegSup(c)&&typeof staBar==='function'?staBar(c):''}</div></div>${tag||sxTag||c.gikkuri>0?`<div class="tags">${tag}${sxTag}${c.gikkuri>0?'<span class="sk bad">ぎっくり腰（次の1試合欠場）</span>':''}</div>`:''}${cardMini(c)}${opts.foot||''}</div>`;
 }
 
 /* ---------- ガチャ ---------- */
@@ -5647,7 +5717,7 @@ function makeSnap(name,players,mgLv,tac,form){
   const hasCap=players.some(x=>x.special==='captain'),rOf=(st,x)=>Math.round(cardOvr({st,plus:{},pos:x.role},x.role)*fitMul(x.pos||x.role,x.role)*10)/10;
   const pl=players.map(x=>{const st={};KEYS.forEach(k=>st[k]=Math.min(99,x.st[k]+(hasCap&&x.special!=='captain'?4:0)));
     const o={n:x.n,role:x.role,r:rOf(st,x),sho:st.sho,pas:st.pas,cap:x.special==='captain'?1:0,emp:x.special==='empire'?1:0,mao:x.special==='mao'?1:0,st,pos:x.pos||x.role,sp:x.special||null};
-    o.phy=st.phy;if(x.special==='renkei')o.kama=1;if(x.special==='uhho')o.uhho=1;if(x.special==='tabako')o.tabako=1;if(x.special==='kpass')o.kpass=1;if(x.special==='doctor')o.doc=1;if(x.special==='santa')o.santa=1;if(x.special==='inu')o.inu=1;if(x.special==='oibore'&&x.role==='GK')o.oib=1;
+    o.phy=st.phy;if(x.special==='renkei')o.kama=1;if(x.special==='uhho')o.uhho=1;if(x.special==='tabako')o.tabako=1;if(x.special==='kpass')o.kpass=1;if(x.special==='doctor')o.doc=1;if(x.special==='santa')o.santa=1;if(x.sx&&x.sx.length)o.sx=x.sx.slice();if(x.special==='inu')o.inu=1;if(x.special==='oibore'&&x.role==='GK')o.oib=1;
     if(x.special==='starter'){const s1={...st};for(const [k,v] of Object.entries(STARTER_D))s1[k]=Math.min(99,Math.max(1,s1[k]+v));o.st1={r:rOf(s1,x),pas:s1.pas}}
     return o});
   const av=role=>{const l=pl.filter(x=>x.role===role);return l.length?l.reduce((s,x)=>s+x.r,0)/l.length:60};
@@ -6199,6 +6269,7 @@ function rulesHtml(){
     'ケミストリー：同じ国の選手（2人+1・3人+2・4人以上+3）、育成で同じクラブにいた選手（+2）、ガチャの特別選手3人以上（+1）を並べると能力アップ（1人最大+5）',
     '季節イベント：12月1日〜25日はクリスマス限定「サンタ・クロース」ガチャ。12月24・25日はプレゼント、1月1〜7日はお年玉（10,000コイン）を配布',
     '実況：試合中、ゴールや特殊能力の発動に合わせて実況が入る',
+    '超レジェンド：育成でまれに15人の超レジェンドが現れる（ふつうのレジェンドの1/10の確率）。「教わる」に成功すると特殊能力がつき、引退してマイ選手になったあとも試合で発動する（ガチャキャラより少し弱め）。リオネル・メツシに勝つと「神の子」に加えて「アルゼンチンの神の子」の能力と称号',
     'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる',
     '体力ゲージ：選手は対戦や試合のたびに体力が減る（フィジカルが高いほど減りにくい）。1時間で12ずつ回復。体力60未満だと能力が下がり、試合中に体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
@@ -8090,7 +8161,7 @@ const DOC_SK=[
  {n:'プルャ‼︎',d:'おじいちゃん系キャラ（政夫）の全能力+50（バツ丸尾君は対象外）。ささちーのタバコ休憩が3回減る。MAOの「俺の邪魔はさせない！！」が能力を下げずにもう一度打てる（2回目は下がる）'}];
 const DOC_SKILL={n:'ヤハ／ウラ／プルャ‼︎',q:'ヤハ！',d:DOC_SK.map(s=>`「${s.n}」${s.d}`).join('　')};
 const isGramps=c=>!!c&&(c.id==='masao'||c.special==='inu');
-const fitOf=(c,role)=>c&&c.pos2&&c.pos2.includes(role)?1:fitMul(c.pos,role);
+function fitOf(c,role){return c&&((c.pos2&&c.pos2.includes(role))||(typeof sxPos==='function'&&sxPos(c,role)))?1:fitMul(c.pos,role)}
 function docStart(X,seed){
   X.yaha=[0,0];X.maoTw=[0,0];
   X.T.forEach((Y,i)=>{const doc=Y.pl.find(p=>p.doc);if(!doc)return;
@@ -8490,6 +8561,73 @@ function jkHtml(){const j=jkAt(typeof matchMin==='function'?matchMin():90);retur
    <button class="act" data-act="spView" data-v="rank"><b>週間ランキング</b><span>今週 勝ち点${R.pts}</span><em>1位10,000コイン・月曜にリセット</em></button>
   </div>`+_sm()}}
 {const _sv=spView;spView=function(){const v=G.bt.view;if(v==='cup')return cupHtml();if(v==='rank')return rkHtml();return _sv()}}
+
+/* ========== 超レジェンド：育成で教わると、カードにガチャ風の特殊能力（弱め）がつく ========== */
+const SX={
+ ronaldo:{n:'人間最高到達点',d:'シュート+4。試合中2回、高い打点のヘディングで決定機（シュート+5）',st:{sho:4},ch:{n:2,b:5,tx:'高い打点からヘディング！'}},
+ hakimi:{n:'音速ディフェンダー',d:'スピード+6・守備+3。試合中1回、自陣から駆け上がって決定機',st:{spd:6,def:3},ch:{n:1,b:2,tx:'自陣から一気に駆け上がった！'}},
+ kaka:{n:'音速ドリブラー',d:'スピード+4・テクニック+3。試合中1回、独走ドリブルで決定機（シュート+4）',st:{spd:4,tec:3},ch:{n:1,b:4,tx:'ドリブルで独走！'}},
+ neymar:{n:'テクニックとスピードの神様',d:'テクニック+6・スピード+4',st:{tec:6,spd:4}},
+ pele:{n:'全ての神',d:'全能力+3',st:{spd:3,tec:3,sho:3,pas:3,phy:3,def:3}},
+ maradona:{n:'神の人間',d:'FW・MFのどちらでも能力が下がらない。試合中1回「神の手」で決定機（シュート+8）',pos2:['FW','MF'],ch:{n:1,b:8,tx:'「神の手」だ！'}},
+ lukaku:{n:'フィジカルモンスター',d:'フィジカル+8・シュート+3',st:{phy:8,sho:3}},
+ schmei:{n:'サッカーゴールは別のとこに移しました。',d:'試合中1回、相手の決定機を防ぐ（ゴールを別の場所に移したかのように）',save:{tx:'「サッカーゴールは別のとこに移しました。」 シュートは誰もいない場所へ！'}},
+ honda:{n:'7分、パスはゴロで出せ！',d:'試合開始7分ごろ、ゴロのスルーパスで味方に決定機（シュート+3）',pass:{b:3,tx:'「7分、パスはゴロで出せ！」 ゴロのスルーパス！'}},
+ vandijk:{n:'オランダの鉄人',d:'守備+5・フィジカル+4',st:{def:5,phy:4}},
+ nesta:{n:'ディフェンスの神様',d:'守備+3。試合中1回、相手の決定機をスライディングで消す',st:{def:3},save:{tx:'完璧なスライディングで決定機を消した！'}},
+ gattuso:{n:'闘牛犬',d:'フィジカル+4。いっしょに出ている味方全員の守備+1',st:{phy:4},team:{all:1}},
+ maldini:{n:'空中の支配者',d:'守備+4・フィジカル+2。試合中1回、相手のヘディングをはじき返す',st:{def:4,phy:2},save:{tx:'空中戦で競り勝ち、ヘディングをはじき返した！'}},
+ gerrard:{n:'イングランドの固定砲台',d:'MF・DFのどちらでも能力が下がらない。試合中2回、ミドルシュートの決定機（シュート+4）',pos2:['MF','DF'],ch:{n:2,b:4,tx:'ミドルシュートの体勢！'}},
+ kahn:{n:'ゴール以外も守護する守護神',d:'味方のDF全員の守備+2。試合中1回、決定機を止める',team:{df:2},save:{tx:'雄叫びとともにシュートを止めた！'}},
+ messi:{n:'アルゼンチンの神の子',d:'テクニック+3。試合中2回、ドリブルからの決定機（シュート+6）',st:{tec:3},ch:{n:2,b:6,tx:'ドリブルで3人抜き！'}},
+};
+Object.entries(SX).forEach(([k,s])=>{SKILLS['sx_'+k]={n:s.n,d:s.d}});
+const sxOf=c=>(c&&c.sx||[]).filter(k=>SX[k]);
+const sxPos=(c,role)=>sxOf(c).some(k=>SX[k].pos2&&SX[k].pos2.includes(c.pos)&&SX[k].pos2.includes(role));
+function sxSt(cards,c,k){let v=0;sxOf(c).forEach(s=>{v+=(SX[s].st&&SX[s].st[k])||0});
+  if(k==='def')cards.forEach(x=>{if(!x.c||x.c===c)return;sxOf(x.c).forEach(s=>{const T=SX[s].team;if(!T)return;if(T.all)v+=T.all;if(T.df&&(c.pos==='DF'||x.role==='DF'))v+=T.df})});
+  return v}
+
+/* ----- 試合エンジン ----- */
+function sxStart(X,seed){
+  X.sxq=[[],[]];X.sxSv=[[],[]];
+  X.T.forEach((Y,i)=>Y.pl.forEach((p,j)=>{if(!p.sx)return;const rk=rng((seed^(0x51ed27+i*7919+j*131))>>>0);
+    p.sx.forEach(k=>{const S0=SX[k];if(!S0)return;
+      if(S0.ch){const used=new Set();for(let n=0;n<S0.ch.n;n++){let s;do{s=2+Math.floor(rk()*15)}while(used.has(s));used.add(s);X.sxq[i].push({seg:s,n:p.n,k,ty:'ch'})}}
+      if(S0.pass)X.sxq[i].push({seg:1,n:p.n,k,ty:'pass'});
+      if(S0.save)X.sxSv[i].push({n:p.n,k,left:1});
+    })}));
+  X.sxq.forEach(q=>q.sort((a,b)=>a.seg-b.seg));
+}
+function sxTeam(X,i){
+  if(!X.sxq||!X.sxq[i].length)return false;const q=X.sxq[i],e=q.find(e=>!e.done&&e.seg<=X.seg);if(!e)return false;e.done=1;
+  const Y=X.T[i],O=X.T[1-i],r=X.r,ok=p=>p&&!p.gone&&!injOut(X,p)&&!(typeof tbAway==='function'&&tbAway(X,p));
+  const me=Y.pl.find(p=>p.n===e.n);if(!ok(me))return false;const S0=SX[e.k];
+  let sc=me,b=S0.ch?S0.ch.b:0,kp=null;
+  if(e.ty==='pass'){const rc=Y.pl.filter(p=>p!==me&&p.role!=='GK'&&ok(p));if(!rc.length)return false;sc=wPick(r,rc,p=>({FW:5,MF:2.2,DF:.5}[p.role]||1)*Math.pow(Math.max(30,p.sho+3)/60,3));b=S0.pass.b;kp=me.n}
+  const m=e.ty==='pass'?7:X.seg*5+1+Math.floor(r()*5),gk=(O.pl.find(p=>p.role==='GK')||{n:'GK'}).n,odef=mDef(X,1-i);
+  const pg=clamp(.27+(mAtk(X,i)-odef)*.0075+(sc.sho+b-75)*.003,.1,.62);X.sh[i]++;
+  X.ev.push({m,s:i,ty:'skill',tx:`${me.n}「${S0.n}」 ${e.ty==='pass'?S0.pass.tx+` ${sc.n}へ（シュート＋${b}）`:S0.ch.tx+`（シュート＋${b}）`}`});
+  const info={i,m,n:sc.n,pg,gk};if(kp)info.kp=kp;
+  if(X.human===i){X.pend={ty:'shot',...info};return true}
+  if(X.human===1-i){X.pend={ty:'def',...info};return true}
+  mBig(X,info,Math.floor(r()*3),Math.floor(r()*3));return true;
+}
+function sxSave(X,d,m,p){if(!X.sxSv||p<.3)return p;const L=X.sxSv[d].find(s=>s.left>0);if(!L)return p;const g=X.T[d].pl.find(q=>q.n===L.n);if(!g||g.gone||injOut(X,g))return p;
+  L.left=0;X.ev.push({m,s:d,ty:'skill',tx:`${g.n}「${SX[L.k].n}」 ${SX[L.k].save.tx}`});return p*.3}
+
+/* ----- 育成：超レジェンドの出来事と習得 ----- */
+{const _le=legendEv;legendEv=function(id,p){const e=_le(id,p),L=e.legend;if(!L||!L.sup||!SX[L.sk])return e;const S0=SX[L.sk];
+  e.t=`超レジェンド降臨：${L.n}`;e.x=`【超レジェンド「${L.nick}」】${e.x}`;e.sup=1;
+  e.ch=[{l:`${L.n}に「${S0.n}」を教わる`,d:`成功すると特殊能力「${S0.n}」（${S0.d}）`,fixed:1,pr:c=>clamp(.35+(c.ovr-60)/80,.25,.7),
+    ok:{m:`「${L.tip}」。${L.n}の教えが体に染み込んだ。特殊能力「${S0.n}」を身につけた！`,fx:{sx:L.sk,pop:6}},ng:{m:`${L.n}の動きは真似できなかった。それでも、一生忘れない時間になった。`,fx:{key:1,cond:4}}}].concat(e.ch);
+  return e}}
+{const _a2=applyFx2;applyFx2=function(p,k,v){
+  if(k==='sx'&&SX[v]){p.sx=p.sx||[];if(!p.sx.includes(v)){p.sx.push(v);if(!has(p,'sx_'+v))p.skills.push('sx_'+v);
+      const st=SX[v].st||{};Object.keys(st).forEach(s=>{const a=Math.min(3,st[s]);p.cap[s]=Math.min(SMAX,p.cap[s]+a);p.st[s]=Math.min(p.cap[s],p.st[s]+a)})}
+    if(v==='messi')p.title='アルゼンチンの神の子';
+    return ['特殊能力',SX[v].n+(v==='messi'?'・称号「アルゼンチンの神の子」':''),1]}
+  return _a2(p,k,v)}}
 
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
