@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261117-183332';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261118-023218';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -966,6 +966,30 @@ body.rmon{overflow:hidden}
 .rmfq button{height:40px;padding:0 11px;border-radius:999px;border:2px solid rgba(255,255,255,.5);background:radial-gradient(circle at 40% 30%,#c080ff,#6a1ab8);color:#fff;font-weight:800;font-size:12px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.45);touch-action:none}
 .rmfq button.down{transform:scale(.9);filter:brightness(1.3)}
 @media (orientation:landscape){.rmfq{bottom:calc(200px + env(safe-area-inset-bottom))}}
+/* 画面を見やすく：フェイントはボタンのまわりに弧で並べる（ボールを持っているときだけ） */
+.rmbtns .fq{width:48px;height:48px;font-size:10px;letter-spacing:-.06em;white-space:nowrap;background:radial-gradient(circle at 40% 30%,#c890ff,#6a1ab8);border-width:2px;opacity:0;pointer-events:none;transform:scale(.6);transition:opacity .12s,transform .12s}
+.rmbtns.fqon .fq{opacity:.92;pointer-events:auto;transform:none}
+.rmbtns.fqon .fq.down{transform:scale(.88);filter:brightness(1.35)}
+.rmbtns .fq1{right:179px;bottom:127px}.rmbtns .fq2{right:138px;bottom:181px}.rmbtns .fq3{right:80px;bottom:216px}.rmbtns .fq4{right:14px;bottom:227px}
+.rmbtns button:not(.fq){opacity:.9}
+.rmbtns{right:calc(10px + env(safe-area-inset-right))}
+.rmstick{left:calc(30px + env(safe-area-inset-left))}
+#rmvar{right:auto;left:50%;bottom:auto;top:calc(86px + env(safe-area-inset-top));transform:translateX(-50%);font-size:13px;padding:3px 12px}
+#rmmsg{top:17%}#rmmsg b{font-size:21px;padding:4px 14px}
+#rmply{left:calc(8px + env(safe-area-inset-left));padding:3px 8px 3px 3px;gap:6px;opacity:.88;max-width:42vw}
+#rmply .f,#rmply .f .sprw{width:30px;height:30px}#rmply b{font-size:12px}#rmply span,#rmply em{font-size:9px}
+@media (orientation:landscape){#rmply{top:calc(42px + env(safe-area-inset-top))}}
+/* フェイント：1つのボタン＋押している間だけ出る4方向 */
+.rmbtns .fq{display:none}
+.rmbtns .ft{right:84px;bottom:152px;width:54px;height:54px;font-size:10px;white-space:nowrap;letter-spacing:-.05em;background:radial-gradient(circle at 40% 30%,#c890ff,#6a1ab8);opacity:0;pointer-events:none;transform:scale(.7);transition:opacity .12s,transform .12s}
+.rmbtns.fqon .ft{opacity:.92;pointer-events:auto;transform:none}
+.rmbtns.fqon .ft.down{transform:scale(.92);filter:brightness(1.3)}
+#rmfr{position:absolute;right:111px;bottom:179px;width:0;height:0;pointer-events:none;opacity:0;transition:opacity .08s;z-index:3}
+#rmfr.on{opacity:1}
+#rmfr i{position:absolute;right:0;bottom:0;transform:translate(50%,50%);font-style:normal;font-weight:800;font-size:12px;color:#fff;white-space:nowrap;background:rgba(20,8,40,.82);border:2px solid #b070ff;border-radius:999px;padding:4px 10px;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+#rmfr i[data-d=u]{bottom:56px}#rmfr i[data-d=d]{bottom:-56px}#rmfr i[data-d=l]{right:76px}#rmfr i[data-d=r]{right:-70px}
+#rmfr i.on{background:#ffe066;color:#222;border-color:#fff;transform:translate(50%,50%) scale(1.12)}
+.rmbtns button.ft{opacity:0}.rmbtns.fqon button.ft{opacity:.92}
 
 </style>
 </head>
@@ -6503,7 +6527,7 @@ function rulesHtml(){
     'チームスタイル：ショートカウンター・ロングカウンター・ポゼッション・ロングボール・サイドアタック・サイドカウンター・ポゼッションティキタカの7種類。監督にはそれぞれ得意な戦術が1つあり、チームスタイルを監督の得意に合わせないと、選手の能力を最大限に引き出せない（全員の能力−6%）',
     '監督強化ガチャ：1回200コイン。監督につける強化アイテム（全選手の全能力+2：3%、FWのスピード+1：12%）が出る。監督1人に1個まで、スカッドの監督の枠からつけ外しできる',
     '育成の出来事：1,200種類以上。特訓・試合の場面・休日・メディア・チームメイト・遠征・食事・ファン・監督・学生生活・ちょっとした運などのほか、レジェンドとの交流、過去に育てたマイ選手（OB）の登場、レジェンドの教えで選んだレジェンドにまつわる出来事も起きる。同じ出来事は2シーズン続けては起きにくい',
-    'リアルマッチ：対戦メニューから、自分のスカッドを操作して戦う3Dアクションモード（スマホを横にして遊ぶ）。操作はイーフトのクラシック操作と同じ。移動はスティック（少し倒すとフィネスドリブル、大きく倒し続けるかダッシュボタンでダッシュ）。急加速・急停止・方向転換・ボールキープで相手の逆を取れる。パス・スルー・フライ（サイドの深い位置ではクロス）・シュートは長押しでゲージ、少し引っ張って離すとグラウンダー、押し続けるとインパクト。シュートは引っ張る向きで上＝ループ、横＝コントロール、下＝グラウンダー。パスが飛んでいる間にスルーでワンツー、ダッシュをポンでパス＆ゴー、シュートやパスを押しておくとダイレクト・ボレー・ヘディング。フェイントはボールを持つと出るボタン（ダブルタッチ・エラシコ・ルーレット・ボディフェイント）をタップ（技術が高いほど成功しやすい）。守備はブロック（横からはショルダーチャージ、引っ張るとスライディング）・マッチアップ・プレス・チームプレス・切替・GK飛び出し。ファウルでフリーキック、エリア内ならPK、コーナーキックもある。一時停止で攻撃レベル・フォーメーション・選手交代（5回）。自陣ではシュートがクリア。特殊能力はランダムで自動発動。試合が終わると体力は全回復',
+    'リアルマッチ：対戦メニューから、自分のスカッドを操作して戦う3Dアクションモード（スマホを横にして遊ぶ）。操作はイーフトのクラシック操作と同じ。移動はスティック（少し倒すとフィネスドリブル、大きく倒し続けるかダッシュボタンでダッシュ）。急加速・急停止・方向転換・ボールキープで相手の逆を取れる。パス・スルー・フライ（サイドの深い位置ではクロス）・シュートは長押しでゲージ、少し引っ張って離すとグラウンダー、押し続けるとインパクト。シュートは引っ張る向きで上＝ループ、横＝コントロール、下＝グラウンダー。パスが飛んでいる間にスルーでワンツー、ダッシュをポンでパス＆ゴー、シュートやパスを押しておくとダイレクト・ボレー・ヘディング。フェイントはボールを持つと出るフェイントボタンを押して、上＝ダブルタッチ・右＝エラシコ・下＝ルーレット・左＝ボディフェイントにすべらせて離す（ポンと押すと前回と同じ。技術が高いほど成功しやすい）。守備はブロック（横からはショルダーチャージ、引っ張るとスライディング）・マッチアップ・プレス・チームプレス・切替・GK飛び出し。ファウルでフリーキック、エリア内ならPK、コーナーキックもある。一時停止で攻撃レベル・フォーメーション・選手交代（5回）。自陣ではシュートがクリア。特殊能力はランダムで自動発動。試合が終わると体力は全回復',
     'オート：育成中と試合中は右下の「オート」ボタンで自動で進められる。育成は練習・出来事の選択・移籍先まで自動で選び、引退すると止まる。試合は1回押すと決定機・交代・ハーフタイムを自動で選び、2回押すと高速オートで結果まで一気に進む。もう一度押すと止まる。左の「×1」ボタンで速さを1・2・4・8倍に切り替えられる（育成と試合の両方）',
     '体力ゲージ：試合中は走るほど体力が減り（フィジカルが高いほど減りにくい）、体力が尽きてくると足が止まって能力ダウン、ケガもしやすくなる。試合が終わると全員の体力が全回復する',
     `レジェンドガチャ：合計${Math.round(LEG_RATE*100)}%（ピックアップ${GLEGS.filter(l=>l.pu).length}人で${Math.round(LEG_PU*100)}%）。レジェンドは<b>育成専用</b>で、スカッドには入れられない`,
@@ -9361,7 +9385,7 @@ function rmMount(){
   <div class="rmhud"><div class="rmsc"><span class="t0">${esc(RM.A.name)}</span><b id="rmscore">0 - 0</b><span class="t1">${esc(RM.B.name)}</span></div><div id="rmtime">0'</div><button class="rmq" id="rmquit">II</button></div>
   <div id="rmply"></div><div id="rmmsg"></div><div id="rmcut"></div>
   <div class="rmstick" id="rmstick"><i></i></div>
-  <div id="rmrot"><b>📱↻</b><span>スマホを横にしてね</span></div><div id="rmvar"></div><div id="rmhint"></div><div id="rmfq" class="rmfq"><button data-ft="dt">ダブルタッチ</button><button data-ft="ela">エラシコ</button><button data-ft="rou">ルーレット</button><button data-ft="bod">ボディフェイント</button></div><div class="rmbtns"><button id="rmb-fl" class="fl">フライ<i class="gg" id="rmg-fl"></i></button><button id="rmb-th" class="th">スルー<i class="gg" id="rmg-th"></i></button><button id="rmb-ps" class="ps">パス<i class="gg" id="rmg-ps"></i></button><button id="rmb-sh" class="sh">シュート<i class="gg" id="rmg-sh"></i></button><button id="rmb-ds" class="ds">ダッシュ</button></div>
+  <div id="rmrot"><b>📱↻</b><span>スマホを横にしてね</span></div><div id="rmvar"></div><div id="rmhint"></div><div class="rmbtns"><div id="rmfr"><i data-d="u">ダブタ</i><i data-d="r">エラシコ</i><i data-d="d">ルーレット</i><i data-d="l">ボディ</i></div><button id="rmb-ft" class="ft">フェイント</button><button id="rmb-fl" class="fl">フライ<i class="gg" id="rmg-fl"></i></button><button id="rmb-th" class="th">スルー<i class="gg" id="rmg-th"></i></button><button id="rmb-ps" class="ps">パス<i class="gg" id="rmg-ps"></i></button><button id="rmb-sh" class="sh">シュート<i class="gg" id="rmg-sh"></i></button><button id="rmb-ds" class="ds">ダッシュ</button></div>
   <div id="rmsk" class="rmsk" hidden></div><div id="rmpz" class="rmpz" hidden></div>`;
   document.body.appendChild(el);document.body.classList.add('rmon');
   const cv=document.getElementById('rmc');RM.cv=cv;RM.cx=cv.getContext('2d');rmResize();
@@ -9390,8 +9414,18 @@ function rmMount(){
     b.addEventListener('touchend',e=>{e.preventDefault();up()});b.addEventListener('touchcancel',()=>up());
     b.addEventListener('mousedown',e=>{e.stopPropagation();down(e.clientX,e.clientY)});addEventListener('mousemove',e=>{if(st)move(e.clientX,e.clientY)});addEventListener('mouseup',()=>{if(st)up()})};
   gauge('rmb-sh','shoot');gauge('rmb-ps','pass');gauge('rmb-th','through');gauge('rmb-fl','fly');
-  // フェイント：タップするとすぐ出る
-  document.querySelectorAll('#rmfq button').forEach(bt=>{const go=e=>{e.preventDefault();e.stopPropagation();bt.classList.add('down');setTimeout(()=>bt.classList.remove('down'),150);if(RM&&RM.ctrl&&!RM.freezeMenu)rmFeint(RM.ctrl,bt.dataset.ft)};bt.addEventListener('touchstart',go,{passive:false});bt.addEventListener('mousedown',go)});
+  // フェイント：押して上下左右にすべらせて離す（上＝ダブルタッチ・右＝エラシコ・下＝ルーレット・左＝ボディフェイント）、ポンと押すと前回のフェイント
+  {const fb=document.getElementById('rmb-ft'),fr=document.getElementById('rmfr'),MAP={u:'dt',r:'ela',d:'rou',l:'bod'};let st=null;
+    const dirOf=(dx,dy)=>Math.hypot(dx,dy)<16?null:Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u');
+    const hl=d=>fr.querySelectorAll('i').forEach(i=>i.classList.toggle('on',i.dataset.d===d||(!d&&MAP[i.dataset.d]===(RM&&RM.lastFt||'dt'))));
+    const down=(x,y,id)=>{if(!RM||RM.freezeMenu)return;st={x,y,id,d:null};fb.classList.add('down');fr.classList.add('on');hl(null)};
+    const move=(x,y)=>{if(!st)return;st.d=dirOf(x-st.x,y-st.y);hl(st.d)};
+    const up=()=>{if(!st)return;const k=st.d?MAP[st.d]:(RM&&RM.lastFt||'dt');st=null;fb.classList.remove('down');fr.classList.remove('on');if(RM&&RM.ctrl&&!RM.freezeMenu){RM.lastFt=k;rmFeint(RM.ctrl,k)}};
+    fb.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();const t=e.changedTouches[0];down(t.clientX,t.clientY,t.identifier)},{passive:false});
+    fb.addEventListener('touchmove',e=>{e.preventDefault();if(!st)return;const t=[...e.changedTouches].find(x=>x.identifier===st.id);if(t)move(t.clientX,t.clientY)},{passive:false});
+    fb.addEventListener('touchend',e=>{e.preventDefault();if(!st)return;const t=[...e.changedTouches].find(x=>x.identifier===st.id);if(t){move(t.clientX,t.clientY);up()}},{passive:false});
+    fb.addEventListener('touchcancel',()=>{st=null;fb.classList.remove('down');fr.classList.remove('on')});
+    fb.addEventListener('mousedown',e=>{e.stopPropagation();down(e.clientX,e.clientY,'m');const mv=ev=>move(ev.clientX,ev.clientY),u=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',u);up()};document.addEventListener('mousemove',mv);document.addEventListener('mouseup',u)})}
   const qb=document.getElementById('rmquit');qb.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();rmPauseMenu(true)});qb.addEventListener('click',()=>rmPauseMenu(true));
   // キーボード
   const K={};addEventListener('keydown',RM.kd=e=>{if(K[e.code])return;K[e.code]=1;const kk={KeyJ:'pass',KeyL:'through',KeyK:'shoot',KeyU:'fly'}[e.code];if(kk){RM.inp.charge={kind:kk,t0:performance.now(),ground:!!K.Space,drag:!!K.Space,v:K.Space&&kk==='shoot'?'ground':null};rmPress(kk+'Down')}{const fk={Digit1:'dt',Digit2:'ela',Digit3:'rou',Digit4:'bod'}[e.code];if(fk&&RM.ctrl)rmFeint(RM.ctrl,fk)}if(e.code==='ShiftLeft'||e.code==='ShiftRight'){RM.inp.dash=true;RM.dsT=performance.now()}if(e.code==='Escape')rmPauseMenu(true);rmKeys(K)});
@@ -9563,7 +9597,7 @@ function rmLoop(now){const R=RM;if(!R||!R.running)return;let dt=Math.min(.05,(no
   rmDraw();requestAnimationFrame(rmLoop)}
 function rmTick(dt){const R=RM;if(R.pause>0){R.pause-=dt;if(R.pause<=0&&R.pendKick!=null){const k=R.pendKick;R.pendKick=null;rmKickoff(k)}}else rmStep(dt)}
 function rmUI(){const R=RM;if(!R)return;const cx=rmCtx(),b=R.ball,c=R.ctrl;
-  {const fq=document.getElementById('rmfq');if(fq)fq.classList.toggle('on',cx==='att'&&!R.setp&&!R.ended)}
+  {const bx=document.querySelector('.rmbtns');if(bx)bx.classList.toggle('fqon',cx==='att'&&!R.setp&&!R.ended)}
   const ch=R.inp.charge,el0=ch?(performance.now()-ch.t0)/1000:0,pw=rmClamp(el0/.9,0,1);if(ch)ch.impact=el0>1.3;
   const live=cx==='att'||cx==='flight'||cx==='loose';
   ['sh','ps','th','fl'].forEach(k=>{const e=document.getElementById('rmg-'+k);if(e){const on=live&&ch&&ch.kind==={sh:'shoot',ps:'pass',th:'through',fl:'fly'}[k];e.style.width=(on?pw*100:0)+'%';e.classList.toggle('gr',!!(on&&ch.drag));e.classList.toggle('imp',!!(on&&ch.impact&&!R.setp))}});
@@ -9801,7 +9835,7 @@ ACT.rmGo=v=>{const [lv,len]=String(v).split(':').map(Number);rmStart(lv,len)};
 ACT.rmLen=v=>{G.rmLen=+v};
 function rmMenuHtml(){const len=G.rmLen||5,R0=M.rmRec||{w:0,d:0,l:0};
   return `<div class="kick">リアルマッチ<span class="r">${R0.w}勝${R0.d}分${R0.l}敗</span></div>
-  <p class="note">自分のスカッドを操作して戦うアクションモード。スマホを横にして遊ぶ3Dモード。操作はイーフトのクラシック操作と同じ：パス・スルー・フライ（クロス）・シュート・ダッシュ・フェイント（ダブルタッチ・エラシコ・ルーレット・ボディフェイントのボタンをタップ）、ワンツー、ループ／コントロール／インパクトシュート、ボレー・ヘディング、守備はマッチアップ・プレス・チームプレス・スライディング。ファウルでFK・PK、一時停止で攻撃レベル・フォーメーション・選手交代。MAOなどの特殊能力は試合中にランダムで自動発動する。</p>
+  <p class="note">自分のスカッドを操作して戦うアクションモード。スマホを横にして遊ぶ3Dモード。操作はイーフトのクラシック操作と同じ：パス・スルー・フライ（クロス）・シュート・ダッシュ・フェイント（フェイントボタンを上下左右にすべらせてダブルタッチ・エラシコ・ルーレット・ボディフェイント）、ワンツー、ループ／コントロール／インパクトシュート、ボレー・ヘディング、守備はマッチアップ・プレス・チームプレス・スライディング。ファウルでFK・PK、一時停止で攻撃レベル・フォーメーション・選手交代。MAOなどの特殊能力は試合中にランダムで自動発動する。</p>
   <div class="seg c3" style="margin-bottom:8px">${RM_LEN.map(([m,n])=>`<button class="opt" aria-pressed="${len===m}" data-act="rmLen" data-v="${m}">${n}</button>`).join('')}</div>
   <div class="acts">${CPU_LV.map((L,i)=>`<button class="act rmact" data-act="rmGo" data-v="${i}:${len}"><b>${esc(L.n)}</b><span>強さ ${L.lv}</span><em>勝ち${(L.rw[0]*3).toLocaleString('ja-JP')}・引分${L.rw[1]*3}・負け${L.rw[2]*3}コイン</em></button>`).join('')}</div>`}
 {const _sm=spMenuHtml;spMenuHtml=function(){return rmMenuHtml()+_sm()}}
@@ -10007,7 +10041,7 @@ const RM_HELP=`<b>移動</b>：左側をドラッグ。ふつうは歩き（通�
 ワンツー：パスを出した直後（ボールが飛んでいる間）にスルー→出した選手が前へ走り、受けた選手がダイレクトで返す／パス＆ゴー：パスを出した直後にダッシュをポンと押す→出した選手が前へ走る<br>
 <b>シュート</b>：長押しでパワー。引っ張って離す向きで種類が変わる：上＝ループ、横＝コントロール（カーブでコースを狙う）、下＝グラウンダー。押し続けるとインパクトシュート（強いけど蹴るまで時間がかかる）<br>
 ワンタッチ・ボレー・ヘディング：味方のパスやクロスが飛んでいる間にシュート（パス）を押しておくと、届いた瞬間にダイレクトで蹴る。浮いていればボレー、高ければヘディング<br>
-<b>フェイント</b>：ボールを持つとボタンの上に「ダブルタッチ・エラシコ・ルーレット・ボディフェイント」が出る。タップするとすぐ発動。技術が高いほど成功しやすく、相手が反応した瞬間に逆へ抜ける。進む方向にスティックを倒しながら、ボタン以外の右側を上下にフリックしてもダブルタッチ<br>
+<b>フェイント</b>：ボールを持つと出るフェイントボタンを押して、指を上＝ダブルタッチ・右＝エラシコ・下＝ルーレット・左＝ボディフェイントにすべらせて離す（押している間だけ名前が出る）。ポンと押すだけだと前回と同じフェイント。技術が高いほど成功しやすく、相手が反応した瞬間に逆へ抜ける。進む方向にスティックを倒しながら、ボタン以外の右側を上下にフリックしてもダブルタッチ<br>
 
 自陣ではシュートボタンがクリア（大きく蹴り出す）<br>
 <b>守備</b>：ブロック（シュート）＝近ければ奪いに行き、横に並んでいればショルダーチャージ、コースを体で止める／引っ張って離すとスライディング（後ろからはファウルになりやすい）<br>
