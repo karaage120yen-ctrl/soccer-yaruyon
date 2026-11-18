@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261118-031503';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261118-034008';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14249,7 +14249,7 @@ function gl3Init(){if(GL3.r)return true;const T=THREE;
   const G={};G.torso=new T.CapsuleGeometry(.15,.3,6,14);G.pelvis=new T.CylinderGeometry(.15,.14,.22,14);G.uarm=new T.CapsuleGeometry(.054,.2,4,10);G.farm=new T.CapsuleGeometry(.046,.2,4,10);G.hand=new T.SphereGeometry(.052,10,8);
   G.neck=new T.CylinderGeometry(.055,.06,.12,10);G.head=new T.SphereGeometry(.115,28,20);G.hair=new T.SphereGeometry(.124,20,12,0,Math.PI*2,0,Math.PI*.5);G.hairL=new T.SphereGeometry(.127,20,14,0,Math.PI*2,0,Math.PI*.7);
   G.thigh=new T.CapsuleGeometry(.078,.3,4,12);G.short=new T.CylinderGeometry(.092,.088,.2,12);G.shin=new T.CapsuleGeometry(.06,.3,4,10);G.boot=new T.BoxGeometry(.1,.075,.25);G.num=new T.PlaneGeometry(.2,.2);
-  G.ear=new T.SphereGeometry(.03,8,6);G.collar=new T.TorusGeometry(.08,.018,6,18);G.numS=new T.PlaneGeometry(.09,.09);G.spike=new T.ConeGeometry(.05,.1,8);G.afro=new T.SphereGeometry(.16,18,14);G.tail=new T.CapsuleGeometry(.035,.12,4,8);G.nose=new T.SphereGeometry(.022,8,6);G.eye=new T.SphereGeometry(.014,6,6);
+  G.ear=new T.SphereGeometry(.03,8,6);G.collar=new T.TorusGeometry(.07,.016,6,18);G.cuff=new T.TorusGeometry(.066,.009,5,14);G.numS=new T.PlaneGeometry(.09,.09);G.spike=new T.ConeGeometry(.05,.1,8);G.afro=new T.SphereGeometry(.16,18,14);G.tail=new T.CapsuleGeometry(.035,.12,4,8);G.nose=new T.SphereGeometry(.022,8,6);G.eye=new T.SphereGeometry(.014,6,6);
   G.ring=new T.RingGeometry(.55,.68,48);G.disc=new T.CircleGeometry(1,40);G.ringT=new T.RingGeometry(.9,1,48);
   G.dogBody=new T.CapsuleGeometry(.16,.4,4,10);G.dogLeg=new T.CapsuleGeometry(.04,.2,4,8);G.dogHead=new T.SphereGeometry(.13,12,10);
   GL3.geo=G;
@@ -14323,48 +14323,107 @@ function gl3Goal(d){const T=THREE,g=new T.Group(),hw=RM_GW/2,H=RM_GH,D=2.2,pr=.0
   g.position.set(d*RM_L/2,0,0);if(d<0)g.rotation.y=Math.PI;return g}
 
 /* ----- 選手 ----- */
-function gl3FaceTex(skin,hair,beard){const key='f'+skin+hair+(beard?1:0);if(GL3.mats[key])return GL3.mats[key];const W=256,H=128,c=gl3Cv(W,H),x=c.getContext('2d');x.fillStyle=skin;x.fillRect(0,0,W,H);
-  const cx0=64;// 正面（+Z）はu=0.25
-  const sh=(a)=>`rgba(60,30,10,${a})`;
-  let g=x.createRadialGradient(cx0,70,4,cx0,70,46);g.addColorStop(0,'rgba(255,255,255,.10)');g.addColorStop(1,'rgba(0,0,0,.12)');x.fillStyle=g;x.fillRect(0,0,W,H);
-  x.fillStyle=hair;[-1,1].forEach(s2=>{x.save();x.translate(cx0+s2*11,50);x.rotate(s2*.12);x.fillRect(-7,-1.6,14,3.2);x.restore()});
-  [-1,1].forEach(s2=>{const ex=cx0+s2*11;x.fillStyle='#f4f1ea';x.beginPath();x.ellipse(ex,58,5.2,3,0,0,7);x.fill();x.fillStyle='#3a2a1c';x.beginPath();x.arc(ex,58,2.5,0,7);x.fill();x.fillStyle='#0c0806';x.beginPath();x.arc(ex,58,1.3,0,7);x.fill();
-    x.fillStyle=sh(.25);x.fillRect(ex-6,54.4,12,1.2)});
-  x.fillStyle=sh(.22);x.beginPath();x.moveTo(cx0-2,60);x.lineTo(cx0-4.5,72);x.lineTo(cx0+4.5,72);x.lineTo(cx0+2,60);x.closePath();x.fill();
-  x.fillStyle=sh(.35);x.fillRect(cx0-4,72,8,1.6);
-  x.fillStyle='rgba(120,40,40,.55)';x.beginPath();x.ellipse(cx0,81,7,1.8,0,0,7);x.fill();x.fillStyle=sh(.3);x.fillRect(cx0-7,80.6,14,.9);
-  if(beard){x.fillStyle=hair;x.globalAlpha=.75;x.beginPath();x.ellipse(cx0,88,20,10,0,0,Math.PI);x.fill();x.fillRect(cx0-20,78,4,10);x.fillRect(cx0+16,78,4,10);x.globalAlpha=1}
+function gl3FaceTex(skin,hair,beard){const key='f'+skin+hair+(beard?1:0);if(GL3.mats[key])return GL3.mats[key];const W=512,H=256,c=gl3Cv(W,H),x=c.getContext('2d');x.fillStyle=skin;x.fillRect(0,0,W,H);
+  const cx0=128,S=2;// 正面（+Z）はu=0.25。座標は以前の2倍の細かさ
+  const sh=a=>`rgba(70,35,15,${a})`,hl=a=>`rgba(255,240,225,${a})`;
+  const rg=(px,py,r,c1,c2)=>{const g=x.createRadialGradient(px,py,0,px,py,r);g.addColorStop(0,c1);g.addColorStop(1,c2);x.fillStyle=g;x.fillRect(px-r,py-r,r*2,r*2)};
+  // 顔全体の立体感：おでこ・ほお骨は明るく、こめかみ・あご下は暗く
+  rg(cx0,110,120,'rgba(0,0,0,0)','rgba(40,20,10,.22)');rg(cx0,92,40,hl(.18),hl(0));[-1,1].forEach(s2=>{rg(cx0+s2*30,138,26,hl(.12),hl(0));rg(cx0+s2*44,120,30,sh(.12),sh(0))});
+  rg(cx0,186,60,sh(.28),sh(0));
+  // 眉
+  x.fillStyle=hair;[-1,1].forEach(s2=>{x.save();x.translate(cx0+s2*22,100);x.rotate(s2*.1);x.beginPath();x.moveTo(-15,2);x.quadraticCurveTo(0,-5,15,0);x.lineTo(15,4);x.quadraticCurveTo(0,0,-15,6);x.closePath();x.fill();x.restore()});
+  // 目のくぼみ・目
+  [-1,1].forEach(s2=>{const ex=cx0+s2*22,ey=117;rg(ex,ey-2,18,sh(.22),sh(0));
+    x.fillStyle='#f6f2ea';x.beginPath();x.moveTo(ex-11,ey);x.quadraticCurveTo(ex,ey-8,ex+11,ey);x.quadraticCurveTo(ex,ey+6,ex-11,ey);x.fill();
+    x.fillStyle='#4a3020';x.beginPath();x.arc(ex+s2*.5,ey,5,0,7);x.fill();x.fillStyle='#0c0806';x.beginPath();x.arc(ex+s2*.5,ey,2.6,0,7);x.fill();x.fillStyle='rgba(255,255,255,.9)';x.beginPath();x.arc(ex+1.6,ey-1.8,1.2,0,7);x.fill();
+    x.strokeStyle=sh(.6);x.lineWidth=1.6;x.beginPath();x.moveTo(ex-11,ey);x.quadraticCurveTo(ex,ey-8.5,ex+11,ey);x.stroke();x.strokeStyle=sh(.2);x.lineWidth=1;x.beginPath();x.moveTo(ex-9,ey+3);x.quadraticCurveTo(ex,ey+6,ex+9,ey+3);x.stroke()});
+  // 鼻：横の影と鼻先
+  x.fillStyle=sh(.16);x.beginPath();x.moveTo(cx0-5,118);x.lineTo(cx0-9,144);x.lineTo(cx0-3,146);x.closePath();x.fill();x.beginPath();x.moveTo(cx0+5,118);x.lineTo(cx0+9,144);x.lineTo(cx0+3,146);x.closePath();x.fill();
+  rg(cx0,140,8,hl(.18),hl(0));x.fillStyle=sh(.5);[-1,1].forEach(s2=>{x.beginPath();x.ellipse(cx0+s2*5,148,2.8,1.6,0,0,7);x.fill()});
+  // 口：上唇・下唇・口角
+  x.fillStyle='rgba(150,60,55,.75)';x.beginPath();x.moveTo(cx0-14,163);x.quadraticCurveTo(cx0-6,158,cx0,160);x.quadraticCurveTo(cx0+6,158,cx0+14,163);x.quadraticCurveTo(cx0,165,cx0-14,163);x.fill();
+  x.fillStyle='rgba(170,75,65,.6)';x.beginPath();x.moveTo(cx0-12,164);x.quadraticCurveTo(cx0,174,cx0+12,164);x.closePath();x.fill();x.strokeStyle=sh(.55);x.lineWidth=1.3;x.beginPath();x.moveTo(cx0-14,163);x.quadraticCurveTo(cx0,166,cx0+14,163);x.stroke();
+  rg(cx0,176,9,sh(.14),sh(0));
+  if(beard){x.globalAlpha=.8;x.fillStyle=hair;x.beginPath();x.moveTo(cx0-46,140);x.quadraticCurveTo(cx0-40,200,cx0,206);x.quadraticCurveTo(cx0+40,200,cx0+46,140);x.lineTo(cx0+36,150);x.quadraticCurveTo(cx0+18,182,cx0,184);x.quadraticCurveTo(cx0-18,182,cx0-36,150);x.closePath();x.fill();x.fillRect(cx0-16,152,32,4);x.globalAlpha=1}
   // 髪の生え際（後ろと横）
-  x.fillStyle=hair;x.fillRect(0,0,W,30);x.fillRect(110,0,146,62);x.beginPath();x.moveTo(30,30);x.quadraticCurveTo(64,40,98,30);x.lineTo(98,0);x.lineTo(30,0);x.fill();
+  x.fillStyle=hair;x.fillRect(0,0,W,58);x.fillRect(220,0,292,124);x.beginPath();x.moveTo(56,58);x.quadraticCurveTo(cx0,80,200,58);x.lineTo(200,0);x.lineTo(56,0);x.fill();
+  // 肌のきめ
+  const id=x.getImageData(0,0,W,H),d=id.data;for(let k=0;k<d.length;k+=4){const n=(gl3Rnd()-.5)*8;d[k]+=n;d[k+1]+=n;d[k+2]+=n}x.putImageData(id,0,0);
   const t=gl3Tex(c);GL3.mats[key]=t;return t}
 function gl3Mat(key,make){let m=GL3.mats[key];if(!m)m=GL3.mats[key]=make();return m}
 const gl3Std=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.7,metalness:0},o||{}));
-function gl3MakeMan(p){const T=THREE,G=GL3.geo,L=r3Look(p),kit=R3KIT[p.side],gk=p.role==='GK';
-  const sh=gl3Mat('sh'+p.side+gk,()=>gl3Std(gk?kit.gk:kit.sh,{roughness:.62})),pa=gl3Mat('pa'+p.side+gk,()=>gl3Std(gk?kit.gk2:kit.pa,{roughness:.66})),so=gl3Mat('so'+p.side+gk,()=>gl3Std(gk?kit.gk2:kit.so,{roughness:.8}));
-  const sk=gl3Mat('sk'+L.skin,()=>gl3Std(L.skin,{roughness:.55})),hr=gl3Mat('hr'+L.hair,()=>gl3Std(L.hair,{roughness:.85})),bt=gl3Mat('bt'+L.boots,()=>gl3Std(L.boots,{roughness:.35,metalness:.15})),gl=gk?gl3Mat('glove',()=>gl3Std('#f4f4f4',{roughness:.6})):sk;
-  const ey=gl3Mat('eye',()=>new T.MeshBasicMaterial({color:0x1a1410}));
+// 体のパーツの形（回転体で筋肉のふくらみを作る）
+function gl3Body(){if(GL3.body)return GL3.body;const T=THREE,V=(r,y)=>new T.Vector2(r,y),L=(pts,seg)=>{const g=new T.LatheGeometry(pts.map(([r,y])=>V(r,y)),seg||18);g.computeVertexNormals();return g};
+  const B={};
+  B.torso=L([[0,0],[.13,0],[.134,.05],[.139,.13],[.15,.22],[.165,.31],[.174,.39],[.175,.45],[.166,.5],[.142,.54],[.1,.575],[.064,.6],[0,.605]],22);
+  B.pelvis=L([[0,-.15],[.112,-.15],[.142,-.11],[.156,-.04],[.152,.03],[.138,.08],[0,.085]],20);
+  B.shortL=L([[.1,-.21],[.098,-.14],[.094,-.06],[.088,.01]],16);
+  B.thigh=L([[0,-.46],[.05,-.46],[.054,-.43],[.062,-.38],[.074,-.29],[.084,-.19],[.088,-.11],[.086,-.04],[.078,.01],[0,.03]],18);
+  B.shin=L([[0,-.43],[.029,-.43],[.032,-.4],[.038,-.34],[.046,-.26],[.057,-.17],[.061,-.12],[.058,-.06],[.051,-.01],[0,.01]],16);
+  B.sockTop=new T.TorusGeometry(.053,.01,6,16);
+  B.knee=new T.SphereGeometry(.033,10,8);
+  B.uarm=L([[0,-.3],[.039,-.3],[.042,-.27],[.047,-.21],[.054,-.14],[.056,-.09],[.053,-.03],[.047,.01],[0,.035]],14);
+  B.sleeve=L([[.069,-.15],[.068,-.09],[.067,-.03],[.06,.02],[.045,.05]],14);
+  B.delt=new T.SphereGeometry(.064,14,10);
+  B.farm=L([[0,-.26],[.026,-.26],[.029,-.23],[.035,-.17],[.044,-.09],[.047,-.04],[.043,0],[0,.02]],14);
+  B.palm=new T.SphereGeometry(.044,12,8);B.fing=new T.SphereGeometry(.038,10,8);B.thumb=new T.CapsuleGeometry(.012,.032,3,6);
+  B.neck=L([[0,-.02],[.064,-.02],[.058,.04],[.053,.1],[.05,.13],[0,.13]],14);
+  // 頭：あごを細く、あごの先を前に、後頭部をふくらませる（顔のテクスチャはそのまま使える）
+  const hg=new T.SphereGeometry(.105,32,24),pa=hg.attributes.position,r0=.105;for(let k=0;k<pa.count;k++){let x=pa.getX(k),y=pa.getY(k),z=pa.getZ(k);const ny=y/r0;
+    if(ny<0){const d=Math.pow(-ny,1.15);x*=1-.24*d;if(z>0)z*=1+.04*d;else z*=1-.18*d}
+    if(z<0&&ny>-.2)z*=1.1;if(ny>.6)x*=.97;pa.setXYZ(k,x,y,z)}hg.computeVertexNormals();B.head=hg;
+  B.nose=new T.SphereGeometry(.017,10,8);B.ear=new T.SphereGeometry(.027,10,8);
+  B.hair=new T.SphereGeometry(.112,26,14,0,Math.PI*2,0,Math.PI*.44);B.hairL=new T.SphereGeometry(.114,26,16,0,Math.PI*2,0,Math.PI*.6);B.afro=new T.SphereGeometry(.15,20,14);
+  B.bootUp=new T.SphereGeometry(.05,14,10);B.sole=new T.BoxGeometry(.092,.016,.255);
+  // 生地の織り目
+  {const c=gl3Cv(64,64),x=c.getContext('2d');x.fillStyle='#808080';x.fillRect(0,0,64,64);for(let yy=0;yy<64;yy+=2)for(let xx=0;xx<64;xx+=2){x.fillStyle=((xx+yy)/2)%2?'#9a9a9a':'#666';x.fillRect(xx,yy,2,2)}
+    B.cloth=new T.CanvasTexture(c);B.cloth.wrapS=B.cloth.wrapT=T.RepeatWrapping;B.cloth.repeat.set(26,26)}
+  return GL3.body=B}
+function gl3MakeMan(p){const T=THREE,G=GL3.geo,B=gl3Body(),L=r3Look(p),kit=R3KIT[p.side],gk=p.role==='GK',h=HASH(p.n||'');
+  const cloth=(c,o)=>gl3Std(c,Object.assign({roughness:.72,bumpMap:B.cloth,bumpScale:.35},o||{}));
+  const sh=gl3Mat('sh'+p.side+gk,()=>cloth(gk?kit.gk:kit.sh)),pa=gl3Mat('pa'+p.side+gk,()=>cloth(gk?kit.gk2:kit.pa)),paD=gl3Mat('paD'+p.side+gk,()=>cloth(gk?kit.gk2:kit.pa,{side:T.DoubleSide})),shD=gl3Mat('shD'+p.side+gk,()=>cloth(gk?kit.gk:kit.sh,{side:T.DoubleSide}));
+  const so=gl3Mat('so'+p.side+gk,()=>cloth(gk?kit.gk2:kit.so,{roughness:.85})),tr=gl3Mat('cl'+p.side+gk,()=>cloth(gk?kit.gk2:kit.sh2));
+  const sk=gl3Mat('sk'+L.skin,()=>{const m=gl3Std(L.skin,{roughness:.5});m.emissive=new T.Color(L.skin).multiplyScalar(.07);return m}),hr=gl3Mat('hr'+L.hair,()=>gl3Std(L.hair,{roughness:.9})),bt=gl3Mat('bt'+L.boots,()=>gl3Std(L.boots,{roughness:.3,metalness:.2})),sole=gl3Mat('sole',()=>gl3Std('#1a1a1a',{roughness:.6}));
+  const gl=gk?gl3Mat('glove',()=>gl3Std('#f0f0f0',{roughness:.6})):sk;
   const M=(g,m,sh2=true)=>{const x=new T.Mesh(g,m);x.castShadow=sh2;return x};
-  const root=new T.Group(),hips=new T.Group();root.add(hips);const sc=L.h/1.8;root.scale.setScalar(sc);
-  const pel=M(G.pelvis,pa);hips.add(pel);
-  const torso=new T.Group();hips.add(torso);const chest=M(G.torso,sh);chest.scale.set(1.22,1,.78);chest.position.y=.34;torso.add(chest);
-  const dark=!gk&&p.side===0?false:false;const nm=new T.Mesh(G.num,new T.MeshStandardMaterial({map:gl3NumTex(p.num||'',kit.sh==='#f4f4f4'),transparent:true,roughness:.7}));nm.position.set(0,.4,-.122);nm.rotation.y=Math.PI;torso.add(nm);
-  const neck=M(G.neck,sk,false);neck.position.y=.62;torso.add(neck);
-  const head=new T.Group();head.position.y=.76;torso.add(head);const fm=gl3Mat('fc'+L.skin+L.hair+(L.beard?1:0),()=>gl3Std('#ffffff',{map:gl3FaceTex(L.skin,L.hair,L.beard),roughness:.6}));head.add(M(G.head,fm));
-  const col=M(G.collar,gl3Mat('cl'+p.side+gk,()=>gl3Std(gk?kit.gk2:kit.sh2,{roughness:.6})),false);col.rotation.x=Math.PI/2;col.position.y=.6;torso.add(col);
-  const nf=new T.Mesh(G.numS,nm.material);nf.position.set(0,.47,.122);torso.add(nf);
-  const hs=(HASH(p.n||'')>>>5)%6;
-  if(hs===0){const h2=M(G.hair,hr);h2.scale.setScalar(.95);h2.position.set(0,.004,-.004);h2.rotation.x=-.2;head.add(h2)}
-  else if(hs===1||hs===2){const h2=M(G.hair,hr);h2.position.set(0,.014,-.008);h2.rotation.x=-.18;head.add(h2);if(hs===2){const sp=M(G.spike,hr);sp.position.set(0,.12,.01);sp.scale.set(1,1,1.6);head.add(sp)}}
-  else if(hs===3){const h2=M(G.hairL,hr);h2.position.set(0,.012,-.012);h2.rotation.x=-.4;head.add(h2)}
-  else if(hs===4){const h2=M(G.afro,hr);h2.position.set(0,.05,-.02);h2.scale.set(1,.85,1);head.add(h2)}
-  else{const h2=M(G.hair,hr);h2.position.set(0,.02,-.01);h2.rotation.x=-.25;h2.scale.set(1.04,1.1,1.06);head.add(h2);const tl=M(G.tail,hr);tl.position.set(0,-.02,-.13);tl.rotation.x=.5;head.add(tl)}
-  [-1,1].forEach(s=>{const e=M(G.ear,sk,false);e.position.set(s*.112,-.005,0);head.add(e)});const no=M(G.nose,sk,false);no.position.set(0,-.012,.112);head.add(no);
-  const arms=[-1,1].map(s=>{const sg=new T.Group();sg.position.set(s*.22,.52,0);torso.add(sg);const ua=M(G.uarm,sh);ua.position.y=-.14;sg.add(ua);
-    const eg=new T.Group();eg.position.y=-.29;sg.add(eg);const fa=M(G.farm,sk);fa.position.y=-.13;eg.add(fa);const hd=M(G.hand,gl,false);hd.position.y=-.27;if(gk)hd.scale.setScalar(1.35);eg.add(hd);return {sg,eg}});
-  const legs=[-1,1].map(s=>{const hg=new T.Group();hg.position.set(s*.1,-.04,0);hips.add(hg);const th=M(G.thigh,sk);th.position.y=-.22;hg.add(th);const sr=M(G.short,pa);sr.position.y=-.08;hg.add(sr);
-    const kg=new T.Group();kg.position.y=-.45;hg.add(kg);const sn=M(G.shin,so);sn.position.y=-.2;kg.add(sn);const fg=new T.Group();fg.position.y=-.43;kg.add(fg);const bo=M(G.boot,bt);bo.position.set(0,-.01,.05);fg.add(bo);return {hg,kg,fg}});
+  const build=.94+((h>>>11)%15)/100;// 体格（細め〜がっしり）
+  const root=new T.Group(),hips=new T.Group();root.add(hips);root.scale.setScalar(L.h/1.8);
+  // 腰・パンツ
+  const pel=M(B.pelvis,pa);pel.scale.set(1.17*build,1,.86);hips.add(pel);
+  // 胴体（肩幅が広く、腰が細い）
+  const torso=new T.Group();hips.add(torso);const chest=M(B.torso,sh);chest.scale.set(1.27*build,1,.78*(.96+build*.04));torso.add(chest);
+  const nm=new T.Mesh(G.num,new T.MeshStandardMaterial({map:gl3NumTex(p.num||'',false),transparent:true,roughness:.7}));nm.position.set(0,.38,-.142);nm.rotation.y=Math.PI;torso.add(nm);
+  const nf=new T.Mesh(G.numS,nm.material);nf.position.set(.07,.43,.142);torso.add(nf);
+  const col=M(G.collar,tr,false);col.rotation.x=Math.PI/2;col.position.y=.585;col.scale.set(1.05,1,.95);torso.add(col);
+  // 首・頭
+  const neck=M(B.neck,sk,false);neck.position.y=.56;torso.add(neck);
+  const head=new T.Group();head.position.y=.758;torso.add(head);
+  const fm=gl3Mat('fc'+L.skin+L.hair+(L.beard?1:0),()=>{const m=gl3Std('#ffffff',{map:gl3FaceTex(L.skin,L.hair,L.beard),roughness:.5});m.emissive=new T.Color(L.skin).multiplyScalar(.07);return m});const skull=M(B.head,fm);skull.scale.set(1,1.1,1.06);head.add(skull);
+  const no=M(B.nose,sk,false);no.scale.set(.7,1.25,.95);no.position.set(0,-.008,.1);head.add(no);
+  [-1,1].forEach(s2=>{const e=M(B.ear,sk,false);e.scale.set(.42,1,.75);e.position.set(s2*.1,-.004,-.005);head.add(e)});
+  const hs=(h>>>5)%6,hg=new T.Group();hg.scale.set(1,1.1,1.06);head.add(hg);
+  if(hs===0){const x=M(B.hair,hr);x.scale.setScalar(.975);x.rotation.x=-.42;x.position.z=-.006;hg.add(x)}
+  else if(hs===1||hs===2){const x=M(B.hair,hr);x.position.set(0,.008,-.01);x.rotation.x=-.4;hg.add(x);if(hs===2){const sp=M(G.spike,hr);sp.position.set(0,.105,.01);sp.scale.set(.9,1,1.7);hg.add(sp)}}
+  else if(hs===3){const x=M(B.hairL,hr);x.position.set(0,.01,-.018);x.rotation.x=-.62;hg.add(x)}
+  else if(hs===4){const x=M(B.afro,hr);x.position.set(0,.045,-.018);x.scale.set(1,.85,1);hg.add(x)}
+  else{const x=M(B.hair,hr);x.position.set(0,.012,-.012);x.rotation.x=-.45;x.scale.set(1.03,1.08,1.05);hg.add(x);const tl=M(G.tail,hr);tl.position.set(0,-.02,-.12);tl.rotation.x=.5;hg.add(tl)}
+  // 腕：肩（三角筋）・上腕（力こぶ）・前腕・手（手のひら・指・親指）
+  const arms=[-1,1].map(s2=>{const sg=new T.Group();sg.position.set(s2*.196*build,.485,0);torso.add(sg);
+    const dl=M(B.delt,sh);dl.scale.set(.78,.85,.95);dl.position.set(s2*-.008,-.025,0);sg.add(dl);const sl=M(B.sleeve,shD);sg.add(sl);const cuff=M(G.cuff,tr,false);cuff.rotation.x=Math.PI/2;cuff.position.y=-.148;sg.add(cuff);
+    const ua=M(B.uarm,sk);ua.scale.set(build,1,build*1.04);sg.add(ua);
+    const eg=new T.Group();eg.position.y=-.29;sg.add(eg);const fa=M(B.farm,sk);fa.scale.set(build,1,build*.92);eg.add(fa);
+    const hd=new T.Group();hd.position.y=-.26;eg.add(hd);if(gk)hd.scale.setScalar(1.3);
+    const pm=M(B.palm,gl,false);pm.scale.set(.78,1.05,.36);pm.position.y=-.04;hd.add(pm);const fg=M(B.fing,gl,false);fg.scale.set(.72,.95,.33);fg.position.set(0,-.088,.006);fg.rotation.x=.25;hd.add(fg);
+    const th=M(B.thumb,gl,false);th.position.set(s2*-.028,-.035,.016);th.rotation.set(.3,0,s2*.55);hd.add(th);return {sg,eg}});
+  // 脚：太もも（大腿四頭筋）・ひざ・すね（ふくらはぎ）・足首・スパイク
+  const legs=[-1,1].map(s2=>{const hg2=new T.Group();hg2.position.set(s2*.098*build,-.05,0);hips.add(hg2);
+    const th=M(B.thigh,sk);th.scale.set(build,1,build*1.02);hg2.add(th);const sr=M(B.shortL,paD);sr.scale.set(build,1,build);hg2.add(sr);
+    const kg=new T.Group();kg.position.y=-.45;hg2.add(kg);const kn=M(B.knee,sk,false);kn.position.set(0,.0,.032);kn.scale.set(1,.9,.7);kg.add(kn);
+    const sn=M(B.shin,so);sn.scale.set(build,1,build*1.05);kg.add(sn);const st=M(B.sockTop,so,false);st.rotation.x=Math.PI/2;st.position.y=-.035;kg.add(st);
+    const fg2=new T.Group();fg2.position.y=-.43;kg.add(fg2);const bu=M(B.bootUp,bt);bu.scale.set(.95,.78,2.45);bu.position.set(0,-.012,.05);fg2.add(bu);const so2=M(B.sole,sole,false);so2.position.set(0,-.047,.05);fg2.add(so2);
+    return {hg:hg2,kg,fg:fg2}});
   hips.position.y=.95;GL3.scene.add(root);
-  return {root,hips,torso,head,arms,legs,ph:Math.random()*6,yaw:0,key:p.n+'|'+p.side+'|'+p.role,dog:false}}
+  return {root,hips,torso,chest,head,arms,legs,ph:Math.random()*6,yaw:0,key:p.n+'|'+p.side+'|'+p.role,dog:false}}
 function gl3MakeDog(p){const T=THREE,G=GL3.geo,m=gl3Std('#b8834a',{roughness:.8}),d=gl3Std('#2a1a10');const root=new T.Group(),body=new T.Mesh(G.dogBody,m);body.rotation.x=Math.PI/2;body.position.y=.45;body.castShadow=true;root.add(body);
   const head=new T.Mesh(G.dogHead,m);head.position.set(0,.62,.38);head.castShadow=true;root.add(head);const nose=new T.Mesh(GL3.geo.nose,d);nose.scale.setScalar(1.6);nose.position.set(0,.6,.52);root.add(nose);
   [-1,1].forEach(s=>{const e=new T.Mesh(GL3.geo.ear,d);e.scale.set(1.2,2,1);e.position.set(s*.09,.74,.36);root.add(e)});
@@ -14391,9 +14450,10 @@ function gl3Anim(m,p,dt,R){const sp=Math.hypot(p.vx,p.vy),T=R.t;
   else if(p.stun>T){lean=-.15;laZ=.5;raZ=-.5}
   // ゴール後の喜び
   if(R.goalT>performance.now()/1000&&R.lastScorerSide===p.side&&(sp<2||p===GL3.scorer)){laX=-2.7;raX=-2.7;lE=-.2;rE=-.2;rootY=Math.abs(Math.sin(T*9))*.25}
-  m.hips.position.y=hipsY+rootY;m.hips.rotation.z=side*.5;m.root.rotation.z=rootRz;
-  m.torso.rotation.set(lean,twist,side);m.head.rotation.set(-lean*.6,-twist*.6,0);
-  L.hg.rotation.x=lH;Rg.hg.rotation.x=rH;L.kg.rotation.x=lK;Rg.kg.rotation.x=rK;L.fg.rotation.x=-lK*.4;Rg.fg.rotation.x=-rK*.4;
+  const pelY=sp>.3?-s*A*.22:0,breathe=1+Math.sin(T*(sp>4?5:2.2)+m.ph*.1)*.012;
+  m.hips.position.y=hipsY+rootY;m.hips.rotation.set(0,pelY,side*.5+(sp>.3?c*A*.05:0));m.root.rotation.z=rootRz;
+  m.torso.rotation.set(lean,twist-pelY,side);if(m.chest)m.chest.scale.y=breathe;m.head.rotation.set(-lean*.7,-(twist-pelY)*.7,0);
+  L.hg.rotation.x=lH;Rg.hg.rotation.x=rH;L.kg.rotation.x=lK;Rg.kg.rotation.x=rK;L.fg.rotation.x=-lK*.35+Math.max(0,-lH)*.25;Rg.fg.rotation.x=-rK*.35+Math.max(0,-rH)*.25;L.hg.rotation.z=-.04;Rg.hg.rotation.z=.04;
   AL.sg.rotation.set(laX,0,laZ);AR.sg.rotation.set(raX,0,raZ);AL.eg.rotation.x=lE;AR.eg.rotation.x=rE}
 
 /* ----- 描く ----- */
