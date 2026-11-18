@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="やるよん">
 <script src="firebase-config.js"></script>
-<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261118-025215';</script>
+<script>window.KJNET_PENDING=new Promise(function(r){window.__kjResolve=r});window.APP_VER='20261118-031503';</script>
 <script type="module" src="fb.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -992,6 +992,13 @@ body.rmon{overflow:hidden}
 .rmbtns button.ft{opacity:0}.rmbtns.fqon button.ft{opacity:.92}
 #rmgl{position:absolute;inset:0;width:100%;height:100%;display:block}
 #rm::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 55%,rgba(0,0,0,0) 55%,rgba(0,0,0,.28) 100%)}
+/* ホーム：3Dスタジアム */
+.hero2 #rmgl{position:absolute;inset:0;width:100%;height:100%;z-index:0;display:block}
+.hero2.gl .h2sky,.hero2.gl .h2pitch,.hero2.gl .h2ball{display:none}
+.hero2.gl{background:#05070f}
+.hero2.gl::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(4,6,14,.62) 0%,rgba(4,6,14,.18) 30%,rgba(4,6,14,0) 48%,rgba(4,6,14,0) 66%,rgba(4,6,14,.55) 100%),radial-gradient(ellipse at 50% 55%,transparent 55%,rgba(0,0,0,.35) 100%)}
+.hero2.gl .h2cards{height:150px;bottom:12px}
+.hero2.gl .hc{width:98px}.hero2.gl .hc0{width:116px;transform:translateX(-50%) translateY(-10px)}
 
 </style>
 </head>
@@ -14228,21 +14235,21 @@ function gl3Init(){if(GL3.r)return true;const T=THREE;
   GL3.r=r;const S=new T.Scene();GL3.scene=S;S.fog=new T.Fog(0x9fb8d0,120,320);
   GL3.cam=new T.PerspectiveCamera(20,16/9,.5,600);
   // 空（グラデーションのドーム）
-  const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.ShaderMaterial({side:T.BackSide,depthWrite:false,fog:false,uniforms:{top:{value:new T.Color(0x2f62a8)},hor:{value:new T.Color(0xd7e6f2)},sun:{value:new T.Vector3(-.45,.38,-.8).normalize()}},
+  const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.ShaderMaterial({side:T.BackSide,depthWrite:false,fog:false,uniforms:{top:{value:new T.Color(0x2f62a8)},hor:{value:new T.Color(0xd7e6f2)},sun:{value:new T.Vector3(-.45,.38,-.8).normalize()},stars:{value:0},sunA:{value:1}},
     vertexShader:'varying vec3 vP;void main(){vP=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader:'uniform vec3 top;uniform vec3 hor;uniform vec3 sun;varying vec3 vP;void main(){float h=max(vP.y,0.);vec3 c=mix(hor,top,pow(h,.55));float s=max(dot(vP,sun),0.);c+=vec3(1.,.85,.6)*pow(s,40.)*.6+vec3(1.,.9,.7)*pow(s,6.)*.12;gl_FragColor=vec4(c,1.);}'}));
-  S.add(sky);
+    fragmentShader:'uniform vec3 top;uniform vec3 hor;uniform vec3 sun;uniform float stars;uniform float sunA;varying vec3 vP;void main(){float h=max(vP.y,0.);vec3 c=mix(hor,top,pow(h,.55));float s=max(dot(vP,sun),0.);c+=(vec3(1.,.85,.6)*pow(s,40.)*.6+vec3(1.,.9,.7)*pow(s,6.)*.12)*sunA;float st=step(.9975,fract(sin(dot(floor(vP*420.),vec3(12.9898,78.233,45.164)))*43758.5453));c+=vec3(st*stars*smoothstep(.05,.4,h));gl_FragColor=vec4(c,1.);}'}));
+  S.add(sky);GL3.sky=sky;GL3.lamps=[];GL3.lampMats=[];GL3.towers=[];
   // 光：空と地面の照り返し＋太陽（影）＋照明
-  S.add(new T.HemisphereLight(0xdfeeff,0x3d5a2c,1.1));
+  const hemi=new T.HemisphereLight(0xdfeeff,0x3d5a2c,1.1);S.add(hemi);GL3.hemi=hemi;
   const sun=new T.DirectionalLight(0xfff1dc,2.6);sun.position.set(-40,70,30);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);const sc=sun.shadow.camera;sc.left=-38;sc.right=38;sc.top=30;sc.bottom=-30;sc.near=10;sc.far=200;sun.shadow.bias=-.0004;sun.shadow.normalBias=.03;
   S.add(sun);S.add(sun.target);GL3.sun=sun;
-  const fill=new T.DirectionalLight(0xbfd4ff,.55);fill.position.set(50,40,-60);S.add(fill);
+  const fill=new T.DirectionalLight(0xbfd4ff,.55);fill.position.set(50,40,-60);S.add(fill);GL3.fill=fill;
   gl3Stadium(S);
   // 共通の形
   const G={};G.torso=new T.CapsuleGeometry(.15,.3,6,14);G.pelvis=new T.CylinderGeometry(.15,.14,.22,14);G.uarm=new T.CapsuleGeometry(.054,.2,4,10);G.farm=new T.CapsuleGeometry(.046,.2,4,10);G.hand=new T.SphereGeometry(.052,10,8);
-  G.neck=new T.CylinderGeometry(.055,.06,.12,10);G.head=new T.SphereGeometry(.115,20,16);G.hair=new T.SphereGeometry(.124,20,12,0,Math.PI*2,0,Math.PI*.5);G.hairL=new T.SphereGeometry(.127,20,14,0,Math.PI*2,0,Math.PI*.7);
+  G.neck=new T.CylinderGeometry(.055,.06,.12,10);G.head=new T.SphereGeometry(.115,28,20);G.hair=new T.SphereGeometry(.124,20,12,0,Math.PI*2,0,Math.PI*.5);G.hairL=new T.SphereGeometry(.127,20,14,0,Math.PI*2,0,Math.PI*.7);
   G.thigh=new T.CapsuleGeometry(.078,.3,4,12);G.short=new T.CylinderGeometry(.092,.088,.2,12);G.shin=new T.CapsuleGeometry(.06,.3,4,10);G.boot=new T.BoxGeometry(.1,.075,.25);G.num=new T.PlaneGeometry(.2,.2);
-  G.ear=new T.SphereGeometry(.03,8,6);G.nose=new T.SphereGeometry(.022,8,6);G.eye=new T.SphereGeometry(.014,6,6);
+  G.ear=new T.SphereGeometry(.03,8,6);G.collar=new T.TorusGeometry(.08,.018,6,18);G.numS=new T.PlaneGeometry(.09,.09);G.spike=new T.ConeGeometry(.05,.1,8);G.afro=new T.SphereGeometry(.16,18,14);G.tail=new T.CapsuleGeometry(.035,.12,4,8);G.nose=new T.SphereGeometry(.022,8,6);G.eye=new T.SphereGeometry(.014,6,6);
   G.ring=new T.RingGeometry(.55,.68,48);G.disc=new T.CircleGeometry(1,40);G.ringT=new T.RingGeometry(.9,1,48);
   G.dogBody=new T.CapsuleGeometry(.16,.4,4,10);G.dogLeg=new T.CapsuleGeometry(.04,.2,4,8);G.dogHead=new T.SphereGeometry(.13,12,10);
   GL3.geo=G;
@@ -14253,7 +14260,9 @@ function gl3Init(){if(GL3.r)return true;const T=THREE;
   const pv=new T.Group();const pd=new T.Mesh(G.disc,new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.22,depthWrite:false}));pd.rotation.x=-Math.PI/2;const pr=new T.Mesh(G.ringT,new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.7,depthWrite:false}));pr.rotation.x=-Math.PI/2;pr.position.y=.005;
   pv.add(pd,pr);pv.position.y=.035;pv.renderOrder=3;S.add(pv);GL3.pv=pv;
   const lg=new T.BufferGeometry();lg.setAttribute('position',new T.BufferAttribute(new Float32Array(33*3),3));const ln=new T.Line(lg,new T.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.6,depthWrite:false}));ln.frustumCulled=false;S.add(ln);GL3.pvLine=ln;
-  GL3.v=new T.Vector3();return true}
+  // ボールの軌跡
+  GL3.trail=[];GL3.trailS=[];const gt=gl3GlowTex();for(let i=0;i<14;i++){const sp=new T.Sprite(new T.SpriteMaterial({map:gt,color:0xffffff,transparent:true,opacity:0,depthWrite:false,blending:T.AdditiveBlending,fog:false}));sp.visible=false;S.add(sp);GL3.trailS.push(sp)}
+  gl3BuildGlows();GL3.v=new T.Vector3();return true}
 function gl3Stadium(S){const T=THREE;
   // 外周の芝・コンクリート
   const out=new T.Mesh(new T.PlaneGeometry(150,104),new T.MeshStandardMaterial({color:0x2f6e2e,roughness:1}));out.rotation.x=-Math.PI/2;out.position.y=-.02;out.receiveShadow=true;S.add(out);
@@ -14262,7 +14271,7 @@ function gl3Stadium(S){const T=THREE;
   const pt=gl3PitchTex(),pm=new T.MeshStandardMaterial({map:pt.tex,roughness:.92,metalness:0,bumpMap:gl3GrainTex(),bumpScale:.18});
   const pitch=new T.Mesh(new T.PlaneGeometry(pt.w,pt.h),pm);pitch.rotation.x=-Math.PI/2;pitch.receiveShadow=true;S.add(pitch);
   // 看板（LED）
-  const adT=gl3AdTex();GL3.adT=adT;const adM=new T.MeshStandardMaterial({map:adT,emissive:0xffffff,emissiveMap:adT,emissiveIntensity:.55,roughness:.5});
+  const adT=gl3AdTex();GL3.adT=adT;const adM=new T.MeshStandardMaterial({map:adT,emissive:0xffffff,emissiveMap:adT,emissiveIntensity:.55,roughness:.5});GL3.adM=adM;
   const board=(w,x,z,ry)=>{const m=new T.Mesh(new T.BoxGeometry(w,.95,.12),adM);m.position.set(x,.48,z);m.rotation.y=ry;m.castShadow=true;S.add(m)};
   board(118,0,-RM_W/2-4.2,0);board(70,RM_L/2+5.5,0,Math.PI/2);board(70,-RM_L/2-5.5,0,-Math.PI/2);
   // スタンド（奥・左右）
@@ -14275,7 +14284,7 @@ function gl3Stadium(S){const T=THREE;
     const roof=new T.Mesh(new T.BoxGeometry(len+4,.6,depth*.85),new T.MeshStandardMaterial({color:0xd8dde4,roughness:.6,metalness:.3}));roof.position.set(0,rise+7.5,-depth*.5);roof.rotation.x=-.06;roof.castShadow=true;g.add(roof);
     const edge=new T.Mesh(new T.BoxGeometry(len+4,1.1,.6),new T.MeshStandardMaterial({color:0x6a717c,metalness:.5,roughness:.4}));edge.position.set(0,rise+7.2,-depth*.08);g.add(edge);
     // 照明（屋根の下）
-    const lm=new T.MeshStandardMaterial({color:0xffffff,emissive:0xfff6d8,emissiveIntensity:2.2});for(let i=0;i<Math.floor(len/9);i++){const l=new T.Mesh(new T.BoxGeometry(2.2,.5,.4),lm);l.position.set(-len/2+4.5+i*9,rise+6.5,-depth*.1);g.add(l)}
+    const lm=new T.MeshStandardMaterial({color:0xffffff,emissive:0xfff6d8,emissiveIntensity:2.2});GL3.lampMats.push(lm);for(let i=0;i<Math.floor(len/9);i++){const l=new T.Mesh(new T.BoxGeometry(2.2,.5,.4),lm);l.position.set(-len/2+4.5+i*9,rise+6.5,-depth*.1);g.add(l);GL3.lamps.push(l)}
     for(let i=0;i<Math.floor(len/6);i++){const p=new T.Mesh(new T.CylinderGeometry(.18,.22,rise+6,8),new T.MeshStandardMaterial({color:0x8a9099,metalness:.6,roughness:.4}));p.position.set(-len/2+3+i*6,(rise+6)/2+1.6,-depth+.2);g.add(p)}
     return g};
   const far=stand(150,30,20,crowdH,7.5);far.position.set(0,0,-RM_W/2-7.5);S.add(far);
@@ -14283,18 +14292,18 @@ function gl3Stadium(S){const T=THREE;
   const right=stand(96,26,17,crowdH,5);right.rotation.y=-Math.PI/2;right.position.set(RM_L/2+9,0,0);S.add(right);
   GL3.crowdMats=[far,left,right].map(g=>g.children[0].material);
   // 角の照明塔
-  const tm=new T.MeshStandardMaterial({color:0x9aa0a8,metalness:.6,roughness:.4}),lm=new T.MeshStandardMaterial({color:0xffffff,emissive:0xfff8e0,emissiveIntensity:2.5});
+  const tm=new T.MeshStandardMaterial({color:0x9aa0a8,metalness:.6,roughness:.4}),lm=new T.MeshStandardMaterial({color:0xffffff,emissive:0xfff8e0,emissiveIntensity:2.5});GL3.lampMats.push(lm);
   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{const g=new T.Group();const pole=new T.Mesh(new T.CylinderGeometry(.5,.9,46,10),tm);pole.position.y=23;g.add(pole);
     const pan=new T.Mesh(new T.BoxGeometry(8,5,.6),new T.MeshStandardMaterial({color:0x30343c}));pan.position.set(0,47,0);g.add(pan);
     for(let i=0;i<4;i++)for(let j=0;j<3;j++){const l=new T.Mesh(new T.BoxGeometry(1.5,1.1,.2),lm);l.position.set(-2.8+i*1.86,45.4+j*1.6,.4);g.add(l)}
-    g.position.set(sx*(RM_L/2+30),0,sz*(RM_W/2+30));g.lookAt(0,40,0);S.add(g)});
+    g.position.set(sx*(RM_L/2+30),0,sz*(RM_W/2+30));g.lookAt(0,40,0);S.add(g);GL3.towers.push(pan)});
   // コーナーフラッグ
   const fpm=new T.MeshStandardMaterial({color:0xf0f0f0}),ffm=new T.MeshStandardMaterial({color:0xffd23a,side:T.DoubleSide,roughness:.7});GL3.flags=[];
   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{const g=new T.Group();const pole=new T.Mesh(new T.CylinderGeometry(.02,.02,1.6,6),fpm);pole.position.y=.8;pole.castShadow=true;g.add(pole);
     const fg=new T.BufferGeometry();fg.setAttribute('position',new T.Float32BufferAttribute([0,1.6,0,0,1.25,0,.38,1.43,0],3));fg.computeVertexNormals();const fl=new T.Mesh(fg,ffm);fl.castShadow=true;g.add(fl);GL3.flags.push(fl);
     g.position.set(sx*RM_L/2,0,sz*RM_W/2);S.add(g)});
   // ゴール
-  [1,-1].forEach(d=>S.add(gl3Goal(d)));
+  GL3.goals={};[1,-1].forEach(d=>{const g=gl3Goal(d);GL3.goals[d]=g;S.add(g)});
   // 交代ベンチ（手前は映らないので奥側）
   const bench=new T.Mesh(new T.BoxGeometry(8,1.6,1.6),new T.MeshStandardMaterial({color:0x22324a,roughness:.4,metalness:.2,transparent:true,opacity:.85}));bench.position.set(-10,.8,-RM_W/2-2.2);S.add(bench);
   const bench2=bench.clone();bench2.position.x=10;S.add(bench2)}
@@ -14306,14 +14315,28 @@ function gl3Goal(d){const T=THREE,g=new T.Group(),hw=RM_GW/2,H=RM_GH,D=2.2,pr=.0
   rod(new T.Vector3(0,0,-hw),new T.Vector3(D,0,-hw));rod(new T.Vector3(0,0,hw),new T.Vector3(D,0,hw));rod(new T.Vector3(D,0,-hw),new T.Vector3(D,0,hw));rod(new T.Vector3(0,H,-hw),new T.Vector3(D*.55,H*.82,-hw));rod(new T.Vector3(0,H,hw),new T.Vector3(D*.55,H*.82,hw));
   // ネット
   const nt=gl3NetTex(),nm=(rx,ry)=>{const t=nt.clone();t.needsUpdate=true;t.repeat.set(rx,ry);return new T.MeshStandardMaterial({map:t,alphaMap:null,transparent:true,alphaTest:.35,side:T.DoubleSide,roughness:.9,depthWrite:true})};
-  const quad=(pts,rx,ry)=>{const geo=new T.BufferGeometry();const [a,b2,c,e]=pts;geo.setAttribute('position',new T.Float32BufferAttribute([...a,...b2,...c,...a,...c,...e],3));geo.setAttribute('uv',new T.Float32BufferAttribute([0,0,1,0,1,1,0,0,1,1,0,1],2));geo.computeVertexNormals();const m=new T.Mesh(geo,nm(rx,ry));m.castShadow=true;g.add(m)};
+  g.userData.nets=[];const quad=(pts,rx,ry,w)=>{const geo=new T.BufferGeometry();const [a,b2,c,e]=pts;geo.setAttribute('position',new T.Float32BufferAttribute([...a,...b2,...c,...a,...c,...e],3));geo.setAttribute('uv',new T.Float32BufferAttribute([0,0,1,0,1,1,0,0,1,1,0,1],2));geo.computeVertexNormals();const m=new T.Mesh(geo,nm(rx,ry));m.castShadow=true;m.userData.w=w||.5;g.userData.nets.push(m);g.add(m)};
   const nb=[D,0],nt2=[D*.55,H*.82];
-  quad([[nb[0],0,-hw],[nb[0],0,hw],[nt2[0],nt2[1],hw],[nt2[0],nt2[1],-hw]],RM_GW/.5,Math.hypot(D*.45,H*.82)/.5);
-  quad([[0,H,-hw],[0,H,hw],[nt2[0],nt2[1],hw],[nt2[0],nt2[1],-hw]],RM_GW/.5,Math.hypot(D*.55,H*.18)/.5);
+  quad([[nb[0],0,-hw],[nb[0],0,hw],[nt2[0],nt2[1],hw],[nt2[0],nt2[1],-hw]],RM_GW/.5,Math.hypot(D*.45,H*.82)/.5,1);
+  quad([[0,H,-hw],[0,H,hw],[nt2[0],nt2[1],hw],[nt2[0],nt2[1],-hw]],RM_GW/.5,Math.hypot(D*.55,H*.18)/.5,.7);
   [-hw,hw].forEach(z=>{quad([[0,0,z],[nb[0],0,z],[nt2[0],nt2[1],z],[0,H,z]],D/.5,H/.5)});
   g.position.set(d*RM_L/2,0,0);if(d<0)g.rotation.y=Math.PI;return g}
 
 /* ----- 選手 ----- */
+function gl3FaceTex(skin,hair,beard){const key='f'+skin+hair+(beard?1:0);if(GL3.mats[key])return GL3.mats[key];const W=256,H=128,c=gl3Cv(W,H),x=c.getContext('2d');x.fillStyle=skin;x.fillRect(0,0,W,H);
+  const cx0=64;// 正面（+Z）はu=0.25
+  const sh=(a)=>`rgba(60,30,10,${a})`;
+  let g=x.createRadialGradient(cx0,70,4,cx0,70,46);g.addColorStop(0,'rgba(255,255,255,.10)');g.addColorStop(1,'rgba(0,0,0,.12)');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.fillStyle=hair;[-1,1].forEach(s2=>{x.save();x.translate(cx0+s2*11,50);x.rotate(s2*.12);x.fillRect(-7,-1.6,14,3.2);x.restore()});
+  [-1,1].forEach(s2=>{const ex=cx0+s2*11;x.fillStyle='#f4f1ea';x.beginPath();x.ellipse(ex,58,5.2,3,0,0,7);x.fill();x.fillStyle='#3a2a1c';x.beginPath();x.arc(ex,58,2.5,0,7);x.fill();x.fillStyle='#0c0806';x.beginPath();x.arc(ex,58,1.3,0,7);x.fill();
+    x.fillStyle=sh(.25);x.fillRect(ex-6,54.4,12,1.2)});
+  x.fillStyle=sh(.22);x.beginPath();x.moveTo(cx0-2,60);x.lineTo(cx0-4.5,72);x.lineTo(cx0+4.5,72);x.lineTo(cx0+2,60);x.closePath();x.fill();
+  x.fillStyle=sh(.35);x.fillRect(cx0-4,72,8,1.6);
+  x.fillStyle='rgba(120,40,40,.55)';x.beginPath();x.ellipse(cx0,81,7,1.8,0,0,7);x.fill();x.fillStyle=sh(.3);x.fillRect(cx0-7,80.6,14,.9);
+  if(beard){x.fillStyle=hair;x.globalAlpha=.75;x.beginPath();x.ellipse(cx0,88,20,10,0,0,Math.PI);x.fill();x.fillRect(cx0-20,78,4,10);x.fillRect(cx0+16,78,4,10);x.globalAlpha=1}
+  // 髪の生え際（後ろと横）
+  x.fillStyle=hair;x.fillRect(0,0,W,30);x.fillRect(110,0,146,62);x.beginPath();x.moveTo(30,30);x.quadraticCurveTo(64,40,98,30);x.lineTo(98,0);x.lineTo(30,0);x.fill();
+  const t=gl3Tex(c);GL3.mats[key]=t;return t}
 function gl3Mat(key,make){let m=GL3.mats[key];if(!m)m=GL3.mats[key]=make();return m}
 const gl3Std=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.7,metalness:0},o||{}));
 function gl3MakeMan(p){const T=THREE,G=GL3.geo,L=r3Look(p),kit=R3KIT[p.side],gk=p.role==='GK';
@@ -14326,10 +14349,16 @@ function gl3MakeMan(p){const T=THREE,G=GL3.geo,L=r3Look(p),kit=R3KIT[p.side],gk=
   const torso=new T.Group();hips.add(torso);const chest=M(G.torso,sh);chest.scale.set(1.22,1,.78);chest.position.y=.34;torso.add(chest);
   const dark=!gk&&p.side===0?false:false;const nm=new T.Mesh(G.num,new T.MeshStandardMaterial({map:gl3NumTex(p.num||'',kit.sh==='#f4f4f4'),transparent:true,roughness:.7}));nm.position.set(0,.4,-.122);nm.rotation.y=Math.PI;torso.add(nm);
   const neck=M(G.neck,sk,false);neck.position.y=.62;torso.add(neck);
-  const head=new T.Group();head.position.y=.76;torso.add(head);head.add(M(G.head,sk));
-  const hair=M(L.hairLen>.25?G.hairL:G.hair,hr);hair.position.set(0,.012,-.008);hair.rotation.x=L.hairLen>.25?-.35:-.18;head.add(hair);
-  [-1,1].forEach(s=>{const e=M(G.ear,sk,false);e.position.set(s*.112,-.005,0);head.add(e);const y=M(G.eye,ey,false);y.position.set(s*.04,.015,.104);head.add(y)});const no=M(G.nose,sk,false);no.position.set(0,-.012,.115);head.add(no);
-  if(L.beard){const b=M(G.hair,hr,false);b.scale.set(.92,.6,.92);b.rotation.x=Math.PI;b.position.set(0,-.03,.01);head.add(b)}
+  const head=new T.Group();head.position.y=.76;torso.add(head);const fm=gl3Mat('fc'+L.skin+L.hair+(L.beard?1:0),()=>gl3Std('#ffffff',{map:gl3FaceTex(L.skin,L.hair,L.beard),roughness:.6}));head.add(M(G.head,fm));
+  const col=M(G.collar,gl3Mat('cl'+p.side+gk,()=>gl3Std(gk?kit.gk2:kit.sh2,{roughness:.6})),false);col.rotation.x=Math.PI/2;col.position.y=.6;torso.add(col);
+  const nf=new T.Mesh(G.numS,nm.material);nf.position.set(0,.47,.122);torso.add(nf);
+  const hs=(HASH(p.n||'')>>>5)%6;
+  if(hs===0){const h2=M(G.hair,hr);h2.scale.setScalar(.95);h2.position.set(0,.004,-.004);h2.rotation.x=-.2;head.add(h2)}
+  else if(hs===1||hs===2){const h2=M(G.hair,hr);h2.position.set(0,.014,-.008);h2.rotation.x=-.18;head.add(h2);if(hs===2){const sp=M(G.spike,hr);sp.position.set(0,.12,.01);sp.scale.set(1,1,1.6);head.add(sp)}}
+  else if(hs===3){const h2=M(G.hairL,hr);h2.position.set(0,.012,-.012);h2.rotation.x=-.4;head.add(h2)}
+  else if(hs===4){const h2=M(G.afro,hr);h2.position.set(0,.05,-.02);h2.scale.set(1,.85,1);head.add(h2)}
+  else{const h2=M(G.hair,hr);h2.position.set(0,.02,-.01);h2.rotation.x=-.25;h2.scale.set(1.04,1.1,1.06);head.add(h2);const tl=M(G.tail,hr);tl.position.set(0,-.02,-.13);tl.rotation.x=.5;head.add(tl)}
+  [-1,1].forEach(s=>{const e=M(G.ear,sk,false);e.position.set(s*.112,-.005,0);head.add(e)});const no=M(G.nose,sk,false);no.position.set(0,-.012,.112);head.add(no);
   const arms=[-1,1].map(s=>{const sg=new T.Group();sg.position.set(s*.22,.52,0);torso.add(sg);const ua=M(G.uarm,sh);ua.position.y=-.14;sg.add(ua);
     const eg=new T.Group();eg.position.y=-.29;sg.add(eg);const fa=M(G.farm,sk);fa.position.y=-.13;eg.add(fa);const hd=M(G.hand,gl,false);hd.position.y=-.27;if(gk)hd.scale.setScalar(1.35);eg.add(hd);return {sg,eg}});
   const legs=[-1,1].map(s=>{const hg=new T.Group();hg.position.set(s*.1,-.04,0);hips.add(hg);const th=M(G.thigh,sk);th.position.y=-.22;hg.add(th);const sr=M(G.short,pa);sr.position.y=-.08;hg.add(sr);
@@ -14361,7 +14390,7 @@ function gl3Anim(m,p,dt,R){const sp=Math.hypot(p.vx,p.vy),T=R.t;
   else if(p.ft&&p.ft.until>T){const k=(T-p.ft.t)/Math.max(.1,p.ft.until-p.ft.t);side=Math.sin(k*Math.PI*2)*.35;twist+=Math.sin(k*Math.PI)*.5;rH+=Math.sin(k*Math.PI)*-.6}
   else if(p.stun>T){lean=-.15;laZ=.5;raZ=-.5}
   // ゴール後の喜び
-  if(R.goalT>performance.now()/1000&&R.lastScorerSide===p.side&&sp<2){laX=-2.7;raX=-2.7;lE=-.2;rE=-.2;rootY=Math.abs(Math.sin(T*9))*.25}
+  if(R.goalT>performance.now()/1000&&R.lastScorerSide===p.side&&(sp<2||p===GL3.scorer)){laX=-2.7;raX=-2.7;lE=-.2;rE=-.2;rootY=Math.abs(Math.sin(T*9))*.25}
   m.hips.position.y=hipsY+rootY;m.hips.rotation.z=side*.5;m.root.rotation.z=rootRz;
   m.torso.rotation.set(lean,twist,side);m.head.rotation.set(-lean*.6,-twist*.6,0);
   L.hg.rotation.x=lH;Rg.hg.rotation.x=rH;L.kg.rotation.x=lK;Rg.kg.rotation.x=rK;L.fg.rotation.x=-lK*.4;Rg.fg.rotation.x=-rK*.4;
@@ -14373,14 +14402,15 @@ rmDraw=function(){const R=RM;if(!gl3Supported()||!R.gl3){return gl3Draw2D()}
   try{gl3Frame(R)}catch(e){console.warn('GL描画エラー→2Dに切り替え',e);GL3.ok=false;try{GL3.r.domElement.remove()}catch(_){};R.gl3=false;return gl3Draw2D()}};
 function gl3Frame(R){const T=THREE,b=R.ball,now=performance.now(),dt=Math.min(.05,(now-(GL3.last||now))/1000);GL3.last=now;
   // 選手のモデルをそろえる
-  if(GL3.forRM!==R){GL3.men.forEach(m=>gl3Dispose(m));GL3.men.clear();GL3.forRM=R}
+  if(GL3.forRM!==R){GL3.men.forEach(m=>gl3Dispose(m));GL3.men.clear();GL3.forRM=R;if(!R.mood){const r=Math.random();R.mood=r<.4?'night':r<.7?'sunset':'day'}GL3.introT=now;GL3.scorer=null}
+  if(GL3.moodNow!==R.mood)gl3Mood(R.mood);gl3HomeShow(false);
   const alive=new Set();R.P.forEach(p=>{let m=GL3.men.get(p);const key=p.dog?'dog':p.n+'|'+p.side+'|'+p.role;if(m&&m.key!==key){gl3Dispose(m);m=null}if(!m){m=p.dog?gl3MakeDog(p):gl3MakeMan(p);GL3.men.set(p,m)}alive.add(p);
     m.root.visible=!(p.away&&(p.x<-1||p.x>RM_W+1));gl3Anim(m,p,dt,R)});
   GL3.men.forEach((m,p)=>{if(!alive.has(p)){gl3Dispose(m);GL3.men.delete(p)}});
   // ボール（転がると回る）
   const bm=GL3.ball;bm.position.set(gX(b.y),b.z+.11,gZ(b.x));const vX=-b.vy,vZ=-b.vx,v=Math.hypot(vX,vZ);if(v>.05){GL3.v.set(vZ,0,-vX).normalize();bm.rotateOnWorldAxis(GL3.v,v*dt/.11)}
   // 操作中の選手のリング
-  const c=R.ctrl;GL3.ring.visible=!!c&&!c.away;if(c){GL3.ring.position.x=gX(c.y);GL3.ring.position.z=gZ(c.x);GL3.ring.rotation.z+=dt*1.5;GL3.ring.material.color.set(R.inp.dash||R.inp.hold>.35?0xffa040:0xffe066)}
+  const c=R.ctrl;GL3.ring.visible=!!c&&!c.away&&!(GL3.gk>0);if(c){GL3.ring.position.x=gX(c.y);GL3.ring.position.z=gZ(c.x);GL3.ring.rotation.z+=dt*1.5;GL3.ring.material.color.set(R.inp.dash||R.inp.hold>.35?0xffa040:0xffe066)}
   // 予測（薄い白）
   const ch=R.inp.charge,own=b.own;let pvOn=false;
   if(ch&&own&&own===R.ctrl){const pw=rmClamp((now-ch.t0)/900,.08,1),pv=rmPreview(own,ch,pw);if(pv&&pv.tx!=null){pvOn=true;const tX=gX(pv.ty),tZ=gZ(pv.tx);GL3.pv.position.set(tX,.035,tZ);GL3.pv.scale.setScalar(pv.rad);
@@ -14391,9 +14421,19 @@ function gl3Frame(R){const T=THREE,b=R.ball,now=performance.now(),dt=Math.min(.0
   // 中継カメラ：ボールを追って横に振る
   const tgx=rmClamp(RM_L-b.y,8,RM_L-8),tgy=rmClamp(b.x,7,RM_W-10);R.camX=R.camX==null?tgx:R.camX+(tgx-R.camX)*.07;R.camY=R.camY==null?tgy:R.camY+(tgy-R.camY)*.05;
   const W=innerWidth,H=innerHeight,asp=W/H,cam=GL3.cam;const lx=R.camX-RM_L/2,lz=RM_W/2-R.camY;
-  cam.position.set(lx*.8,13.5,lz+44);cam.lookAt(lx,1.2,lz-8);const hfov=asp>1?32:40;cam.fov=2*Math.atan(Math.tan(hfov*Math.PI/360)/asp)*180/Math.PI;cam.aspect=asp;cam.updateProjectionMatrix();
+  let cp=[lx*.8,13.5,lz+44],cl=[lx,1.2,lz-8],hf=asp>1?32:40;const L3=(a,c2,k)=>[a[0]+(c2[0]-a[0])*k,a[1]+(c2[1]-a[1])*k,a[2]+(c2[2]-a[2])*k];
+  // ゴールのあと：決めた選手に寄る
+  const sc=GL3.scorer;if(R.goalT>now/1000&&sc&&!sc.away){GL3.gk=Math.min(1,(GL3.gk||0)+dt*1.4);const k=GL3.gk*GL3.gk*(3-2*GL3.gk),X=gX(sc.y),Z=gZ(sc.x);let fx=-(sc.fy||0),fz=-(sc.fx||0);const fm=Math.hypot(fx,fz)||1;fx/=fm;fz/=fm;if(fz<-.2){fz=Math.abs(fz)}const cx2=X+fx*11+fz*3.5,cz2=Z+Math.max(fz*11,5)-fx*3.5;cp=L3(cp,[cx2,4.2,cz2],k);cl=L3(cl,[X,1.15,Z],k);hf=gl3Lerp(hf,30,k)}else GL3.gk=0;
+  // 試合開始：スタジアムを大きく回ってから試合のカメラへ
+  const it=(now-(GL3.introT||0))/1000;if(it<2.8){const k=Math.max(0,it/2.8),e=k*k*(3-2*k),a=-1.25+e*1.25;cp=L3([Math.sin(a)*78,34,Math.cos(a)*78],cp,e);cl=L3([0,0,0],cl,e);hf=gl3Lerp(62,hf,e)}
+  cam.position.set(cp[0],cp[1],cp[2]);cam.lookAt(cl[0],cl[1],cl[2]);cam.fov=2*Math.atan(Math.tan(hf*Math.PI/360)/asp)*180/Math.PI;cam.aspect=asp;cam.updateProjectionMatrix();
   // 影はカメラが見ている場所に合わせる
-  GL3.sun.target.position.set(lx,0,lz);GL3.sun.position.set(lx-40,70,lz+30);
+  GL3.sun.target.position.set(cl[0],0,cl[2]);const so=GL3.sunOff||[-40,70,30];GL3.sun.position.set(cl[0]+so[0],so[1],cl[2]+so[2]);
+  // ゴールネットが揺れる
+  {const rt=(now-(GL3.ripT||-1e9))/1000;[1,-1].forEach(d=>{const g=GL3.goals&&GL3.goals[d];if(!g)return;const off=d===GL3.ripD&&rt<2.4?Math.sin(rt*15)*Math.exp(-rt*2)*.38:0;g.userData.nets.forEach(n=>n.position.x=off*n.userData.w)})}
+  // ボールの軌跡（強いシュート・パス）
+  {const fast=!b.own&&Math.hypot(b.vx,b.vy)>13;if(fast)GL3.trail.unshift([bm.position.x,bm.position.y,bm.position.z]);else if(GL3.trail.length)GL3.trail.pop();if(GL3.trail.length>14)GL3.trail.length=14;
+    GL3.trailS.forEach((sp,i)=>{const t=GL3.trail[i];sp.visible=!!t&&i>0;if(t){sp.position.set(t[0],t[1],t[2]);const k=1-i/14;sp.scale.setScalar(.42*k+.06);sp.material.opacity=.55*k}})}
   GL3.r.render(GL3.scene,cam);
   {const ft=now-(GL3.fpT||now);GL3.fpT=now;GL3.fa=(GL3.fa||16)*.95+ft*.05;GL3.fn=(GL3.fn||0)+1;if(GL3.fn>90&&GL3.fa>30&&(GL3.q||0)<2){GL3.q=(GL3.q||0)+1;GL3.fn=0;const pr=[1.75,1.3,1][GL3.q];GL3.r.setPixelRatio(Math.min(devicePixelRatio||1,pr));GL3.r.setSize(innerWidth,innerHeight,false);if(GL3.q>=2){GL3.sun.castShadow=false}}}
   gl3Overlay(R)}
@@ -14402,7 +14442,7 @@ function gl3Overlay(R){const cv=R.cv,cx=R.cx,W=cv.width,H=cv.height,b=R.ball,d0=
   const proj=(X,Y,Z)=>{v.set(X,Y,Z).project(cam);if(v.z>1)return null;return {x:(v.x+1)/2*W,y:(1-v.y)/2*H}};
   const label=(p,txt,col,tri)=>{const q=proj(gX(p.y),2.25,gZ(p.x));if(!q)return;cx.font=`800 ${Math.round(12*d0)}px sans-serif`;cx.textAlign='center';cx.textBaseline='bottom';cx.lineWidth=3*d0;cx.strokeStyle='rgba(0,0,0,.7)';cx.strokeText(txt,q.x,q.y-(tri?10*d0:0));cx.fillStyle=col;cx.fillText(txt,q.x,q.y-(tri?10*d0:0));
     if(tri){cx.fillStyle=col;cx.beginPath();cx.moveTo(q.x-6*d0,q.y-8*d0);cx.lineTo(q.x+6*d0,q.y-8*d0);cx.lineTo(q.x,q.y);cx.closePath();cx.fill()}};
-  const c=R.ctrl;if(c&&!c.away){label(c,c.n.split(' ').pop(),'#ffe066',true);const q=proj(gX(c.y),-.05,gZ(c.x));if(q){const w=34*d0;cx.fillStyle='rgba(0,0,0,.55)';cx.fillRect(q.x-w/2,q.y+6*d0,w,4*d0);cx.fillStyle=c.sta>40?'#7aff9a':'#ff7a5a';cx.fillRect(q.x-w/2,q.y+6*d0,w*c.sta/100,4*d0)}}
+  const c=R.ctrl;if(c&&!c.away&&!(GL3.gk>0)){label(c,c.n.split(' ').pop(),'#ffe066',true);const q=proj(gX(c.y),-.05,gZ(c.x));if(q){const w=34*d0;cx.fillStyle='rgba(0,0,0,.55)';cx.fillRect(q.x-w/2,q.y+6*d0,w,4*d0);cx.fillStyle=c.sta>40?'#7aff9a':'#ff7a5a';cx.fillRect(q.x-w/2,q.y+6*d0,w*c.sta/100,4*d0)}}
   if(b.own&&b.own!==c&&!b.own.away)label(b.own,b.own.n.split(' ').pop(),b.own.side===0?'#ffffff':'#9cc4ff',false);
   if(performance.now()<R.stopUntil){cx.fillStyle='rgba(120,80,200,.2)';cx.fillRect(0,0,W,H)}
   // ミニマップ
@@ -14412,6 +14452,61 @@ function gl3Overlay(R){const cv=R.cv,cx=R.cx,W=cv.width,H=cv.height,b=R.ball,d0=
 // 試合画面にWebGLのキャンバスを入れる・大きさを合わせる
 {const _m=rmMount;rmMount=function(){const r=_m.apply(this,arguments);try{if(RM&&gl3Supported()&&gl3Init()){const cv=document.getElementById('rmc');cv.parentNode.insertBefore(GL3.r.domElement,cv);GL3.r.setSize(innerWidth,innerHeight,false);RM.gl3=true;GL3.forRM=null;GL3.last=0}}catch(e){console.warn('WebGLが使えない',e);GL3.ok=false;if(RM)RM.gl3=false}return r}}
 {const _r=rmResize;rmResize=function(){_r.apply(this,arguments);if(RM&&RM.gl3&&GL3.r){GL3.r.setSize(innerWidth,innerHeight,false)}}}
+
+/* ========== 3D描画の仕上げ：昼・夕方・ナイターの光／照明の光り／ゴールの演出／ホーム画面の3Dスタジアム ========== */
+function gl3GlowTex(){if(GL3.glowT)return GL3.glowT;const c=gl3Cv(128,128),x=c.getContext('2d'),g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.18,'rgba(255,248,225,.75)');g.addColorStop(.45,'rgba(255,240,200,.18)');g.addColorStop(1,'rgba(255,240,200,0)');x.fillStyle=g;x.fillRect(0,0,128,128);
+  return GL3.glowT=new THREE.CanvasTexture(c)}
+// 照明の光の玉（ナイターで光る）
+function gl3BuildGlows(){const T=THREE,S=GL3.scene;S.updateMatrixWorld(true);GL3.glows=[];const t=gl3GlowTex(),v=new T.Vector3();
+  const add=(pos,s)=>{const m=new T.SpriteMaterial({map:t,color:0xfff4d8,transparent:true,opacity:0,depthWrite:false,blending:T.AdditiveBlending,fog:false});const sp=new T.Sprite(m);sp.position.copy(pos);sp.scale.setScalar(s);sp.userData.s=s;S.add(sp);GL3.glows.push(sp)};
+  GL3.lamps.forEach(l=>{l.getWorldPosition(v);add(v.clone(),11)});GL3.towers.forEach(p=>{p.getWorldPosition(v);add(v.clone(),38)})}
+const GL3MOOD={
+  day:{top:0x2f62a8,hor:0xd7e6f2,sunDir:[-.45,.38,-.8],sunA:1,sunCol:0xfff1dc,sunI:2.6,sunOff:[-40,70,30],hemi:[0xdfeeff,0x3d5a2c,1.1],fill:.55,fog:0x9fb8d0,exp:.98,glow:0,stars:0,ad:.55,lamp:1.4},
+  sunset:{top:0x2b2a63,hor:0xf09a5a,sunDir:[-.92,.1,-.38],sunA:1.6,sunCol:0xffa860,sunI:2.5,sunOff:[-85,26,22],hemi:[0xffc8a8,0x35442a,.75],fill:.4,fog:0xb88468,exp:1.02,glow:.55,stars:0,ad:.9,lamp:2.6},
+  night:{top:0x02040c,hor:0x0d1b36,sunDir:[0,-1,0],sunA:0,sunCol:0xeef2ff,sunI:2.35,sunOff:[-14,85,22],hemi:[0x5a70a0,0x101810,.32],fill:.38,fog:0x060c18,exp:1.05,glow:1,stars:1,ad:1.7,lamp:3.4}};
+function gl3Mood(k){const T=THREE,m=GL3MOOD[k]||GL3MOOD.day;GL3.moodNow=k;const u=GL3.sky.material.uniforms;u.top.value.set(m.top);u.hor.value.set(m.hor);u.sun.value.set(...m.sunDir).normalize();u.stars.value=m.stars;u.sunA.value=m.sunA;
+  GL3.sun.color.set(m.sunCol);GL3.sun.intensity=m.sunI;GL3.sunOff=m.sunOff;GL3.hemi.color.set(m.hemi[0]);GL3.hemi.groundColor.set(m.hemi[1]);GL3.hemi.intensity=m.hemi[2];GL3.fill.intensity=m.fill;
+  GL3.scene.fog.color.set(m.fog);GL3.r.toneMappingExposure=m.exp;GL3.adM.emissiveIntensity=m.ad;GL3.lampMats.forEach(x=>x.emissiveIntensity=m.lamp);(GL3.glows||[]).forEach(g=>g.material.opacity=m.glow*(g.userData.s>20?.95:.8))}
+// ゴールの瞬間：決めた選手とネット
+{const _g=rmGoal;rmGoal=function(side,by){try{GL3.scorer=by||null;GL3.ripT=performance.now();GL3.ripD=side===0?1:-1}catch(e){}return _g.apply(this,arguments)}}
+
+/* ----- ホーム画面：本物のスタジアムでウォーミングアップ ----- */
+const GLH={men:[],ps:[],ball:null,cam:null,last:0,w:0,h:0,on:false,started:false};
+function gl3HomeShow(on){if(GLH.on===on)return;GLH.on=on;GLH.men.forEach(m=>m.root.visible=on);if(GLH.ball)GLH.ball.visible=on;
+  if(GL3.ball)GL3.ball.visible=!on;if(GL3.ring)GL3.ring.visible=!on&&GL3.ring.visible;if(on){GL3.ring.visible=false;GL3.pv.visible=false;GL3.pvLine.visible=false;GL3.men.forEach(m=>m.root.visible=false);(GL3.trailS||[]).forEach(s=>s.visible=false);[1,-1].forEach(d=>GL3.goals[d].userData.nets.forEach(n=>n.position.x=0))}}
+function gl3HomeMood(){const h=new Date().getHours()+new Date().getMinutes()/60;return h>=6&&h<16?'day':h>=16&&h<18.5?'sunset':'night'}
+function gl3HomeSetup(){const T=THREE;if(!GLH.cam)GLH.cam=new T.PerspectiveCamera(42,1,.3,600);
+  if(!GLH.men.length){let cards=[];try{cards=(M.squad.slots||[]).map(id=>id&&cardById(id)).filter(c=>c&&!isMgr(c))}catch(e){}
+    cards.sort((a,b)=>{try{return cardOvr(b,b.pos)-cardOvr(a,a.pos)}catch(e){return 0}});
+    const pick=cards.slice(0,3);while(pick.length<3)pick.push(null);
+    GLH.ps=pick.map((c,i)=>({n:c?c.name:['ホーム '+i,'ヤルヨン '+i,'サッカー '+i][i],side:0,role:c?(c.pos==='GK'?'MF':c.pos):'MF',num:[10,7,9][i],card:c||null,x:RM_W/2,y:RM_L/2,vx:0,vy:0,fx:0,fy:-1,kickCd:0,slide:0,stun:0,away:0}));
+    GLH.men=GLH.ps.map(p=>gl3MakeMan(p));
+    GLH.ball=new T.Mesh(GL3.ball.geometry,GL3.ball.material);GLH.ball.castShadow=true;GL3.scene.add(GLH.ball)}
+  GLH.on=null;gl3HomeShow(true);gl3Mood(gl3HomeMood())}
+function gl3HomeFrame(now){const t=now/1000,dt=Math.min(.05,(now-(GLH.last||now))/1000);GLH.last=now;
+  const fakeR={t,ball:{own:null},goalT:0,lastScorerSide:-1};
+  // 1人目：リフティング、2・3人目：ゆっくり走る
+  const P=GLH.ps,M0=GLH.men;
+  const p0=P[0];p0.x=RM_W/2;p0.y=RM_L/2;p0.vx=p0.vy=0;const ang=t*.35;p0.fx=Math.sin(ang*.3);p0.fy=-Math.cos(ang*.3);
+  const ph=(t*2.2)%1,bh=.18+Math.sin(ph*Math.PI)*1.05;if(ph<GLH.lastPh)p0.kickCd=t+.3;GLH.lastPh=ph;
+  const fx0=p0.fx,fy0=p0.fy;GLH.ball.position.set(gX(p0.y+fy0*.45),bh,gZ(p0.x+fx0*.45));GLH.ball.rotation.x+=dt*6;
+  [1,2].forEach(i=>{const p=P[i],r=3.2+i*1.2,a=t*(.22+i*.05)+i*2.1,sp=r*(.22+i*.05);p.x=RM_W/2+Math.cos(a)*r;p.y=RM_L/2+Math.sin(a)*r;p.vx=-Math.sin(a)*sp;p.vy=Math.cos(a)*sp});
+  P.forEach((p,i)=>gl3Anim(M0[i],p,dt,fakeR));
+  if(GL3.adT)GL3.adT.offset.x=(t*.03)%1;if(GL3.flags)GL3.flags.forEach((f,i)=>f.rotation.y=Math.sin(t*2.5+i)*.35);
+  // カメラ：選手のまわりをゆっくり回る
+  const cam=GLH.cam,a=t*.06+.6,R0=8.6;cam.position.set(Math.sin(a)*R0,1.7+Math.sin(t*.13)*.35,Math.cos(a)*R0);cam.lookAt(0,1.35,0);cam.aspect=GLH.w/GLH.h;cam.updateProjectionMatrix();
+  GL3.sun.target.position.set(0,0,0);const so=GL3.sunOff||[-40,70,30];GL3.sun.position.set(so[0],so[1],so[2]);
+  GL3.r.render(GL3.scene,cam)}
+function gl3HomeLoop(){requestAnimationFrame(gl3HomeLoop);try{
+  if(RM||document.hidden)return;const hero=document.querySelector('.hero2');if(!hero||!gl3Supported())return;
+  const now=performance.now();if(now-(GLH.tick||0)<33)return;GLH.tick=now;
+  const rc=hero.getBoundingClientRect();if(rc.bottom<0||rc.top>innerHeight)return;
+  if(!GL3.r&&!gl3Init())return;const cv=GL3.r.domElement;
+  if(cv.parentNode!==hero){hero.insertBefore(cv,hero.firstChild);hero.classList.add('gl');GLH.w=0;gl3HomeSetup()}
+  if(GLH.on!==true||GL3.moodNow!==gl3HomeMood())gl3HomeSetup();
+  const w=hero.clientWidth,h=hero.clientHeight;if(w!==GLH.w||h!==GLH.h){GLH.w=w;GLH.h=h;GL3.r.setPixelRatio(Math.min(devicePixelRatio||1,1.6));GL3.r.setSize(w,h,false)}
+  gl3HomeFrame(now)}catch(e){console.warn('ホームの3D描画エラー',e);GL3.ok=false;const h=document.querySelector('.hero2');if(h)h.classList.remove('gl');try{GL3.r.domElement.remove()}catch(_){}}}
+if(!GLH.started){GLH.started=true;requestAnimationFrame(gl3HomeLoop)}
 
 /* ========== スカッドの表示：スキルで上がった状態の能力（試合の途中で上がるものは含めない） ========== */
 let DISPC=null;
